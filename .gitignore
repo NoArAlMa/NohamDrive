@@ -1,0 +1,79 @@
+# Environnement Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+.env.local
+.env*.local
+
+# Fichiers de dépendances
+*.egg-info/
+dist/
+build/
+*.egg
+*.whl
+
+# Fichiers de base de données
+*.db
+*.sqlite3
+
+# Fichiers de logs et cache
+*.log
+*.pot
+*.pyc
+__pycache__/
+.DS_Store
+.venv
+.env
+.env.development
+.env.test
+.env.production
+
+# Fichiers IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Fichiers de build et de distribution
+/dist/
+/build/
+/node_modules/
+/.next/
+/out/
+
+# Fichiers de migration Alembic
+/alembic/versions/*.pyc
+
+# Fichiers de configuration locale
+instance/
+*.ini
+*.cfg
+*.yml
+*.yaml
+
+# Fichiers de cache
+/.cache/
+/.coverage
+/htmlcov/
+
+# Fichiers de tests
+/.pytest_cache/
+/tests/__pycache__/
+
+# Fichiers de documentation générés
+/docs/
+/site/
+
+# Fichiers de dépendances Node.js (si jamais tu en as)
+/node_modules/
+/package-lock.json
+/yarn.lock
+
+# Fichiers de Tauri (si tu veux les ignorer ici)
+/src-tauri/target/
+/src-tauri/node_modules/
+
+# Fichiers de Docker
+docker-compose.override.yml
