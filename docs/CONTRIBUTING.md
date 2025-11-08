@@ -70,6 +70,8 @@ pnpm dev
 ```bash
 python venv venv ./venv #un truc dans le genre quoi
 ./Scripts/activate
+pip install -r requirements.txt
+uvicorn main:app --reload
 ```
 
 **\*N'oubliez pas d'utilisez **Postman** pour tester NOTRE api\***
