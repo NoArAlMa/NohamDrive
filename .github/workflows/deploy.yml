@@ -1,7 +1,7 @@
 name: Deploy to VPS
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Permet de déclencher manuellement
   push:
     branches: ["main"]
 
@@ -11,6 +11,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Install Docker and Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker.io docker-compose
+          sudo systemctl enable docker
+          sudo systemctl start docker
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
@@ -29,6 +36,7 @@ jobs:
 
             echo -e "${YELLOW}=== Début du déploiement ===${NC}"
 
+            # 1. Mise à jour ou clonage du dépôt
             if [ -d "$REPO_PATH" ]; then
               echo -e "${GREEN}✅ Dépôt trouvé. Mise à jour en cours...${NC}"
               cd "$REPO_PATH" || { echo -e "${RED}❌ Erreur : Impossible d'entrer dans $REPO_PATH${NC}"; exit 1; }
