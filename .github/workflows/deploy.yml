@@ -3,7 +3,7 @@ name: Deploy to VPS
 on:
   workflow_dispatch:  # Permet de déclencher manuellement
   push:
-    branches: ["main", "dev/deploy"]  # Déclenchement automatique sur push vers main
+    branches: ["main"]  # Déclenchement automatique sur push vers main
 
 jobs:
   deploy:
