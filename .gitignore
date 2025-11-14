@@ -6,6 +6,7 @@ venv/
 .env
 .env.local
 .env*.local
+.ruff_cache
 
 # Fichiers de dépendances
 *.egg-info/
