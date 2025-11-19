@@ -1,9 +1,11 @@
-name: Deploy to VPS
+name: Deploy Frontend to Raspberry Pi
 
 on:
   workflow_dispatch:
   push:
     branches: ["main"]
+    paths:
+      - "frontend/**"
 
 jobs:
   deploy:
@@ -12,12 +14,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy via SSH
+      - name: Deploy frontend via SSH
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          host: ${{ secrets.RPI_HOST }}
+          username: ${{ secrets.RPI_USER }}
+          key: ${{ secrets.RPI_SSH_KEY }}
           port: 22
           script: |
             # Couleurs
@@ -27,8 +29,7 @@ jobs:
             NC='\033[0m'
             REPO_PATH="NohamDrive"
 
-            echo -e "${YELLOW}=== Début du déploiement ===${NC}"
-
+            echo -e "${YELLOW}=== Début du déploiement du frontend ===${NC}"
             if [ -d "$REPO_PATH" ]; then
               echo -e "${GREEN}✅ Dépôt trouvé. Mise à jour en cours...${NC}"
               cd "$REPO_PATH" || { echo -e "${RED}❌ Erreur : Impossible d'entrer dans $REPO_PATH${NC}"; exit 1; }
@@ -41,24 +42,24 @@ jobs:
               cd "$REPO_PATH" || { echo -e "${RED}❌ Erreur : Impossible d'entrer dans $REPO_PATH${NC}"; exit 1; }
             fi
 
-            # Build et redémarrage des conteneurs
-            echo -e "${YELLOW}🐳 Construction des images Docker...${NC}"
-            docker-compose build || { echo -e "${RED}❌ Erreur lors du build Docker${NC}"; exit 1; }
+            # Build et redémarrage du conteneur frontend
+            echo -e "${YELLOW}🐳 Construction de l'image Docker pour le frontend...${NC}"
+            docker-compose -f docker-compose.yml build || { echo -e "${RED}❌ Erreur lors du build Docker${NC}"; exit 1; }
 
-            echo -e "${YELLOW}🔄 Redémarrage des conteneurs...${NC}"
-            docker-compose down || { echo -e "${RED}❌ Erreur lors de l'arrêt des conteneurs${NC}"; exit 1; }
-            docker-compose up -d --remove-orphans || { echo -e "${RED}❌ Erreur lors du démarrage des conteneurs${NC}"; exit 1; }
+            echo -e "${YELLOW}🔄 Redémarrage du conteneur frontend...${NC}"
+            docker-compose -f docker-compose.yml down || { echo -e "${RED}❌ Erreur lors de l'arrêt du conteneur${NC}"; exit 1; }
+            docker-compose -f docker-compose.yml up -d --remove-orphans || { echo -e "${RED}❌ Erreur lors du démarrage du conteneur${NC}"; exit 1; }
 
-            # Nettoyage des images inutilisées
+            # Nettoyage
             echo -e "${YELLOW}🧹 Nettoyage des images Docker inutilisées...${NC}"
             docker image prune -f || { echo -e "${RED}❌ Erreur lors du nettoyage${NC}"; exit 1; }
 
             # Vérification finale
-            if docker ps | grep -q "backend" && docker ps | grep -q "frontend"; then
+            if docker ps | grep -q "frontend"; then
               echo -e "${GREEN}============================${NC}"
-              echo -e "${GREEN}✨ Déploiement terminé avec succès ! ✨${NC}"
+              echo -e "${GREEN}✨ Déploiement frontend terminé avec succès ! ✨${NC}"
               echo -e "${GREEN}============================${NC}"
             else
-              echo -e "${RED}❌ ÉCHEC : Les conteneurs ne sont pas démarrés.${NC}"
+              echo -e "${RED}❌ ÉCHEC : Le conteneur frontend n'est pas démarré.${NC}"
               exit 1
             fi
