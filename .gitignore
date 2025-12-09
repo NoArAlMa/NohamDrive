@@ -77,3 +77,7 @@ instance/
 
 # Fichiers de Docker
 docker-compose.override.yml
+
+
+
+./.ruff_cache
