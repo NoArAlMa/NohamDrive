@@ -1,29 +1,98 @@
-from fastapi import APIRouter, UploadFile, Depends
-from app.services.minio_service import FileService, get_file_service
+from fastapi import APIRouter, UploadFile, Depends, status
+from app.services.minio_service import MinioService
 from datetime import datetime
-from app.schemas.files import FileUpload
+from app.schemas.file_tree import SimpleFileTreeResponse, TreeResponse
+from app.utils.response import BaseResponse
 from core.minio_client import get_healthy_minio
+from app.schemas.files import FileUploadResponse
 
 
 router = APIRouter(prefix="/storage", tags=["Storage"])
 
 
-@router.post("/upload", response_model=FileUpload)
+@router.post(
+    "/upload", response_model=FileUploadResponse, status_code=status.HTTP_201_CREATED
+)
 async def upload_file_endpoint(
     file: UploadFile,
-    file_service: FileService = Depends(get_file_service),
-    user_id: int = 1,  # À remplacer par l'ID réel (via auth)
-):
+    file_service: MinioService = Depends(),
+    user_id: int = 1,  # TODO : À remplacer par l'ID réel (via auth)
+) -> FileUploadResponse:
     """
     Upload un fichier dans le bucket utilisateur.
     """
     metadata = await file_service.upload_file(user_id, file)
-    return FileUpload(**metadata.model_dump(), status="success")
+    return FileUploadResponse(data=metadata, status_code=status.HTTP_201_CREATED)
 
 
-@router.get("/health")
-async def health_check(minio_status: dict = Depends(get_healthy_minio)):
-    return {
-        "status": "ok",
-        "timestamp": datetime.now().isoformat(),
-    }
+@router.get("/health", response_model=BaseResponse)
+async def health_check(minio_status=Depends(get_healthy_minio)) -> BaseResponse:
+    return BaseResponse(
+        success=True,
+        message="MinIO est opérationnel !",
+        data=[],
+        status_code=status.HTTP_200_OK,
+    )
+
+
+@router.get(
+    "/tree",
+    response_model=TreeResponse,
+    responses={
+        404: {"message": "Not Found"},
+        500: {"message": "Internal Server Error"},
+    },
+)
+async def list_path(
+    path: str = "", file_service: MinioService = Depends()
+) -> TreeResponse:
+    """
+    Liste le contenu d'un chemin dans le bucket utilisateur.
+    Args:
+        path: Chemin relatif (ex: "dossier1/sous-dossier/"). Par défaut, liste la racine.
+    Returns:
+        SimpleFileTreeResponse: Arborescence du chemin.
+    """
+    bucket_name = await file_service.ensure_bucket_exists(
+        user_id=1
+    )  # TODO : À adapter au système d'auth
+    tree: SimpleFileTreeResponse = await file_service.simple_list_path(
+        bucket_name, path
+    )
+
+    return TreeResponse(
+        success=True if tree.items else False,
+        data=tree,
+        status_code=status.HTTP_200_OK,
+        message="Tree loaded",
+    )
+
+
+@router.get(
+    "/download/{object_name}",
+    responses={
+        200: {
+            "description": "Fichier téléchargé avec succès.",
+            "content": {"application/octet-stream": {}},
+        },
+        404: {
+            "description": "Fichier ou bucket non trouvé.",
+            "content": {
+                "application/json": {"example": {"detail": "Fichier non trouvé."}}
+            },
+        },
+        500: {
+            "description": "Erreur interne.",
+            "content": {"application/json": {"example": {"detail": "Erreur interne."}}},
+        },
+    },
+)
+async def download_file_endpoint(
+    object_name: str,
+    user_id: int = 1,  # TODO: Remplacer par l'ID réel (via auth)
+    file_service: MinioService = Depends(),
+):
+    """
+    Télécharge un fichier depuis le bucket utilisateur.
+    """
+    return await file_service.download_file(user_id, object_name, "user-1")
