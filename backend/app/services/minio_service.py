@@ -1,5 +1,4 @@
 from minio.error import S3Error
-from minio.sseconfig import SSEConfig
 from core.minio_client import get_minio_client
 from app.schemas.files import FileMetadata
 from app.schemas.file_tree import SimpleFileItem, SimpleFileTreeResponse
@@ -17,13 +16,16 @@ class MinioService:
     def __init__(self):
         self.minio = get_minio_client()
 
-
     async def get_user_bucket(self, user_id: int) -> str:
         """Retourne le nom du bucket utilisateur."""
         return f"user-{user_id}"
 
     async def ensure_bucket_exists(self, user_id: int) -> str:
-        """Crée le bucket utilisateur s'il n'existe pas."""
+        """
+        Crée le bucket utilisateur s'il n'existe pas.
+
+        NOTES : Fonction temporaire le temps de créer le système d'auth
+        """
         bucket_name = await self.get_user_bucket(user_id)
         if not self.minio.bucket_exists(bucket_name):
             self.minio.make_bucket(bucket_name)
@@ -79,7 +81,7 @@ class MinioService:
             bucket_name: Nom du bucket.
             path: Préfixe (ex: "dossier/").
         Returns:
-            SimpleFileTreeResponse: Liste brute des objets (changement possible).
+            SimpleFileTreeResponse: Liste brute des objets .
         """
         try:
             objects = list(
@@ -110,9 +112,7 @@ class MinioService:
                 detail=f"Impossible de lister le chemin : {str(e)}",
             )
 
-    async def download_file(
-        self, user_id: int, object_name: str, bucket_name: str
-    ) -> StreamingResponse:
+    async def download_file(self, user_id: int, object_name: str) -> StreamingResponse:
         """
         Télécharge un fichier depuis MinIO.
 
@@ -130,6 +130,8 @@ class MinioService:
                           500 en cas d'erreur interne.
         """
         try:
+            bucket_name = await self.ensure_bucket_exists(user_id)
+
             # Vérifie que le bucket existe
             if not self.minio.bucket_exists(bucket_name):
                 raise HTTPException(

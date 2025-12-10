@@ -1,6 +1,6 @@
 from fastapi import APIRouter, UploadFile, Depends, status
+from fastapi.responses import StreamingResponse
 from app.services.minio_service import MinioService
-from datetime import datetime
 from app.schemas.file_tree import SimpleFileTreeResponse, TreeResponse
 from app.utils.response import BaseResponse
 from core.minio_client import get_healthy_minio
@@ -20,6 +20,13 @@ async def upload_file_endpoint(
 ) -> FileUploadResponse:
     """
     Upload un fichier dans le bucket utilisateur.
+
+    Args:
+        file : Un fichier à uploader
+        user_id : ID de l'utilisateur (injecté par l'auth)
+
+    Returns:
+        The file
     """
     metadata = await file_service.upload_file(user_id, file)
     return FileUploadResponse(data=metadata, status_code=status.HTTP_201_CREATED)
@@ -27,6 +34,11 @@ async def upload_file_endpoint(
 
 @router.get("/health", response_model=BaseResponse)
 async def health_check(minio_status=Depends(get_healthy_minio)) -> BaseResponse:
+    """
+
+    Retourne la disponibilité de MinIO
+
+    """
     return BaseResponse(
         success=True,
         message="MinIO est opérationnel !",
@@ -51,7 +63,7 @@ async def list_path(
     Args:
         path: Chemin relatif (ex: "dossier1/sous-dossier/"). Par défaut, liste la racine.
     Returns:
-        SimpleFileTreeResponse: Arborescence du chemin.
+        TreeResponse: Arborescence du chemin.
     """
     bucket_name = await file_service.ensure_bucket_exists(
         user_id=1
@@ -94,5 +106,10 @@ async def download_file_endpoint(
 ):
     """
     Télécharge un fichier depuis le bucket utilisateur.
+
+    ***Args:***
+         **object_name** (str ): Nom du fichier à télécharger
+         **user_id** : ID de l'utilisateur (injecté par l'auth)
+
     """
-    return await file_service.download_file(user_id, object_name, "user-1")
+    return await file_service.download_file(user_id, object_name)
