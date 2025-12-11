@@ -1,5 +1,4 @@
 from fastapi import APIRouter, UploadFile, Depends, status
-from fastapi.responses import StreamingResponse
 from app.services.minio_service import MinioService
 from app.schemas.file_tree import SimpleFileTreeResponse, TreeResponse
 from app.utils.response import BaseResponse
