@@ -24,7 +24,7 @@ minio_client = Minio(
     http_client=urllib3.PoolManager(
         timeout=urllib3.Timeout(connect=2.0, read=3.0),  # Timeout global de 5s
         maxsize=10,
-        retries=False,  # Désactive les retries au niveau urllib3 (on gère ça avec tenacity)
+        retries=False,
     ),
 )
 
