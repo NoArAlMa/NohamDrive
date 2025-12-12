@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from backend.app.services.auth_service import get_auth_service, AuthService
+from app.services.auth_service import get_auth_service, AuthService
 from app.schemas.auth import PasswordVerifyRequest
 
 

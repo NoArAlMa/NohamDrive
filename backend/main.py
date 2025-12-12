@@ -1,11 +1,10 @@
 from fastapi import FastAPI
-from routes import storages, auth
+from routes import storages, auth, terminal
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 
 
 # Instanciation de l'app FastAPI
-
 app = FastAPI(title="OneDrive Alternative API", version="0.1.0")
 
 
@@ -24,6 +23,7 @@ app.add_middleware(
 
 app.include_router(storages.router)
 app.include_router(auth.router)
+app.include_router(terminal.router)
 
 
 @app.get("/")

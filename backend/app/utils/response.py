@@ -9,7 +9,7 @@ class BaseResponse(BaseModel, Generic[T]):
     """Modèle de base pour toutes les réponses API, utilisable à la fois avec `response_model` et en retour direct."""
 
     success: bool = True
-    data: Optional[T] = None
+    data: Optional[list] | Optional[dict] = None
     message: Optional[str] = "Request successful"
     timestamp: datetime = Field(default_factory=datetime.now)
     status_code: Optional[int] = None
