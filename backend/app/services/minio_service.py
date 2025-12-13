@@ -2,14 +2,14 @@ from minio import Minio
 from minio.error import S3Error
 from app.schemas.files import FileMetadata
 from app.schemas.file_tree import SimpleFileItem, SimpleFileTreeResponse
-import logging
+from core.logging import setup_logger
 import uuid
 from datetime import datetime
 from fastapi import UploadFile, HTTPException, status, Request
 from fastapi.responses import StreamingResponse
 
 
-logger = logging.getLogger(__name__)
+logger = setup_logger(__name__)
 
 
 class MinioService:
