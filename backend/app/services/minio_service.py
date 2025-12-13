@@ -18,11 +18,19 @@ class MinioService:
     def __init__(self, minio: Minio):
         self.minio: Minio = minio
 
-
     async def get_user_bucket(self, user_id: int) -> str:
         """Retourne le nom du bucket utilisateur."""
         return f"user-{user_id}"
 
+    async def create_user_bucket(self, user_id: int) -> str:
+        """
+        Crée le bucket d'un nouvel utilisateur s'il n'existe pas et en retourne le nom.
+        """
+        bucket_name = await self.get_user_bucket(user_id)
+        if not self.minio.bucket_exists(bucket_name):
+            self.minio.make_bucket(bucket_name)
+            logger.info(f"Bucket {bucket_name} créé pour l'utilisateur {user_id}.")
+        return bucket_name
 
     async def ensure_bucket_exists(self, user_id: int) -> str:
         """
@@ -35,7 +43,6 @@ class MinioService:
             self.minio.make_bucket(bucket_name)
             logger.info(f"Bucket {bucket_name} créé pour l'utilisateur {user_id}.")
         return bucket_name
-
 
     async def upload_file(self, user_id: int, file: UploadFile) -> FileMetadata:
         """
@@ -76,7 +83,6 @@ class MinioService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Échec de l'upload: {str(e)}",
             )
-
 
     async def create_folder(
         self, user_id: int, current_path: str, folder_path: str
@@ -149,7 +155,6 @@ class MinioService:
                 detail=f"Impossible de créer le dossier: {str(e)}",
             )
 
-
     async def simple_list_path(
         self, bucket_name: str, path: str = "", limit: int = 30
     ) -> SimpleFileTreeResponse:
@@ -189,7 +194,6 @@ class MinioService:
                 status_code=404 if "NoSuchKey" in str(e) else 500,
                 detail=f"Impossible de lister le chemin : {str(e)}",
             )
-
 
     async def download_file(self, user_id: int, object_name: str) -> StreamingResponse:
         """
