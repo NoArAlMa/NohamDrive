@@ -11,19 +11,11 @@ from tenacity import (
     retry_if_exception_type,
 )
 import socket
+from core.logging import setup_logger
 
 # Configure le logger
 
-logging.basicConfig(
-    level=logging.INFO,  # Affiche INFO et au-dessus (WARNING, ERROR, etc.)
-    format="%(levelname)s:     %(message)s",
-    handlers=[
-        logging.StreamHandler(),  # Affiche les logs dans la console
-    ],
-)
-
-
-logger = logging.getLogger(__name__)
+logger = setup_logger(__name__)
 
 # Client MinIO (singleton)
 minio_client = Minio(

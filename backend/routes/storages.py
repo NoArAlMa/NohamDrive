@@ -94,5 +94,4 @@ async def download_file_endpoint(
          **user_id** : ID de l'utilisateur (injecté par l'auth)
 
     """
-    print(object_name)
     return await minio_service.download_file(user_id, object_name)

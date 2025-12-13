@@ -1,13 +1,13 @@
-import logging
 from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import HTTPException, status
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 from core.config import settings
+from core.logging import setup_logger
 
 # Configuration du logger pour ce module
-logger = logging.getLogger(__name__)
+logger = setup_logger(__name__)
 
 
 class AuthService:
@@ -24,7 +24,7 @@ class AuthService:
             argon2__rounds=12,  # Nombre d'itérations
             argon2__memory_cost=65536,  # Mémoire utilisée (en KiB)
             argon2__parallelism=2,  # Nombre de threads
-        )  # Contexte de hachage des mots de passe (bcrypt)
+        )  # Contexte de hachage des mots de passe (argon2)
         self.SECRET_KEY: str = (
             settings.SECRET_KEY
         )  # Clé secrète pour signer les tokens JWT
