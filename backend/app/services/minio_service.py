@@ -130,7 +130,7 @@ class MinioService:
                           500 en cas d'erreur interne.
         """
         try:
-            bucket_name = await self.ensure_bucket_exists(user_id)
+            bucket_name = await self.get_user_bucket(user_id)
 
             # Vérifie que le bucket existe
             if not self.minio.bucket_exists(bucket_name):
@@ -141,12 +141,16 @@ class MinioService:
 
             # Récupère les métadonnées de l'objet pour vérifier son existence
             try:
+                # On nettoie le chemin au cas où il y aurait des pépins
+                if ".." in object_name or object_name.startswith("/"):
+                    raise HTTPException(status_code=400, detail="Chemin invalide.")
+
                 obj = self.minio.stat_object(bucket_name, object_name)
             except S3Error as e:
                 if e.code == "NoSuchKey":
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
-                        detail="Fichier non trouvé.",
+                        detail=f"Fichier {object_name} non trouvé.",
                     )
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
