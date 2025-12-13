@@ -2,7 +2,6 @@ from minio import Minio
 from minio.error import S3Error
 from fastapi import HTTPException, status
 from core.config import settings
-import logging
 import urllib3
 from tenacity import (
     retry,

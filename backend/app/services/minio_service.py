@@ -7,18 +7,22 @@ import uuid
 from datetime import datetime
 from fastapi import UploadFile, HTTPException, status, Request
 from fastapi.responses import StreamingResponse
+import io
+import os
 
-
+# Initialisation du logger
 logger = setup_logger(__name__)
 
 
 class MinioService:
-    def __init__(self, minio):
+    def __init__(self, minio: Minio):
         self.minio: Minio = minio
+
 
     async def get_user_bucket(self, user_id: int) -> str:
         """Retourne le nom du bucket utilisateur."""
         return f"user-{user_id}"
+
 
     async def ensure_bucket_exists(self, user_id: int) -> str:
         """
@@ -31,6 +35,7 @@ class MinioService:
             self.minio.make_bucket(bucket_name)
             logger.info(f"Bucket {bucket_name} créé pour l'utilisateur {user_id}.")
         return bucket_name
+
 
     async def upload_file(self, user_id: int, file: UploadFile) -> FileMetadata:
         """
@@ -72,6 +77,79 @@ class MinioService:
                 detail=f"Échec de l'upload: {str(e)}",
             )
 
+
+    async def create_folder(
+        self, user_id: int, current_path: str, folder_path: str
+    ) -> str:
+        """
+        Crée un dossier dans MinIO au chemin spécifié.
+
+        Args:
+            user_id: ID de l'utilisateur (pour déterminer le bucket).
+            current_path: Chemin actuel (ex: "dossier_parent/").
+            folder_path: Chemin relatif du nouveau dossier (ex: "nouveau_dossier").
+
+        Returns:
+            str: Chemin complet du dossier créé.
+
+        Raises:
+            HTTPException: 400 si le chemin est invalide ou si le dossier existe déjà.
+                        500 en cas d'erreur interne.
+        """
+        bucket_name = await self.get_user_bucket(user_id)
+
+        # Nettoie et normalise le chemin
+        if not current_path.endswith("/"):
+            current_path += "/"
+        full_path = os.path.normpath(f"{current_path}{folder_path}").replace("\\", "/")
+
+        if not full_path.endswith("/"):
+            full_path += "/"
+
+        # Vérifie que le chemin est valide (pas de ".." ou chemin absolu)
+        if ".." in full_path or full_path.startswith("/"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Chemin invalide (accès non autorisé).",
+            )
+
+        try:
+            # On vérifie si un objet avec ce préfixe existe déjà
+            objects = list(self.minio.list_objects(bucket_name, prefix=full_path))
+            if objects:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Le dossier '{full_path}' existe déjà.",
+                )
+        except S3Error as e:
+            if e.code != "NoSuchKey":
+                logger.error(
+                    f"Erreur lors de la vérification du dossier {full_path}: {e}"
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Impossible de vérifier le dossier.",
+                )
+
+        # Crée le dossier
+        try:
+            self.minio.put_object(
+                bucket_name,
+                full_path,
+                io.BytesIO(b""),  # Contenu vide
+                0,
+                content_type="application/x-directory",
+            )
+            logger.info(f"Dossier [bold]{full_path}[/bold] créé dans {bucket_name}")
+            return full_path
+        except S3Error as e:
+            logger.error(f"Échec de la création du dossier {full_path}: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Impossible de créer le dossier: {str(e)}",
+            )
+
+
     async def simple_list_path(
         self, bucket_name: str, path: str = "", limit: int = 30
     ) -> SimpleFileTreeResponse:
@@ -111,6 +189,7 @@ class MinioService:
                 status_code=404 if "NoSuchKey" in str(e) else 500,
                 detail=f"Impossible de lister le chemin : {str(e)}",
             )
+
 
     async def download_file(self, user_id: int, object_name: str) -> StreamingResponse:
         """

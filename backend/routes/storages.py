@@ -1,7 +1,9 @@
-from fastapi import APIRouter, UploadFile, Depends, status
+from fastapi import APIRouter, HTTPException, UploadFile, Depends, status
 from app.services.minio_service import MinioService, get_minio_service
 from app.schemas.file_tree import SimpleFileTreeResponse, TreeResponse
-from app.schemas.files import FileUploadResponse
+from app.schemas.files import CreateFolder, FileUploadResponse
+from app.utils.response import BaseResponse
+
 
 
 router = APIRouter(prefix="/storage", tags=["Storage"])
@@ -95,3 +97,83 @@ async def download_file_endpoint(
 
     """
     return await minio_service.download_file(user_id, object_name)
+
+
+@router.post(
+    "/folder",
+    response_model=BaseResponse[str],
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        201: {
+            "description": "Dossier créé avec succès.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "success": True,
+                        "data": "dossier_parent/nouveau_dossier/",
+                        "message": "Dossier créé avec succès.",
+                    }
+                }
+            },
+        },
+        400: {
+            "description": "Requête invalide (chemin ou dossier existant).",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "success": False,
+                        "data": None,
+                        "message": "Le dossier 'dossier/' existe déjà.",
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Erreur interne.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "success": False,
+                        "data": None,
+                        "message": "Impossible de créer le dossier.",
+                    }
+                }
+            },
+        },
+    },
+)
+async def create_folder_endpoint(
+    request: CreateFolder,
+    user_id: int = 1,  # ID de l'utilisateur (via auth),
+    minio_service: MinioService = Depends(get_minio_service),
+) -> BaseResponse[str]:
+    """
+    Crée un dossier dans le bucket utilisateur.
+
+    **Args:**
+        - **request (CreateFolder):** Objet contenant:
+            - `currentPath (str)`: Chemin parent (ex: "dossier_parent/").
+            - `folderPath (str)`: Nom du nouveau dossier (ex: "nouveau_dossier").
+        - **user_id (int):** ID de l'utilisateur (injecté par l'auth).
+
+    **Returns:**
+        - **BaseResponse**: Réponse standard avec:
+            - `success (bool)`: Statut de la requête.
+            - `data (str)`: Chemin complet du dossier créé.
+            - `message (str)`: Message de confirmation ou d'erreur.
+
+
+    """
+    try:
+        folder_path = await minio_service.create_folder(
+            user_id=user_id,
+            current_path=request.currentPath,
+            folder_path=request.folderPath,
+        )
+        return BaseResponse(
+            success=True,
+            data=folder_path,
+            message="Dossier créé avec succès.",
+        )
+    except HTTPException as e:
+        raise e

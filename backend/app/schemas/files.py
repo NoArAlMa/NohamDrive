@@ -1,7 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
-
 from app.utils.response import BaseResponse
 
 
@@ -13,6 +12,11 @@ class FileMetadata(BaseModel):
     bucket: str
     object_name: str
     url: str | None = None
+
+
+class CreateFolder(BaseModel):
+    currentPath: str
+    folderPath: str
 
 
 class FileUploadResponse(BaseResponse[FileMetadata]):
