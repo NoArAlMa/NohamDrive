@@ -2,7 +2,6 @@ from minio import Minio
 from minio.error import S3Error
 from fastapi import HTTPException, status
 from core.config import settings
-import logging
 import urllib3
 from tenacity import (
     retry,
@@ -11,9 +10,11 @@ from tenacity import (
     retry_if_exception_type,
 )
 import socket
+from core.logging import setup_logger
 
 # Configure le logger
-logger = logging.getLogger(__name__)
+
+logger = setup_logger(__name__)
 
 # Client MinIO (singleton)
 minio_client = Minio(
@@ -49,17 +50,15 @@ def check_minio_availability():
     - Gestion des exceptions réseau
     """
     try:
-        # Utilise un bucket léger pour le check (meilleure perf que list_buckets)
+        # Utilise un bucket léger pour le check
         minio_client.bucket_exists("minio-health-check")
-        logger.info("MinIO est disponible.")
         return minio_client
     except (S3Error, socket.timeout, urllib3.exceptions.ReadTimeoutError) as e:
         logger.warning(
-            f"MinIO temporairement indisponible (tentative suivante dans 1-5s) : {str(e)}"
+            f"MinIO indisponible (attempt {retry.statistics['attempt_number']}/3) : {str(e)}"
         )
-        raise  # Tenacity va gérer le retry
+        raise
     except Exception as e:
-        logger.error(f"Erreur inattendue avec MinIO : {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erreur MinIO : {str(e)}",
@@ -68,14 +67,22 @@ def check_minio_availability():
 
 def get_healthy_minio():
     """
-    Version synchrone pour FastAPI avec gestion des erreurs.
-    Lève une HTTPException après épuisement des retries.
+    Retourne un client Minio sain ou None .
+    Lève une exception seulement en prod si Minio est indisponible.
     """
     try:
-        return check_minio_availability()
-    except Exception as e:
-        logger.error(f"MinIO définitivement indisponible après retries : {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Service de stockage indisponible (timeout: 15s max).",
-        )
+        client = check_minio_availability()
+        logger.info("MinIO est disponible et opérationnel.")
+        return client
+
+    except Exception:
+        if not settings.DEBUG:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Service de stockage indisponible (timeout: 15s max).",
+            )
+        else:
+            logger.critical(
+                "MinIO indisponible: certaines fonctionnalités seront désactivées.",
+            )
+            return None

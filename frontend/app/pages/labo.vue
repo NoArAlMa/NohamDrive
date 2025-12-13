@@ -1,3 +1,5 @@
 <script lang="ts" setup></script>
 
-<template></template>
+<template>
+  <h1>LABO</h1>
+</template>
