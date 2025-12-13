@@ -31,8 +31,6 @@ async def upload_file_endpoint(
     return FileUploadResponse(data=metadata, status_code=status.HTTP_201_CREATED)
 
 
-
-
 @router.get(
     "/tree",
     response_model=TreeResponse,
