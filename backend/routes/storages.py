@@ -1,8 +1,6 @@
 from fastapi import APIRouter, UploadFile, Depends, status
 from app.services.minio_service import MinioService, get_minio_service
 from app.schemas.file_tree import SimpleFileTreeResponse, TreeResponse
-from app.utils.response import BaseResponse
-from core.minio_client import get_healthy_minio
 from app.schemas.files import FileUploadResponse
 
 
@@ -65,7 +63,7 @@ async def list_path(
 
 
 @router.get(
-    "/download/{object_name}",
+    "/download/{object_name:path}",
     responses={
         200: {
             "description": "Fichier téléchargé avec succès.",
@@ -96,4 +94,5 @@ async def download_file_endpoint(
          **user_id** : ID de l'utilisateur (injecté par l'auth)
 
     """
+    print(object_name)
     return await minio_service.download_file(user_id, object_name)
