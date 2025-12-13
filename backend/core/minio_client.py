@@ -49,7 +49,7 @@ def check_minio_availability():
     - Gestion des exceptions réseau
     """
     try:
-        # Utilise un bucket léger pour le check (meilleure perf que list_buckets)
+        # Utilise un bucket léger pour le check
         minio_client.bucket_exists("minio-health-check")
         logger.info("MinIO est disponible.")
         return minio_client

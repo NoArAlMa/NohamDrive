@@ -1,11 +1,11 @@
+from minio import Minio
 from minio.error import S3Error
-from core.minio_client import get_minio_client
 from app.schemas.files import FileMetadata
 from app.schemas.file_tree import SimpleFileItem, SimpleFileTreeResponse
 import logging
 import uuid
 from datetime import datetime
-from fastapi import UploadFile, HTTPException, status
+from fastapi import UploadFile, HTTPException, status, Request
 from fastapi.responses import StreamingResponse
 
 
@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 
 class MinioService:
-    def __init__(self):
-        self.minio = get_minio_client()
+    def __init__(self, minio):
+        self.minio: Minio = minio
 
     async def get_user_bucket(self, user_id: int) -> str:
         """Retourne le nom du bucket utilisateur."""
@@ -177,6 +177,6 @@ class MinioService:
             )
 
 
-def get_file_service() -> MinioService:
-    """Fournit une instance de FileService."""
-    return MinioService()
+def get_minio_service(request: Request) -> MinioService:
+    """Fournit une instance de MinioService avec le client Minio de l'app."""
+    return MinioService(request.app.state.minio_client)
