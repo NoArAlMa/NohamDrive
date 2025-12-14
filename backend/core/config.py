@@ -1,5 +1,4 @@
 # Import d'une classe pydantic pour gérer les .env
-from datetime import timedelta
 from pydantic_settings import BaseSettings
 from pydantic import computed_field, ValidationError
 import sys
