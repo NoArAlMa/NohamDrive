@@ -9,7 +9,8 @@ router = APIRouter(prefix="/auth", tags=["Authentification"])
 
 @router.post("/register")
 async def create_user_endpoint(
-    request: UserCreate, auth_service: AuthService = Depends(get_auth_service)
+    request: UserCreate,
+    auth_service: AuthService = Depends(get_auth_service),
 ):
     created_user = auth_service.create_user(request)
     return BaseResponse(success=True, data=created_user)

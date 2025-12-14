@@ -151,7 +151,14 @@ class AuthService:
         # TODO : Créer le bucket du user pour MinIO
         # user_id = None Temporaire le temps de récup le vrai userID
         # self.minio_service.create_user_bucket(user_id)
-        token = self.create_access_token(dict(request))  # + les infos du modele User
+        
+        token = self.create_access_token(
+            {
+                "username": request.username,
+                "password": password_hash,
+                "email": request.email,
+            }
+        )  # + qlq infos du modele User
         # TODO : Ajouter le token en BDD
 
         return token

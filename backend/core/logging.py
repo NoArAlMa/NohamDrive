@@ -4,19 +4,22 @@ from rich.logging import RichHandler
 from rich.console import Console
 from rich.traceback import install
 
-# Active les traces Rich pour toutes les exceptions
+
 install(show_locals=True)
 
 
 def setup_logger(name: str = __name__) -> logging.Logger:
-    """Configure un logger moderne et coloré pour ton app."""
-    # Console Rich pour un rendu optimal
+    """
+    Fonction pour instancier le logger
+    """
+
     console = Console(stderr=True, force_terminal=True)
     rich_handler = RichHandler(
         rich_tracebacks=True,
         tracebacks_show_locals=True,
         console=console,
         markup=True,
+        log_time_format="",
     )
 
     # Configuration du logger
@@ -34,4 +37,3 @@ def setup_logger(name: str = __name__) -> logging.Logger:
 # Exemple d'utilisation :
 # from app.core.logging import setup_logger
 # logger = setup_logger(__name__)
-# logger.info("[bold green]MinIO est disponible[/bold green]")
