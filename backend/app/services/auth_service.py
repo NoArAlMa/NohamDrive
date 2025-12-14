@@ -3,11 +3,12 @@ from typing import Optional
 from fastapi import Depends, HTTPException, status
 from passlib.context import CryptContext
 from jose import jwt, JWTError
+
 from app.schemas.auth import UserCreate
 from core.config import settings
 from core.logging import setup_logger
 from app.services.minio_service import MinioService, get_minio_service
-
+import uuid
 
 # Configuration du logger pour ce module
 logger = setup_logger(__name__)
@@ -95,14 +96,30 @@ class AuthService:
         try:
             to_encode = data.copy()
 
-            expire = datetime.now() + (
-                expires_delta or timedelta(days=settings.ACCESS_TOKEN_EXPIRE_DAY)
+            now = int(datetime.now().timestamp())
+
+            if expires_delta:
+                expire = int((datetime.now() + expires_delta).timestamp())
+            else:
+                expire = int(
+                    (
+                        datetime.now()
+                        + timedelta(days=settings.ACCESS_TOKEN_EXPIRE_DAY)
+                    ).timestamp()
+                )
+
+            to_encode.update(
+                {
+                    "exp": expire,
+                    "iat": now,
+                    "jti": str(uuid.uuid4()),
+                    "scope": scope if scope else ["*"],
+                }
             )
-            to_encode.update({"exp": expire})
 
             metadata = {
                 "token": jwt.encode(
-                    to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM
+                    to_encode, str(self.SECRET_KEY), algorithm=self.ALGORITHM
                 ),
                 "expires_at": expire,
                 "created_at": datetime.now(),
@@ -151,17 +168,15 @@ class AuthService:
         # TODO : Créer le bucket du user pour MinIO
         # user_id = None Temporaire le temps de récup le vrai userID
         # self.minio_service.create_user_bucket(user_id)
-        
+
         token = self.create_access_token(
             {
-                "username": request.username,
-                "password": password_hash,
-                "email": request.email,
+                "sub": request.email,
             }
         )  # + qlq infos du modele User
         # TODO : Ajouter le token en BDD
 
-        return token
+        return {"user": {}, "token": token}
 
 
 def get_auth_service(minio=Depends(get_minio_service)) -> AuthService:
