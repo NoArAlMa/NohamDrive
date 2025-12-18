@@ -1,8 +1,7 @@
 <script lang="ts" setup>
-import type { TableColumn } from "@nuxt/ui";
+import type { ContextMenuItem, TableColumn } from "@nuxt/ui";
 import { h, resolveComponent } from "vue";
 import type { Column } from "@tanstack/vue-table";
-import { useVueTable } from "@tanstack/vue-table";
 import type { ApiFileItem } from "~~/shared/types/file_tree";
 
 const UCheckbox = resolveComponent("UCheckbox");
@@ -36,22 +35,6 @@ const columns = ref<TableColumn<ApiFileItem>[]>([
   {
     accessorKey: "name",
     header: ({ column }) => getHeader(column, "Name"),
-    cell: ({ row }) => {
-      const isDir = row.original.is_dir;
-      return h(
-        "div",
-        {
-          class: isDir ? "flex items-center p-1 rounded" : "flex items-center",
-        },
-        [
-          h(UIcon, {
-            name: isDir ? "i-heroicons-folder" : "i-heroicons-document",
-            class: "mr-2 text-lg",
-          }),
-          h("span", { class: "" }, row.getValue("name")),
-        ]
-      );
-    },
   },
   {
     accessorKey: "last_modified",
@@ -201,7 +184,7 @@ function getHeader(column: Column<ApiFileItem>, label: string) {
       "aria-label": "Actions dropdown",
       items: [
         {
-          label: "Asc",
+          label: "Ascendant",
           type: "checkbox",
           icon: "i-lucide-arrow-up-narrow-wide",
           checked: isSorted === "asc",
@@ -250,12 +233,25 @@ const items_breadcrumb = ref([
   {
     label: "Mes fichiers",
   },
+]);
+
+const items = ref<ContextMenuItem[]>([
   {
-    label: "Bonjour",
-  },
-  {
-    label: "Rebonjour",
-    onClick: () => console.log("Salut"),
+    label: "Appearance",
+    children: [
+      {
+        label: "System",
+        icon: "i-lucide-monitor",
+      },
+      {
+        label: "Light",
+        icon: "i-lucide-sun",
+      },
+      {
+        label: "Dark",
+        icon: "i-lucide-moon",
+      },
+    ],
   },
 ]);
 </script>
@@ -263,12 +259,48 @@ const items_breadcrumb = ref([
 <template>
   <div class="flex flex-col">
     <section class="flex items-center">
-      <UBreadcrumb :items="items_breadcrumb"> </UBreadcrumb>
+      <UBreadcrumb :items="items_breadcrumb"></UBreadcrumb>
     </section>
     <section>
-      <UTable v-model:sorting="sorting" :data="data" :columns="columns" @hover="">
-        <template #name-cell> </template>
-      </UTable>
+      <UContextMenu :items="items">
+        <UTable
+          v-model:sorting="sorting"
+          :data="data"
+          :columns="columns"
+          :ui="{
+            tbody: 'file-explorer-tbody',
+          }"
+          class="max-h-[600px] overflow-y-scroll"
+          @hover=""
+          @contextmenu=""
+        >
+          <template #name-cell="{ row }">
+            <div
+              :class="
+                row.original.is_dir
+                  ? 'flex items-center p-1 rounded'
+                  : 'flex items-center'
+              "
+            >
+              <UIcon
+                :name="
+                  row.original.is_dir
+                    ? 'material-symbols:folder-outline-rounded'
+                    : 'i-heroicons-document'
+                "
+                class="mr-2 text-lg"
+              />
+
+              <ULink to="">
+                <span
+                  class="hover:underline underline-offset-2 cursor-pointer"
+                  >{{ row.getValue("name") }}</span
+                >
+              </ULink>
+            </div>
+          </template>
+        </UTable>
+      </UContextMenu>
     </section>
   </div>
 </template>
