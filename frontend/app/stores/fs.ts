@@ -22,6 +22,24 @@ export const useFSStore = defineStore("fs", () => {
     currentPath.value = newPath.replace(/\/+/g, "/");
   };
 
+  const generateBreadcrumbItems = () => {
+    const parts = currentPath.value.split("/").filter((part) => part !== "");
+    const items = parts.map((part, index) => {
+      const pathSoFar = parts.slice(0, index + 1).join("/");
+      return {
+        label: part,
+      };
+    });
+
+    // Ajoute toujours la racine ("/") en premier
+    return [
+      {
+        label: "Mes fichiers",
+      },
+      ...items,
+    ];
+  };
+
   const goUp = () => {
     const parts = currentPath.value.split("/").filter(Boolean);
     if (parts.length > 0) {
@@ -53,5 +71,6 @@ export const useFSStore = defineStore("fs", () => {
     navigate,
     currentDirName,
     isRoot,
+    generateBreadcrumbItems,
   };
 });

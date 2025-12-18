@@ -4,6 +4,8 @@ import { h, resolveComponent } from "vue";
 import type { Column } from "@tanstack/vue-table";
 import type { ApiFileItem } from "~~/shared/types/file_tree";
 
+const FSStore = useFSStore();
+
 const UCheckbox = resolveComponent("UCheckbox");
 const UButton = resolveComponent("UButton");
 const UDropdownMenu = resolveComponent("UDropdownMenu");
@@ -229,12 +231,6 @@ function getHeader(column: Column<ApiFileItem>, label: string) {
   );
 }
 
-const items_breadcrumb = ref([
-  {
-    label: "Mes fichiers",
-  },
-]);
-
 const items = ref<ContextMenuItem[]>([
   {
     label: "Appearance",
@@ -259,7 +255,7 @@ const items = ref<ContextMenuItem[]>([
 <template>
   <div class="flex flex-col">
     <section class="flex items-center">
-      <UBreadcrumb :items="items_breadcrumb"></UBreadcrumb>
+      <UBreadcrumb :items="FSStore.generateBreadcrumbItems()"></UBreadcrumb>
     </section>
     <section>
       <UContextMenu :items="items">
