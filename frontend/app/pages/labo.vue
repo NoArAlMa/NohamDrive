@@ -7,6 +7,6 @@ const new_path = ref("");
 <template>
   <h1>LABO</h1>
   <div class="h-full flex justify-center items-center">
-    <FileExplorer class="flex-1 mr-auto ml-auto max-w-[1000px]" />
+    <FileExplorer class="flex-1 mr-auto ml-auto max-w-[1500px]" />
   </div>
 </template>

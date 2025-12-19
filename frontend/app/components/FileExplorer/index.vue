@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { ContextMenuItem, TableColumn } from "@nuxt/ui";
+import type { ContextMenuItem, TableColumn, TableRow } from "@nuxt/ui";
 import { h, resolveComponent } from "vue";
 import type { Column } from "@tanstack/vue-table";
 import type { ApiFileItem } from "~~/shared/types/file_tree";
@@ -16,7 +16,9 @@ const columns = ref<TableColumn<ApiFileItem>[]>([
     id: "select",
     header: ({ table }) =>
       h(UCheckbox, {
-        class: "rounded-full",
+        ui: {
+          base: "rounded-full",
+        },
         modelValue: table.getIsSomePageRowsSelected()
           ? "indeterminate"
           : table.getIsAllPageRowsSelected(),
@@ -26,7 +28,9 @@ const columns = ref<TableColumn<ApiFileItem>[]>([
       }),
     cell: ({ row }) =>
       h(UCheckbox, {
-        class: "rounded-full",
+        ui: {
+          base: "rounded-full",
+        },
         modelValue: row.getIsSelected(),
         "onUpdate:modelValue": (value: boolean | "indeterminate") =>
           row.toggleSelected(!!value),
@@ -36,7 +40,15 @@ const columns = ref<TableColumn<ApiFileItem>[]>([
 
   {
     accessorKey: "name",
-    header: ({ column }) => getHeader(column, "Name"),
+    header: ({ column }) => {
+      return h("div", { class: "flex items-center" }, [
+        h(UIcon, {
+          name: "i-heroicons-document",
+          class: "mr-4 text-lg",
+        }),
+        getHeader(column, "Name"),
+      ]);
+    },
   },
   {
     accessorKey: "last_modified",
@@ -57,7 +69,7 @@ const columns = ref<TableColumn<ApiFileItem>[]>([
   },
 ]);
 
-const data: ApiFileItem[] = [
+const data = ref<ApiFileItem[]>([
   // Images
   {
     name: "vacances_2025.jpg",
@@ -165,7 +177,7 @@ const data: ApiFileItem[] = [
     is_dir: false,
     last_modified: "2025-12-03T11:35:00.000000Z",
   },
-];
+]);
 
 const sorting = ref([
   {
@@ -250,17 +262,28 @@ const items = ref<ContextMenuItem[]>([
     ],
   },
 ]);
+
+const handleRowClick = (row: any) => {
+  console.log("Ligne cliquée :", {
+    donnéesComplètes: row.original,
+  });
+};
 </script>
 
 <template>
   <div class="flex flex-col">
-    <section class="flex items-center">
+    <section class="flex items-center justify-between mb-2">
       <UBreadcrumb :items="FSStore.generateBreadcrumbItems()"></UBreadcrumb>
+      <div class="flex gap-2 mr-2">
+        <UButton label="Upload files" variant="outline" />
+        <UButton label="Create folder" variant="subtle" />
+      </div>
     </section>
     <section>
       <UContextMenu :items="items">
         <UTable
           v-model:sorting="sorting"
+          :sticky="true"
           :data="data"
           :columns="columns"
           :ui="{
@@ -272,26 +295,26 @@ const items = ref<ContextMenuItem[]>([
         >
           <template #name-cell="{ row }">
             <div
-              :class="
-                row.original.is_dir
-                  ? 'flex items-center p-1 rounded'
-                  : 'flex items-center'
-              "
+              class="relative flex items-center group"
+              @click="handleRowClick(row)"
             >
-              <UIcon
-                :name="
-                  row.original.is_dir
-                    ? 'material-symbols:folder-outline-rounded'
-                    : 'i-heroicons-document'
-                "
-                class="mr-2 text-lg"
+              <img
+                v-if="row.original.is_dir"
+                src="/icons/files/file-folder.svg"
+                class="w-5 h-5 mr-2 filter-[brightness(0)_invert(1)_sepia(1)_saturate(5)_hue-rotate(200deg)]"
               />
 
-              <ULink to="">
-                <span
-                  class="hover:underline underline-offset-2 cursor-pointer"
-                  >{{ row.getValue("name") }}</span
-                >
+              <img
+                v-else
+                :src="`/icons/files/${getFileIcon(row.original.name)}.svg`"
+                class="w-5 h-5 mr-2 text-white"
+                :alt="`Icon for ${row.original.name}`"
+              />
+
+              <ULink>
+                <span class="hover:underline underline-offset-2 cursor-pointer">
+                  {{ row.getValue("name") }}
+                </span>
               </ULink>
             </div>
           </template>
