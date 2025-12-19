@@ -243,25 +243,102 @@ function getHeader(column: Column<ApiFileItem>, label: string) {
   );
 }
 
-const items = ref<ContextMenuItem[]>([
-  {
-    label: "Appearance",
-    children: [
+const items = ref<ContextMenuItem[]>([]);
+
+function getRowItems(row: TableRow<ApiFileItem>) {
+  if (row.original.is_dir) {
+    return [
       {
-        label: "System",
-        icon: "i-lucide-monitor",
+        label: "Ouvrir dans le terminal",
+        icon: "material-symbols:terminal-rounded",
+        onSelect() {
+          console.log("Terminal :", row.original);
+        },
       },
       {
-        label: "Light",
-        icon: "i-lucide-sun",
+        label: "Ouvrir le dossier",
+        icon: "material-symbols:folder-open-outline-rounded",
+        onSelect() {
+          console.log("Renommer :", row.original);
+        },
       },
       {
-        label: "Dark",
-        icon: "i-lucide-moon",
+        label: "Renommer",
+        icon: "material-symbols:edit-outline-rounded",
+        onSelect() {
+          console.log("Renommer :", row.original);
+        },
       },
-    ],
-  },
-]);
+      {
+        label: "Supprimer",
+        icon: "material-symbols:delete-outline-rounded",
+        color: "error" as const,
+        onSelect() {
+          console.log("Renommer :", row.original);
+        },
+      },
+      {
+        type: "separator",
+      },
+      {
+        label: "Propriétés",
+        icon: "material-symbols:info-outline-rounded",
+        onSelect() {
+          console.log("Renommer :", row.original);
+        },
+      },
+    ];
+  } else {
+    return [
+      {
+        label: "Visualiser",
+        icon: "material-symbols:visibility-outline-rounded",
+        onSelect() {
+          console.log("Renommer :", row.original);
+        },
+      },
+
+      {
+        type: "separator",
+      },
+      {
+        label: "Télécharger",
+        icon: "material-symbols:download-rounded",
+        onSelect() {
+          console.log("Renommer :", row.original);
+        },
+      },
+      {
+        label: "Renommer",
+        icon: "material-symbols:edit-outline-rounded",
+        onSelect() {
+          console.log("Renommer :", row.original);
+        },
+      },
+      {
+        label: "Supprimer",
+        icon: "material-symbols:delete-outline-rounded",
+        color: "error" as const,
+        onSelect() {
+          console.log("Supprimer :", row.original);
+        },
+      },
+      {
+        type: "separator",
+      },
+      {
+        label: "Propriétés",
+        icon: "material-symbols:info-outline-rounded",
+        onSelect() {
+          console.log("Renommer :", row.original);
+        },
+      },
+    ];
+  }
+}
+function onContextmenu(_e: Event, row: TableRow<ApiFileItem>) {
+  items.value = getRowItems(row);
+}
 
 const handleRowClick = (row: any) => {
   console.log("Ligne cliquée :", {
@@ -291,7 +368,7 @@ const handleRowClick = (row: any) => {
           }"
           class="max-h-[600px] overflow-y-scroll"
           @hover=""
-          @contextmenu=""
+          @contextmenu="onContextmenu"
         >
           <template #name-cell="{ row }">
             <div
