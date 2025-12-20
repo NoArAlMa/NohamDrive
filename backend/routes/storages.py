@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, UploadFile, Depends, status, Query
 from app.services.minio_service import MinioService, get_minio_service
 from app.schemas.file_tree import SimpleFileTreeResponse, TreeResponse
-from app.schemas.files import CreateFolder, FileUploadResponse
+from app.schemas.files import CreateFolder, FileUploadResponse, RenameItem
 from app.utils.response import BaseResponse
 
 
@@ -235,4 +235,27 @@ async def delete_folder_endpoint(
         data=None,
         message="Dossier supprimé avec succès",
         status_code=status.HTTP_200_OK,
+    )
+
+
+@router.patch(
+    "/rename",
+    response_model=BaseResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def rename_endpoint(
+    payload: RenameItem,
+    minio_service: MinioService = Depends(get_minio_service),
+    user_id: int = 1,
+):
+    await minio_service.rename(
+        user_id=user_id,
+        path=payload.path,
+        new_name=payload.new_name,
+    )
+
+    return BaseResponse(
+        success=True,
+        data=None,
+        message="Renommage effectué avec succès",
     )

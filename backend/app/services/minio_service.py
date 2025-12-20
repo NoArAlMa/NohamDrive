@@ -3,6 +3,7 @@ from minio.error import S3Error
 from app.schemas.files import FileMetadata
 from app.schemas.file_tree import SimpleFileItem, SimpleFileTreeResponse
 from minio.deleteobjects import DeleteObject
+from minio.commonconfig import CopySource
 from core.logging import setup_logger
 from datetime import datetime
 from fastapi import UploadFile, HTTPException, status, Request
@@ -379,6 +380,79 @@ class MinioService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Erreur lors du téléchargement: {str(e)}",
             )
+
+    async def rename(self, user_id: int, path: str, new_name: str):
+        bucket_name = await self.get_user_bucket(user_id)
+
+        if ".." in path or ".." in new_name or "/" in new_name:
+            raise HTTPException(status_code=400, detail="Chemin invalide")
+
+        path = path.lstrip("/")
+        is_folder = path.endswith("/")
+
+        parent = "/".join(path.rstrip("/").split("/")[:-1])
+        parent = f"{parent}/" if parent else ""
+
+        old_prefix = path
+        new_prefix = f"{parent}{new_name}"
+        if is_folder:
+            new_prefix += "/"
+
+        # DOSSIER
+        if is_folder:
+            objects = list(
+                self.minio.list_objects(
+                    bucket_name,
+                    prefix=old_prefix,
+                    recursive=True,
+                )
+            )
+
+            if not objects:
+                raise HTTPException(status_code=404, detail="Dossier introuvable")
+
+            for obj in objects:
+                if obj.object_name:
+                    new_object_name = obj.object_name.replace(old_prefix, new_prefix, 1)
+
+                    self.minio.copy_object(
+                        bucket_name,
+                        new_object_name,
+                        CopySource(bucket_name, obj.object_name),
+                    )
+
+            delete_errors = self.minio.remove_objects(
+                bucket_name,
+                (DeleteObject(obj.object_name) for obj in objects if obj.object_name),
+            )
+            for err in delete_errors:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Erreur suppression objet {err}",
+                )
+
+            try:
+                self.minio.remove_object(bucket_name, old_prefix)
+            except Exception:
+                pass
+
+            return {"detail": "Dossier renommé avec succès"}
+
+        # FICHIER
+        try:
+            self.minio.stat_object(bucket_name, path)
+        except Exception:
+            raise HTTPException(status_code=404, detail="Fichier introuvable")
+
+        self.minio.copy_object(
+            bucket_name,
+            new_prefix,
+            CopySource(bucket_name, path),
+        )
+
+        self.minio.remove_object(bucket_name, path)
+
+        return {"detail": "Fichier renommé avec succès"}
 
 
 def get_minio_service(request: Request) -> MinioService:
