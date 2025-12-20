@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, UploadFile, Depends, status
+from fastapi import APIRouter, HTTPException, UploadFile, Depends, status, Query
 from app.services.minio_service import MinioService, get_minio_service
 from app.schemas.file_tree import SimpleFileTreeResponse, TreeResponse
 from app.schemas.files import CreateFolder, FileUploadResponse
@@ -186,3 +186,53 @@ async def create_folder_endpoint(
         )
     except HTTPException as e:
         raise e
+
+
+@router.delete(
+    "/file",
+    response_model=BaseResponse,
+    status_code=status.HTTP_200_OK,
+    responses={
+        200: {"description": "Fichier supprimé avec succès"},
+        404: {"description": "Fichier inexistant"},
+        500: {"description": "Erreur interne"},
+    },
+)
+async def delete_file_endpoint(
+    object_name: str = Query(..., description="Nom du fichier à supprimer"),
+    minio_service: MinioService = Depends(get_minio_service),
+    user_id: int = 1,
+):
+    await minio_service.delete_file(user_id, object_name)
+
+    return BaseResponse(
+        success=True,
+        data=None,
+        message="Fichier supprimé avec succès",
+        status_code=status.HTTP_200_OK,
+    )
+
+
+@router.delete(
+    "/folder",
+    response_model=BaseResponse,
+    status_code=status.HTTP_200_OK,
+    responses={
+        200: {"description": "Dossier supprimé avec succès"},
+        404: {"description": "Dossier inexistant"},
+        500: {"description": "Erreur interne"},
+    },
+)
+async def delete_folder_endpoint(
+    folder_path: str = Query(..., description="Chemin du dossier à supprimer"),
+    minio_service: MinioService = Depends(get_minio_service),
+    user_id: int = 1,
+):
+    await minio_service.delete_folder(user_id, folder_path)
+
+    return BaseResponse(
+        success=True,
+        data=None,
+        message="Dossier supprimé avec succès",
+        status_code=status.HTTP_200_OK,
+    )
