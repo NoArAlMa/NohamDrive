@@ -158,41 +158,49 @@ class MinioService:
     async def simple_list_path(
         self, bucket_name: str, path: str = "", limit: int = 30
     ) -> SimpleFileTreeResponse:
-        """
-        Liste les objets dans un bucket MinIO, version ultra-simplifiée.
-        Args:
-            bucket_name: Nom du bucket.
-            path: Préfixe (ex: "dossier/").
-        Returns:
-            SimpleFileTreeResponse: Liste brute des objets .
-        """
         try:
-            objects = list(
-                self.minio.list_objects(
-                    bucket_name,
-                    prefix=path,
-                    recursive=False,
-                )
+            normalized_path = path.strip("/")
+            if normalized_path:
+                normalized_path += "/"
+
+            objects = self.minio.list_objects(
+                bucket_name,
+                prefix=normalized_path,
+                recursive=False,
             )
 
             items = []
+
             for obj in objects:
+                # Ignore le dossier courant
+                if obj.object_name == normalized_path:
+                    continue
+
+                # Nom affiché (sans le chemin parent)
+                if obj.object_name:
+                    name = obj.object_name.removeprefix(normalized_path).rstrip("/")
+
                 items.append(
                     SimpleFileItem(
-                        name=obj.object_name,
-                        size=obj.size or None,
+                        name=name,
+                        size=None if obj.is_dir else obj.size,
                         is_dir=obj.is_dir,
                         last_modified=obj.last_modified or datetime.min,
                     )
                 )
 
-            return SimpleFileTreeResponse(path=path or "/", items=items)
+            items.sort(key=lambda x: (not x.is_dir, x.name.lower()))
+
+            return SimpleFileTreeResponse(
+                path="/" + normalized_path if normalized_path else "/",
+                items=items[:limit],
+            )
 
         except S3Error as e:
             logger.error(f"Échec de la liste du chemin {path} : {e}")
             raise HTTPException(
-                status_code=404 if "NoSuchKey" in str(e) else 500,
-                detail=f"Impossible de lister le chemin : {str(e)}",
+                status_code=404 if e.code == "NoSuchKey" else 500,
+                detail="Impossible de lister le chemin",
             )
 
     async def download_file(self, user_id: int, object_name: str) -> StreamingResponse:
