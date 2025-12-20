@@ -5,7 +5,6 @@ from app.schemas.files import CreateFolder, FileUploadResponse
 from app.utils.response import BaseResponse
 
 
-
 router = APIRouter(prefix="/storage", tags=["Storage"])
 
 
@@ -16,6 +15,7 @@ async def upload_file_endpoint(
     file: UploadFile,
     minio_service: MinioService = Depends(get_minio_service),
     user_id: int = 1,  # TODO : À remplacer par l'ID réel (via auth)
+    path: str = "",
 ) -> FileUploadResponse:
     """
     Upload un fichier dans le bucket utilisateur.
@@ -25,10 +25,19 @@ async def upload_file_endpoint(
         user_id : ID de l'utilisateur (injecté par l'auth)
 
     Returns:
-        The file
+        Le fichier à télécharger
     """
-    metadata = await minio_service.upload_file(user_id, file)
-    return FileUploadResponse(data=metadata, status_code=status.HTTP_201_CREATED)
+
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Nom de fichier vide.")
+
+    try:
+        metadata = await minio_service.upload_file(user_id, file, path)
+        return FileUploadResponse(data=metadata, status_code=status.HTTP_201_CREATED)
+    except HTTPException as e:
+        # Log côté endpoint si nécessaire
+        # logger.error(f"Erreur upload user {user_id}, fichier {file.filename}: {e.detail}")
+        raise e
 
 
 @router.get(

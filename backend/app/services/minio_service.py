@@ -3,11 +3,11 @@ from minio.error import S3Error
 from app.schemas.files import FileMetadata
 from app.schemas.file_tree import SimpleFileItem, SimpleFileTreeResponse
 from core.logging import setup_logger
-import uuid
 from datetime import datetime
 from fastapi import UploadFile, HTTPException, status, Request
 from fastapi.responses import StreamingResponse
 import io
+import re
 
 
 # Initialisation du logger
@@ -44,43 +44,88 @@ class MinioService:
             logger.info(f"Bucket {bucket_name} créé pour l'utilisateur {user_id}.")
         return bucket_name
 
-    async def upload_file(self, user_id: int, file: UploadFile) -> FileMetadata:
+    async def upload_file(
+        self, user_id: int, file: UploadFile, path: str = ""
+    ) -> FileMetadata:
         """
-        Upload un fichier dans MinIO.
+        Upload un fichier dans MinIO dans le dossier spécifié.
         Args:
-            user_id: ID de l'utilisateur.
-            file: Fichier à uploader (FastAPI UploadFile).
+            user_id: ID de l'utilisateur
+            file: FastAPI UploadFile
+            path: chemin relatif dans le bucket (ex: "dossier1/dossier2")
         Returns:
-            FileMetadata: Métadonnées du fichier uploadé.
+            FileMetadata
         """
-        bucket_name = await self.ensure_bucket_exists(
-            user_id
-        )  # TODO : Mieux gérer le nom des buckets, attribution ect...
-        object_name = f"{uuid.uuid4()}_{file.filename}"  # TODO : Actuellement on peut créer plusieurs fichiers avec le même nom
+        bucket_name = await self.ensure_bucket_exists(user_id)
 
+        # Normalisation et sécurité du chemin
+        normalized_path = path.strip("/").rstrip("/")
+        if ".." in normalized_path or normalized_path.startswith("/"):
+            raise HTTPException(status_code=400, detail="Chemin invalide.")
+        if normalized_path:
+            normalized_path += "/"
+
+        # Sécurisation du nom de fichier
+
+        if file.filename:
+            base_name, ext = (
+                file.filename.rsplit(".", 1)
+                if "." in file.filename
+                else (file.filename, "")
+            )
+            base_name = re.sub(r"[^a-zA-Z0-9_.-]", "_", base_name)  # Nettoyage
+            ext = f".{ext}" if ext else ""
+            object_name = f"{normalized_path}{base_name}{ext}"
+
+        # Gestion des doublons façon Windows
+        counter = 1
+        while True:
+            try:
+                self.minio.stat_object(bucket_name, object_name)
+                # fichier existe → on ajoute (1), (2), etc.
+                object_name = f"{normalized_path}{base_name} ({counter}){ext}"
+                counter += 1
+            except S3Error as e:
+                if e.code == "NoSuchKey":
+                    break  # Nom disponible
+                else:
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"Erreur lors de la vérification du fichier : {str(e)}",
+                    )
+
+        logger.info("Nom du fichier : %s ", object_name)
+        # Upload en streaming
+
+        content_type = file.content_type or "application/octet-stream"
         try:
-            # Upload en streaming
             self.minio.put_object(
                 bucket_name,
                 object_name,
                 file.file,
-                length=-1,  # Streaming
-                part_size=10 * 1024 * 1024,  # 10 Mo par partie
-                content_type=file.content_type or "application/octet-stream",
+                length=-1,
+                part_size=10 * 1024 * 1024,
+                content_type=content_type,
             )
+
+            # Récupération de la taille réelle
+            stat = self.minio.stat_object(bucket_name, object_name)
 
             return FileMetadata(
                 filename=file.filename,
-                size=file.size,
-                content_type=file.content_type,
+                size=stat.size,
+                content_type=content_type,
                 upload_date=datetime.now(),
                 bucket=bucket_name,
                 object_name=object_name,
             )
+
         except S3Error as e:
-            logger.error(f"Échec de l'upload pour {file.filename}: {e}")
+            status_code = (
+                400 if e.code in ["InvalidArgument", "EntityTooLarge"] else 500
+            )
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status_code,
                 detail=f"Échec de l'upload: {str(e)}",
             )
 
