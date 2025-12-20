@@ -6,7 +6,7 @@ export const useFSStore = defineStore("fs", () => {
   // Cookie
   const pathCookie = useCookie<string>("currentPath", {
     default: () => "/",
-    maxAge: 60 * 60 * 24 * 7, // 1 semaine
+    maxAge: 60, // 1 semaine
   });
 
   // State synchronisé avec le cookie

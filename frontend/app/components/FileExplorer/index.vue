@@ -6,10 +6,16 @@ import type { ApiFileItem } from "~~/shared/types/file_tree";
 
 const FSStore = useFSStore();
 
+const { fileTree, fetchFileTree } = useFileTree();
+
 const UCheckbox = resolveComponent("UCheckbox");
 const UButton = resolveComponent("UButton");
 const UDropdownMenu = resolveComponent("UDropdownMenu");
 const UIcon = resolveComponent("UIcon");
+
+onMounted(() => {
+  fetchFileTree("lala/");
+});
 
 const columns = ref<TableColumn<ApiFileItem>[]>([
   {
@@ -69,115 +75,115 @@ const columns = ref<TableColumn<ApiFileItem>[]>([
   },
 ]);
 
-const data = ref<ApiFileItem[]>([
-  // Images
-  {
-    name: "vacances_2025.jpg",
-    size: 3456789,
-    is_dir: false,
-    last_modified: "2025-12-18T10:30:00.000000Z",
-  },
-  {
-    name: "logo_entreprise.png",
-    size: 45678,
-    is_dir: false,
-    last_modified: "2025-12-17T15:45:00.000000Z",
-  },
-  {
-    name: "capture_ecran.webp",
-    size: 123456,
-    is_dir: false,
-    last_modified: "2025-12-16T09:10:00.000000Z",
-  },
+// const data = ref<ApiFileItem[]>([
+//   // Images
+//   {
+//     name: "vacances_2025.jpg",
+//     size: 3456789,
+//     is_dir: false,
+//     last_modified: "2025-12-18T10:30:00.000000Z",
+//   },
+//   {
+//     name: "logo_entreprise.png",
+//     size: 45678,
+//     is_dir: false,
+//     last_modified: "2025-12-17T15:45:00.000000Z",
+//   },
+//   {
+//     name: "capture_ecran.webp",
+//     size: 123456,
+//     is_dir: false,
+//     last_modified: "2025-12-16T09:10:00.000000Z",
+//   },
 
-  // Documents
-  {
-    name: "CV_Maxime_Dupont.pdf",
-    size: 256789,
-    is_dir: false,
-    last_modified: "2025-12-15T14:20:00.000000Z",
-  },
-  {
-    name: "rapport_annuel_2025.docx",
-    size: 1024567,
-    is_dir: false,
-    last_modified: "2025-12-14T11:30:00.000000Z",
-  },
-  {
-    name: "presentation_projet.pptx",
-    size: 5678901,
-    is_dir: false,
-    last_modified: "2025-12-13T16:50:00.000000Z",
-  },
+//   // Documents
+//   {
+//     name: "CV_Maxime_Dupont.pdf",
+//     size: 256789,
+//     is_dir: false,
+//     last_modified: "2025-12-15T14:20:00.000000Z",
+//   },
+//   {
+//     name: "rapport_annuel_2025.docx",
+//     size: 1024567,
+//     is_dir: false,
+//     last_modified: "2025-12-14T11:30:00.000000Z",
+//   },
+//   {
+//     name: "presentation_projet.pptx",
+//     size: 5678901,
+//     is_dir: false,
+//     last_modified: "2025-12-13T16:50:00.000000Z",
+//   },
 
-  // Archives
-  {
-    name: "backup_projet.zip",
-    size: 10485760,
-    is_dir: false,
-    last_modified: "2025-12-12T12:15:00.000000Z",
-  },
-  {
-    name: "anciens_documents.rar",
-    size: 20971520,
-    is_dir: false,
-    last_modified: "2025-12-11T08:25:00.000000Z",
-  },
+//   // Archives
+//   {
+//     name: "backup_projet.zip",
+//     size: 10485760,
+//     is_dir: false,
+//     last_modified: "2025-12-12T12:15:00.000000Z",
+//   },
+//   {
+//     name: "anciens_documents.rar",
+//     size: 20971520,
+//     is_dir: false,
+//     last_modified: "2025-12-11T08:25:00.000000Z",
+//   },
 
-  // Code
-  {
-    name: "script_automatisation.py",
-    size: 12345,
-    is_dir: false,
-    last_modified: "2025-12-10T17:40:00.000000Z",
-  },
-  {
-    name: "styles.css",
-    size: 4567,
-    is_dir: false,
-    last_modified: "2025-12-09T10:55:00.000000Z",
-  },
+//   // Code
+//   {
+//     name: "script_automatisation.py",
+//     size: 12345,
+//     is_dir: false,
+//     last_modified: "2025-12-10T17:40:00.000000Z",
+//   },
+//   {
+//     name: "styles.css",
+//     size: 4567,
+//     is_dir: false,
+//     last_modified: "2025-12-09T10:55:00.000000Z",
+//   },
 
-  // Dossiers
-  {
-    name: "Projets",
-    size: 0,
-    is_dir: true,
-    last_modified: "2025-12-18T16:41:58.312000Z",
-  },
-  {
-    name: "Images",
-    size: 0,
-    is_dir: true,
-    last_modified: "2025-12-17T14:30:00.000000Z",
-  },
-  {
-    name: "Documents_Importants",
-    size: 0,
-    is_dir: true,
-    last_modified: "2025-12-16T12:00:00.000000Z",
-  },
+//   // Dossiers
+//   {
+//     name: "Projets",
+//     size: 0,
+//     is_dir: true,
+//     last_modified: "2025-12-18T16:41:58.312000Z",
+//   },
+//   {
+//     name: "Images",
+//     size: 0,
+//     is_dir: true,
+//     last_modified: "2025-12-17T14:30:00.000000Z",
+//   },
+//   {
+//     name: "Documents_Importants",
+//     size: 0,
+//     is_dir: true,
+//     last_modified: "2025-12-16T12:00:00.000000Z",
+//   },
 
-  // Fichiers spéciaux
-  {
-    name: ".env",
-    size: 1234,
-    is_dir: false,
-    last_modified: "2025-12-05T09:10:00.000000Z",
-  },
-  {
-    name: "README.md",
-    size: 5678,
-    is_dir: false,
-    last_modified: "2025-12-04T15:20:00.000000Z",
-  },
-  {
-    name: "fichier_sans_extension",
-    size: 7890,
-    is_dir: false,
-    last_modified: "2025-12-03T11:35:00.000000Z",
-  },
-]);
+//   // Fichiers spéciaux
+//   {
+//     name: ".env",
+//     size: 1234,
+//     is_dir: false,
+//     last_modified: "2025-12-05T09:10:00.000000Z",
+//   },
+//   {
+//     name: "README.md",
+//     size: 5678,
+//     is_dir: false,
+//     last_modified: "2025-12-04T15:20:00.000000Z",
+//   },
+//   {
+//     name: "fichier_sans_extension",
+//     size: 7890,
+//     is_dir: false,
+//     last_modified: "2025-12-03T11:35:00.000000Z",
+//   },
+// ]);
 
 const sorting = ref([
   {
@@ -336,6 +342,7 @@ function getRowItems(row: TableRow<ApiFileItem>) {
     ];
   }
 }
+
 function onContextmenu(_e: Event, row: TableRow<ApiFileItem>) {
   items.value = getRowItems(row);
 }
@@ -345,6 +352,8 @@ const handleRowClick = (row: any) => {
     donnéesComplètes: row.original,
   });
 };
+
+console.log(fetch);
 </script>
 
 <template>
@@ -361,7 +370,7 @@ const handleRowClick = (row: any) => {
         <UTable
           v-model:sorting="sorting"
           :sticky="true"
-          :data="data"
+          :data="fileTree"
           :columns="columns"
           :ui="{
             tbody: 'file-explorer-tbody',
@@ -394,6 +403,10 @@ const handleRowClick = (row: any) => {
                 </span>
               </ULink>
             </div>
+          </template>
+
+          <template #empty>
+            <h1>Désolé c'est vide</h1>
           </template>
         </UTable>
       </UContextMenu>
