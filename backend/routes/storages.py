@@ -1,9 +1,9 @@
-from fastapi import APIRouter, UploadFile, Depends, status
-from app.services.minio_service import MinioService
+from fastapi import APIRouter, HTTPException, UploadFile, Depends, status
+from app.services.minio_service import MinioService, get_minio_service
 from app.schemas.file_tree import SimpleFileTreeResponse, TreeResponse
+from app.schemas.files import CreateFolder, FileUploadResponse
 from app.utils.response import BaseResponse
-from core.minio_client import get_healthy_minio
-from app.schemas.files import FileUploadResponse
+
 
 
 router = APIRouter(prefix="/storage", tags=["Storage"])
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/storage", tags=["Storage"])
 )
 async def upload_file_endpoint(
     file: UploadFile,
-    file_service: MinioService = Depends(),
+    minio_service: MinioService = Depends(get_minio_service),
     user_id: int = 1,  # TODO : À remplacer par l'ID réel (via auth)
 ) -> FileUploadResponse:
     """
@@ -27,23 +27,8 @@ async def upload_file_endpoint(
     Returns:
         The file
     """
-    metadata = await file_service.upload_file(user_id, file)
+    metadata = await minio_service.upload_file(user_id, file)
     return FileUploadResponse(data=metadata, status_code=status.HTTP_201_CREATED)
-
-
-@router.get("/health", response_model=BaseResponse)
-async def health_check(minio_status=Depends(get_healthy_minio)) -> BaseResponse:
-    """
-
-    Retourne la disponibilité de MinIO
-
-    """
-    return BaseResponse(
-        success=True,
-        message="MinIO est opérationnel !",
-        data=[],
-        status_code=status.HTTP_200_OK,
-    )
 
 
 @router.get(
@@ -55,7 +40,7 @@ async def health_check(minio_status=Depends(get_healthy_minio)) -> BaseResponse:
     },
 )
 async def list_path(
-    path: str = "", file_service: MinioService = Depends()
+    path: str = "", minio_service: MinioService = Depends(get_minio_service)
 ) -> TreeResponse:
     """
     Liste le contenu d'un chemin dans le bucket utilisateur.
@@ -64,10 +49,10 @@ async def list_path(
     Returns:
         TreeResponse: Arborescence du chemin.
     """
-    bucket_name = await file_service.ensure_bucket_exists(
+    bucket_name = await minio_service.ensure_bucket_exists(
         user_id=1
     )  # TODO : À adapter au système d'auth
-    tree: SimpleFileTreeResponse = await file_service.simple_list_path(
+    tree: SimpleFileTreeResponse = await minio_service.simple_list_path(
         bucket_name, path
     )
 
@@ -80,7 +65,7 @@ async def list_path(
 
 
 @router.get(
-    "/download/{object_name}",
+    "/download/{object_name:path}",
     responses={
         200: {
             "description": "Fichier téléchargé avec succès.",
@@ -101,7 +86,7 @@ async def list_path(
 async def download_file_endpoint(
     object_name: str,
     user_id: int = 1,  # TODO: Remplacer par l'ID réel (via auth)
-    file_service: MinioService = Depends(),
+    minio_service: MinioService = Depends(get_minio_service),
 ):
     """
     Télécharge un fichier depuis le bucket utilisateur.
@@ -111,4 +96,84 @@ async def download_file_endpoint(
          **user_id** : ID de l'utilisateur (injecté par l'auth)
 
     """
-    return await file_service.download_file(user_id, object_name)
+    return await minio_service.download_file(user_id, object_name)
+
+
+@router.post(
+    "/folder",
+    response_model=BaseResponse[str],
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        201: {
+            "description": "Dossier créé avec succès.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "success": True,
+                        "data": "dossier_parent/nouveau_dossier/",
+                        "message": "Dossier créé avec succès.",
+                    }
+                }
+            },
+        },
+        400: {
+            "description": "Requête invalide (chemin ou dossier existant).",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "success": False,
+                        "data": None,
+                        "message": "Le dossier 'dossier/' existe déjà.",
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Erreur interne.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "success": False,
+                        "data": None,
+                        "message": "Impossible de créer le dossier.",
+                    }
+                }
+            },
+        },
+    },
+)
+async def create_folder_endpoint(
+    request: CreateFolder,
+    user_id: int = 1,  # ID de l'utilisateur (via auth),
+    minio_service: MinioService = Depends(get_minio_service),
+) -> BaseResponse[str]:
+    """
+    Crée un dossier dans le bucket utilisateur.
+
+    **Args:**
+        - **request (CreateFolder):** Objet contenant:
+            - `currentPath (str)`: Chemin parent (ex: "dossier_parent/").
+            - `folderPath (str)`: Nom du nouveau dossier (ex: "nouveau_dossier").
+        - **user_id (int):** ID de l'utilisateur (injecté par l'auth).
+
+    **Returns:**
+        - **BaseResponse**: Réponse standard avec:
+            - `success (bool)`: Statut de la requête.
+            - `data (str)`: Chemin complet du dossier créé.
+            - `message (str)`: Message de confirmation ou d'erreur.
+
+
+    """
+    try:
+        folder_path = await minio_service.create_folder(
+            user_id=user_id,
+            current_path=request.currentPath,
+            folder_path=request.folderPath,
+        )
+        return BaseResponse(
+            success=True,
+            data=folder_path,
+            message="Dossier créé avec succès.",
+        )
+    except HTTPException as e:
+        raise e
