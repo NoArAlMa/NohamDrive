@@ -8,7 +8,7 @@ from datetime import datetime
 from fastapi import UploadFile, HTTPException, status, Request
 from fastapi.responses import StreamingResponse
 import io
-import os
+
 
 # Initialisation du logger
 logger = setup_logger(__name__)
@@ -107,13 +107,13 @@ class MinioService:
         # Nettoie et normalise le chemin
         if not current_path.endswith("/"):
             current_path += "/"
-        full_path = os.path.normpath(f"{current_path}{folder_path}").replace("\\", "/")
+        full_path = f"{current_path.rstrip('/')}/{folder_path.strip('/')}/"
 
         if not full_path.endswith("/"):
             full_path += "/"
-
+        logger.info(full_path)
         # Vérifie que le chemin est valide (pas de ".." ou chemin absolu)
-        if ".." in full_path or full_path.startswith("/"):
+        if ".." in full_path:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Chemin invalide (accès non autorisé).",
@@ -121,12 +121,12 @@ class MinioService:
 
         try:
             # On vérifie si un objet avec ce préfixe existe déjà
-            objects = list(self.minio.list_objects(bucket_name, prefix=full_path))
-            if objects:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Le dossier '{full_path}' existe déjà.",
-                )
+            self.minio.stat_object(bucket_name, full_path)
+
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Le dossier '{full_path}' existe déjà.",
+            )
         except S3Error as e:
             if e.code != "NoSuchKey":
                 logger.error(
