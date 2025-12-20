@@ -6,16 +6,41 @@ import type { ApiFileItem } from "~~/shared/types/file_tree";
 
 const FSStore = useFSStore();
 
-const { fileTree, fetchFileTree } = useFileTree();
+const {
+  fileTree,
+  hasError,
+  errorMessage,
+  errorStatus,
+  enterFolder,
+  loading,
+  retryFetching,
+} = useFileTree();
+
+// Importation des components Nuxt UI pour pouvoir les utiliser en JS
 
 const UCheckbox = resolveComponent("UCheckbox");
 const UButton = resolveComponent("UButton");
 const UDropdownMenu = resolveComponent("UDropdownMenu");
 const UIcon = resolveComponent("UIcon");
 
-onMounted(() => {
-  fetchFileTree("lala/");
-});
+// Variable "debounced" du loading
+
+const loading_debounced = refDebounced(loading, 100);
+
+// Variable qui regroupe les actions disponible dans le context-menu
+
+const fsActions = {
+  open: (item: ApiFileItem) => {},
+  rename: (item: ApiFileItem) => {},
+  delete: (item: ApiFileItem) => {},
+  property: (item: ApiFileItem) => {},
+  terminal: (item: ApiFileItem) => {},
+  download: (item: ApiFileItem) => {},
+};
+
+//// Toutes les fonctions sur les colonnes, tris et headers
+
+// Variable qui définis et stock les colonnes de l'explorateur
 
 const columns = ref<TableColumn<ApiFileItem>[]>([
   {
@@ -75,115 +100,7 @@ const columns = ref<TableColumn<ApiFileItem>[]>([
   },
 ]);
 
-// const data = ref<ApiFileItem[]>([
-//   // Images
-//   {
-//     name: "vacances_2025.jpg",
-//     size: 3456789,
-//     is_dir: false,
-//     last_modified: "2025-12-18T10:30:00.000000Z",
-//   },
-//   {
-//     name: "logo_entreprise.png",
-//     size: 45678,
-//     is_dir: false,
-//     last_modified: "2025-12-17T15:45:00.000000Z",
-//   },
-//   {
-//     name: "capture_ecran.webp",
-//     size: 123456,
-//     is_dir: false,
-//     last_modified: "2025-12-16T09:10:00.000000Z",
-//   },
-
-//   // Documents
-//   {
-//     name: "CV_Maxime_Dupont.pdf",
-//     size: 256789,
-//     is_dir: false,
-//     last_modified: "2025-12-15T14:20:00.000000Z",
-//   },
-//   {
-//     name: "rapport_annuel_2025.docx",
-//     size: 1024567,
-//     is_dir: false,
-//     last_modified: "2025-12-14T11:30:00.000000Z",
-//   },
-//   {
-//     name: "presentation_projet.pptx",
-//     size: 5678901,
-//     is_dir: false,
-//     last_modified: "2025-12-13T16:50:00.000000Z",
-//   },
-
-//   // Archives
-//   {
-//     name: "backup_projet.zip",
-//     size: 10485760,
-//     is_dir: false,
-//     last_modified: "2025-12-12T12:15:00.000000Z",
-//   },
-//   {
-//     name: "anciens_documents.rar",
-//     size: 20971520,
-//     is_dir: false,
-//     last_modified: "2025-12-11T08:25:00.000000Z",
-//   },
-
-//   // Code
-//   {
-//     name: "script_automatisation.py",
-//     size: 12345,
-//     is_dir: false,
-//     last_modified: "2025-12-10T17:40:00.000000Z",
-//   },
-//   {
-//     name: "styles.css",
-//     size: 4567,
-//     is_dir: false,
-//     last_modified: "2025-12-09T10:55:00.000000Z",
-//   },
-
-//   // Dossiers
-//   {
-//     name: "Projets",
-//     size: 0,
-//     is_dir: true,
-//     last_modified: "2025-12-18T16:41:58.312000Z",
-//   },
-//   {
-//     name: "Images",
-//     size: 0,
-//     is_dir: true,
-//     last_modified: "2025-12-17T14:30:00.000000Z",
-//   },
-//   {
-//     name: "Documents_Importants",
-//     size: 0,
-//     is_dir: true,
-//     last_modified: "2025-12-16T12:00:00.000000Z",
-//   },
-
-//   // Fichiers spéciaux
-//   {
-//     name: ".env",
-//     size: 1234,
-//     is_dir: false,
-//     last_modified: "2025-12-05T09:10:00.000000Z",
-//   },
-//   {
-//     name: "README.md",
-//     size: 5678,
-//     is_dir: false,
-//     last_modified: "2025-12-04T15:20:00.000000Z",
-//   },
-//   {
-//     name: "fichier_sans_extension",
-//     size: 7890,
-//     is_dir: false,
-//     last_modified: "2025-12-03T11:35:00.000000Z",
-//   },
-// ]);
+// Variable d'initiation du tri
 
 const sorting = ref([
   {
@@ -191,6 +108,43 @@ const sorting = ref([
     desc: false,
   },
 ]);
+
+// Fonction qui garde et permet de gérer le html des dropdown qui tris
+
+function sortingItems(column: Column<ApiFileItem>) {
+  const isSorted = column.getIsSorted();
+
+  return [
+    {
+      label: "Ascendant",
+      type: "checkbox",
+      icon: "i-lucide-arrow-up-narrow-wide",
+      checked: isSorted === "asc",
+      onSelect: () => {
+        if (isSorted === "asc") {
+          column.clearSorting();
+        } else {
+          column.toggleSorting(false);
+        }
+      },
+    },
+    {
+      label: "Descendant",
+      type: "checkbox",
+      icon: "i-lucide-arrow-down-wide-narrow",
+      checked: isSorted === "desc",
+      onSelect: () => {
+        if (isSorted === "desc") {
+          column.clearSorting();
+        } else {
+          column.toggleSorting(true);
+        }
+      },
+    },
+  ];
+}
+
+// Fonction pour créer les dropdown qui permettent de trier une colonne
 
 function getHeader(column: Column<ApiFileItem>, label: string) {
   const isSorted = column.getIsSorted();
@@ -202,34 +156,7 @@ function getHeader(column: Column<ApiFileItem>, label: string) {
         align: "start",
       },
       "aria-label": "Actions dropdown",
-      items: [
-        {
-          label: "Ascendant",
-          type: "checkbox",
-          icon: "i-lucide-arrow-up-narrow-wide",
-          checked: isSorted === "asc",
-          onSelect: () => {
-            if (isSorted === "asc") {
-              column.clearSorting();
-            } else {
-              column.toggleSorting(false);
-            }
-          },
-        },
-        {
-          label: "Desc",
-          icon: "i-lucide-arrow-down-wide-narrow",
-          type: "checkbox",
-          checked: isSorted === "desc",
-          onSelect: () => {
-            if (isSorted === "desc") {
-              column.clearSorting();
-            } else {
-              column.toggleSorting(true);
-            }
-          },
-        },
-      ],
+      items: [...sortingItems(column)],
     },
     () =>
       h(UButton, {
@@ -249,30 +176,36 @@ function getHeader(column: Column<ApiFileItem>, label: string) {
   );
 }
 
+// Les items qui compose le ContextMenu
 const items = ref<ContextMenuItem[]>([]);
 
-function getRowItems(row: TableRow<ApiFileItem>) {
+// Fonction pour créer les éléments du context-menu avec les informations de la ligne
+
+function getRowItems(row: TableRow<ApiFileItem>): ContextMenuItem[] {
   if (row.original.is_dir) {
     return [
       {
         label: "Ouvrir dans le terminal",
         icon: "material-symbols:terminal-rounded",
         onSelect() {
-          console.log("Terminal :", row.original);
+          fsActions.terminal(row.original);
         },
+      },
+      {
+        type: "separator" as const,
       },
       {
         label: "Ouvrir le dossier",
         icon: "material-symbols:folder-open-outline-rounded",
         onSelect() {
-          console.log("Renommer :", row.original);
+          handleRowClick(row);
         },
       },
       {
         label: "Renommer",
         icon: "material-symbols:edit-outline-rounded",
         onSelect() {
-          console.log("Renommer :", row.original);
+          fsActions.rename(row.original);
         },
       },
       {
@@ -280,17 +213,17 @@ function getRowItems(row: TableRow<ApiFileItem>) {
         icon: "material-symbols:delete-outline-rounded",
         color: "error" as const,
         onSelect() {
-          console.log("Renommer :", row.original);
+          fsActions.delete(row.original);
         },
       },
       {
-        type: "separator",
+        type: "separator" as const,
       },
       {
         label: "Propriétés",
         icon: "material-symbols:info-outline-rounded",
         onSelect() {
-          console.log("Renommer :", row.original);
+          fsActions.property(row.original);
         },
       },
     ];
@@ -300,25 +233,25 @@ function getRowItems(row: TableRow<ApiFileItem>) {
         label: "Visualiser",
         icon: "material-symbols:visibility-outline-rounded",
         onSelect() {
-          console.log("Renommer :", row.original);
+          console.log("Visualiser :", row.original);
         },
       },
 
       {
-        type: "separator",
+        type: "separator" as const,
       },
       {
         label: "Télécharger",
         icon: "material-symbols:download-rounded",
         onSelect() {
-          console.log("Renommer :", row.original);
+          fsActions.download(row.original);
         },
       },
       {
         label: "Renommer",
         icon: "material-symbols:edit-outline-rounded",
         onSelect() {
-          console.log("Renommer :", row.original);
+          fsActions.rename(row.original);
         },
       },
       {
@@ -326,49 +259,66 @@ function getRowItems(row: TableRow<ApiFileItem>) {
         icon: "material-symbols:delete-outline-rounded",
         color: "error" as const,
         onSelect() {
-          console.log("Supprimer :", row.original);
+          fsActions.delete(row.original);
         },
       },
       {
-        type: "separator",
+        type: "separator" as const,
       },
       {
+        type: "label",
         label: "Propriétés",
         icon: "material-symbols:info-outline-rounded",
         onSelect() {
-          console.log("Renommer :", row.original);
+          fsActions.property(row.original);
         },
       },
     ];
   }
 }
 
+// Fonction à l'ouverture du context-menu (clique droit)
+
 function onContextmenu(_e: Event, row: TableRow<ApiFileItem>) {
   items.value = getRowItems(row);
 }
 
-const handleRowClick = (row: any) => {
-  console.log("Ligne cliquée :", {
-    donnéesComplètes: row.original,
-  });
+// Fonction qui gère le clique sur une ligne
+
+const handleRowClick = async (row: TableRow<ApiFileItem>) => {
+  if (!row.original.is_dir) return;
+
+  enterFolder(row.original.name);
 };
 
-console.log(fetch);
+// Fonction qui gère le clique sur le Breadcrumb
+
+const onBreadcrumbClick = async (path: string) => {
+  FSStore.setCurrentPath(path);
+};
 </script>
 
 <template>
   <div class="flex flex-col">
     <section class="flex items-center justify-between mb-2">
-      <UBreadcrumb :items="FSStore.generateBreadcrumbItems()"></UBreadcrumb>
-      <div class="flex gap-2 mr-2">
-        <UButton label="Upload files" variant="outline" />
-        <UButton label="Create folder" variant="subtle" />
-      </div>
+      <UBreadcrumb :items="FSStore.generateBreadcrumbItems()">
+        <template #item="{ item }">
+          <UButton
+            variant=""
+            size="lg"
+            class="px-0 hover:cursor-pointer"
+            @click="onBreadcrumbClick(item.path)"
+          >
+            {{ item.label }}
+          </UButton>
+        </template>
+      </UBreadcrumb>
     </section>
     <section>
       <UContextMenu :items="items">
         <UTable
           v-model:sorting="sorting"
+          :loading="loading_debounced"
           :sticky="true"
           :data="fileTree"
           :columns="columns"
@@ -379,34 +329,106 @@ console.log(fetch);
           @hover=""
           @contextmenu="onContextmenu"
         >
+          <!-- Template pour modifier la ligne et ajouter le clique et les images pour les fichiers -->
+
           <template #name-cell="{ row }">
             <div
-              class="relative flex items-center group"
-              @click="handleRowClick(row)"
+              class="relative h-full flex items-center group"
+              @click="row.toggleSelected()"
+              @dblclick="handleRowClick(row)"
             >
-              <img
+              <UIcon
                 v-if="row.original.is_dir"
-                src="/icons/files/file-folder.svg"
-                class="w-5 h-5 mr-2 filter-[brightness(0)_invert(1)_sepia(1)_saturate(5)_hue-rotate(200deg)]"
+                name="heroicons:folder"
+                class="text-lg mr-2"
               />
 
-              <img
+              <UIcon
                 v-else
-                :src="`/icons/files/${getFileIcon(row.original.name)}.svg`"
-                class="w-5 h-5 mr-2 text-white"
+                :name="getFileIcon(row.original.name)"
+                class="text-lg mr-2"
                 :alt="`Icon for ${row.original.name}`"
               />
 
               <ULink>
-                <span class="hover:underline underline-offset-2 cursor-pointer">
+                <span
+                  class="hover:underline underline-offset-2 cursor-pointer"
+                  @click="handleRowClick(row)"
+                >
                   {{ row.getValue("name") }}
                 </span>
               </ULink>
             </div>
           </template>
 
+          <!-- Page lorsque l'explorateur est vide  -->
+
           <template #empty>
-            <h1>Désolé c'est vide</h1>
+            <!-- Si il n'y a pas de fichiers -->
+
+            <div
+              v-if="!loading && !hasError"
+              class="flex items-center justify-center"
+            >
+              <UEmpty
+                class="min-w-[500px]"
+                variant="soft"
+                icon="material-symbols:sad-tab-outline-rounded"
+                title="No files"
+                description="It looks like you haven't added any files/folders.
+              Create one to get started."
+                size="xl"
+              />
+            </div>
+
+            <!-- Si on a une erreur au niveau du serveur -->
+
+            <div v-if="hasError" class="flex items-center justify-center">
+              <UEmpty
+                class="min-w-[500px]"
+                variant="soft"
+                icon="material-symbols:error-outline-rounded"
+                :description="errorMessage"
+                :actions="
+                  errorStatus === 500
+                    ? [
+                        {
+                          icon: 'material-symbols:sync-rounded',
+                          label: 'Refresh',
+                          color: 'neutral',
+                          variant: 'subtle',
+                          size: 'md',
+                          loadingAuto: true,
+                          onClick: retryFetching,
+                        },
+                      ]
+                    : []
+                "
+                size="xl"
+              >
+                <template #title>
+                  <div>
+                    <h1
+                      :class="
+                        errorStatus === 500 ? 'text-error' : 'text-warning'
+                      "
+                    >
+                      Erreur {{ errorStatus }}
+                    </h1>
+                  </div>
+                </template>
+              </UEmpty>
+            </div>
+          </template>
+
+          <!-- Page pour le chargement de l'explorateur -->
+
+          <template #loading>
+            <div class="space-y-2 px-4 py-3">
+              <div v-for="i in 6" :key="i" class="flex items-center gap-1">
+                <USkeleton class="h-[50px] w-full rounded-none" />
+              </div>
+            </div>
           </template>
         </UTable>
       </UContextMenu>

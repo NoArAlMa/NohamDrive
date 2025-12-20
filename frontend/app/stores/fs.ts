@@ -28,6 +28,7 @@ export const useFSStore = defineStore("fs", () => {
       const pathSoFar = parts.slice(0, index + 1).join("/");
       return {
         label: part,
+        path: pathSoFar,
       };
     });
 
@@ -35,6 +36,7 @@ export const useFSStore = defineStore("fs", () => {
     return [
       {
         label: "Mes fichiers",
+        path: "/",
       },
       ...items,
     ];

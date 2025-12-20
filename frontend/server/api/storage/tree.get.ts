@@ -12,11 +12,18 @@ export default defineEventHandler(async (event) => {
       }
     );
     return data;
-  } catch (error) {
-    console.error("Erreur lors du fetch de l'arborescence :", error);
+  } catch (error: any) {
+    if (error?.response?.status) {
+      throw createError({
+        statusCode: error.response.status,
+        statusMessage:
+          error.response._data?.message ??
+          "Erreur lors de la récupération des fichiers",
+      });
+    }
     throw createError({
       statusCode: 500,
-      statusMessage: "Impossible de récupérer l'arborescence",
+      statusMessage: "Serveur de stockage indisponible",
     });
   }
 });

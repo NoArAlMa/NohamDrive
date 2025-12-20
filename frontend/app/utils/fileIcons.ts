@@ -1,41 +1,43 @@
 export const fileIconMap: Record<string, string> = {
   // Documents
-  pdf: "file-pdf",
-  doc: "file-word",
-  docx: "file-word",
+  pdf: "vscode-icons:file-type-pdf2",
+  doc: "vscode-icons:file-type-word",
+  docx: "vscode-icons:file-type-word",
   xls: "i-vscode-icons:file-type-excel",
   xlsx: "i-vscode-icons:file-type-excel2",
-  ppt: "file-powerpoint",
-  pptx: "file-powerpoint",
-  txt: "file-text",
+  ppt: "vscode-icons:file-type-powerpoint",
+  pptx: "vscode-icons:file-type-powerpoint",
+  txt: "vscode-icons:file-type-text",
   csv: "i-vscode-icons:file-type-csv",
-  md: "file-markdown",
+  md: "vscode-icons:file-type-markdown",
 
   // Images
-  png: "file-image",
-  jpg: "file-image",
-  jpeg: "file-image",
-  webp: "file-image",
-  svg: "file-image",
+  png: "vscode-icons:file-type-image",
+  jpg: "vscode-icons:file-type-image",
+  jpeg: "vscode-icons:file-type-image",
+  webp: "vscode-icons:file-type-image",
+  svg: "vscode-icons:file-type-image",
 
   // Archives
-  zip: "file-zip",
-  rar: "file-zip",
+  rar: "vscode-icons:file-type-zip",
+  zip: "vscode-icons:file-type-zip",
 
   // Médias
-  mp4: "file-video",
-  mp3: "file-audio",
+  mp4: "vscode-icons:file-type-video",
+  mp3: "vscode-icons:file-type-audio",
 
   // Code
-  js: "file-js",
-  py: "file-python",
-  css: "file-css",
+  js: "vscode-icons:file-type-js-official",
+  py: "vscode-icons:file-type-python",
+  css: "vscode-icons:file-type-css2",
 
   // Par défaut
-  unknown: "file-unknown",
+  unknown: "heroicons:document",
 };
+
+// Fonction qui retourne le nom de l'icone en fonction de son extension
 
 export const getFileIcon = (filename: string) => {
   const ext = filename.split(".").pop()?.toLowerCase();
-  return fileIconMap[ext ?? ""] ?? "file-unknown";
+  return fileIconMap[ext ?? ""] ?? "heroicons:document";
 };
