@@ -2,6 +2,7 @@ from minio import Minio
 from minio.error import S3Error
 from app.schemas.files import FileMetadata
 from app.schemas.file_tree import SimpleFileItem, SimpleFileTreeResponse
+from minio.deleteobjects import DeleteObject
 from core.logging import setup_logger
 from datetime import datetime
 from fastapi import UploadFile, HTTPException, status, Request
@@ -127,6 +128,69 @@ class MinioService:
             raise HTTPException(
                 status_code=status_code,
                 detail=f"Échec de l'upload: {str(e)}",
+            )
+
+    async def delete_file(self, user_id: int, object_name: str):
+        bucket_name = await self.get_user_bucket(user_id)
+
+        if ".." in object_name or object_name.startswith("/"):
+            raise HTTPException(status_code=400, detail="Chemin invalide.")
+
+        try:
+            self.minio.stat_object(bucket_name, object_name)
+        except S3Error as e:
+            if e.code == "NoSuchKey":
+                raise HTTPException(status_code=404, detail="Fichier non trouvé")
+            else:
+                raise HTTPException(status_code=500, detail=f"Erreur : {str(e)}")
+
+        try:
+            self.minio.remove_object(bucket_name, object_name)
+            return f"Fichier {object_name} supprimé avec succès"
+        except S3Error as e:
+            raise HTTPException(
+                status_code=500, detail=f"Erreur lors de la suppression : {str(e)}"
+            )
+
+    async def delete_folder(self, user_id: int, folder_path: str):
+        bucket_name = await self.get_user_bucket(user_id)
+
+        # Normalisation
+        folder_path = folder_path.strip("/").rstrip("/") + "/"
+        if ".." in folder_path or folder_path.startswith("/"):
+            raise HTTPException(status_code=400, detail="Chemin invalide.")
+
+        objects_to_delete = self.minio.list_objects(
+            bucket_name, prefix=folder_path, recursive=True
+        )
+
+        to_delete = [
+            DeleteObject(obj.object_name)
+            for obj in objects_to_delete
+            if obj.object_name
+        ]
+
+        if not to_delete:
+            raise HTTPException(status_code=404, detail="Dossier vide ou inexistant")
+
+        try:
+            # Supprime tous les objets et consomme le générateur
+            errors = list(self.minio.remove_objects(bucket_name, to_delete))
+
+            # Log des éventuelles erreurs
+            if errors:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Erreur lors de la suppression de certains objets",
+                )
+
+            return {
+                "detail": f"Dossier {folder_path} supprimé avec {len(to_delete)} objets"
+            }
+
+        except S3Error as e:
+            raise HTTPException(
+                status_code=500, detail=f"Erreur lors de la suppression : {str(e)}"
             )
 
     async def create_folder(
