@@ -1,7 +1,6 @@
 name: Deploy Frontend to Raspberry Pi
 
 on:
-  workflow_dispatch:
   push:
     branches: ["main"]
     paths:
@@ -20,7 +19,7 @@ jobs:
           host: ${{ secrets.RPI_HOST }}
           username: ${{ secrets.RPI_USER }}
           key: ${{ secrets.RPI_SSH_KEY }}
-          port: 22
+          port: 2222
           script: |
             # Couleurs
             RED='\033[0;31m'
@@ -44,11 +43,11 @@ jobs:
 
             # Build et redémarrage du conteneur frontend
             echo -e "${YELLOW}🐳 Construction de l'image Docker pour le frontend...${NC}"
-            docker-compose -f docker-compose.yml build || { echo -e "${RED}❌ Erreur lors du build Docker${NC}"; exit 1; }
+            docker-compose -f docker-compose.frontend.yml build || { echo -e "${RED}❌ Erreur lors du build Docker${NC}"; exit 1; }
 
             echo -e "${YELLOW}🔄 Redémarrage du conteneur frontend...${NC}"
-            docker-compose -f docker-compose.yml down || { echo -e "${RED}❌ Erreur lors de l'arrêt du conteneur${NC}"; exit 1; }
-            docker-compose -f docker-compose.yml up -d --remove-orphans || { echo -e "${RED}❌ Erreur lors du démarrage du conteneur${NC}"; exit 1; }
+            docker-compose -f docker-compose.frontend.yml down || { echo -e "${RED}❌ Erreur lors de l'arrêt du conteneur${NC}"; exit 1; }
+            docker-compose -f docker-compose.frontend.yml up -d --remove-orphans || { echo -e "${RED}❌ Erreur lors du démarrage du conteneur${NC}"; exit 1; }
 
             # Nettoyage
             echo -e "${YELLOW}🧹 Nettoyage des images Docker inutilisées...${NC}"
