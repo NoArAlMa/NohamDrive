@@ -1,1 +1,0 @@
-// ROUTE DU REGISTER
