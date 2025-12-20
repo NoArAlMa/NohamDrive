@@ -1,10 +1,14 @@
 from datetime import datetime, timedelta
 from typing import Optional
-from fastapi import HTTPException, status
+from fastapi import Depends, HTTPException, status
 from passlib.context import CryptContext
 from jose import jwt, JWTError
+
+from app.schemas.auth import UserCreate
 from core.config import settings
 from core.logging import setup_logger
+from app.services.minio_service import MinioService, get_minio_service
+import uuid
 
 # Configuration du logger pour ce module
 logger = setup_logger(__name__)
@@ -16,7 +20,7 @@ class AuthService:
     Utilise bcrypt pour le hachage et PyJWT pour les tokens.
     """
 
-    def __init__(self):
+    def __init__(self, minio_client: MinioService):
         """Initialise le service avec les paramètres de sécurité depuis la configuration."""
         self.pwd_context = CryptContext(
             schemes=["argon2"],
@@ -29,6 +33,7 @@ class AuthService:
             settings.SECRET_KEY
         )  # Clé secrète pour signer les tokens JWT
         self.ALGORITHM: str = settings.ALGORITHM  # Algorithme de signature
+        self.minio_service: MinioService = minio_client  # Le service pour gérer MinIO
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         """
@@ -54,14 +59,13 @@ class AuthService:
         """
         Génère un hachage sécurisé d'un mot de passe en clair.
 
-        Args:a
+        Args:
             password: Mot de passe en clair à hacher.
 
         Returns:
             str: Hachage du mot de passe (bcrypt).
         """
         try:
-            password = password[:72]
             return self.pwd_context.hash(password)
         except Exception as e:
             logger.error(f"Erreur lors du hachage du mot de passe: {e}")
@@ -71,8 +75,11 @@ class AuthService:
             )
 
     def create_access_token(
-        self, data: dict, expires_delta: Optional[timedelta] = None
-    ) -> str:
+        self,
+        data: dict,
+        expires_delta: Optional[timedelta] = None,
+        scope: Optional[list[str]] = None,
+    ) -> dict:
         """
         Génère un token JWT pour les données fournies.
 
@@ -88,12 +95,38 @@ class AuthService:
         """
         try:
             to_encode = data.copy()
-            # Utilise UTC pour éviter les problèmes de fuseaux horaires
-            expire = datetime.now() + (
-                expires_delta or timedelta(days=settings.ACCESS_TOKEN_EXPIRE_DAY)
+
+            now = int(datetime.now().timestamp())
+
+            if expires_delta:
+                expire = int((datetime.now() + expires_delta).timestamp())
+            else:
+                expire = int(
+                    (
+                        datetime.now()
+                        + timedelta(days=settings.ACCESS_TOKEN_EXPIRE_DAY)
+                    ).timestamp()
+                )
+
+            to_encode.update(
+                {
+                    "exp": expire,
+                    "iat": now,
+                    "jti": str(uuid.uuid4()),
+                    "scope": scope if scope else ["*"],
+                }
             )
-            to_encode.update({"exp": expire})
-            return jwt.encode(to_encode, self.SECRET_KEY, algorithm=self.ALGORITHM)
+
+            metadata = {
+                "token": jwt.encode(
+                    to_encode, str(self.SECRET_KEY), algorithm=self.ALGORITHM
+                ),
+                "expires_at": expire,
+                "created_at": datetime.now(),
+                "scope": scope if scope else ["*"],
+            }
+
+            return metadata
         except JWTError as e:
             logger.error(f"Erreur lors de la génération du token JWT: {e}")
             raise HTTPException(
@@ -107,13 +140,55 @@ class AuthService:
                 detail="Erreur serveur lors de la génération du token",
             )
 
+    def create_user(self, request: UserCreate):
+        """
+        Crée un nouvel utilisateur => Le stock en BDD, le .
 
-def get_auth_service() -> AuthService:
+        Args:
+            request : sur le modèle de UserCreate
+
+        Returns:
+            User: Utilisateur créé (sans le mot de passe haché).
+
+        Raises:
+            HTTPException: Si l'email existe déjà ou en cas d'erreur DB.
+        """
+
+        # TODO : Vérifier si l'email existe déjà
+        # if existing_user:
+        #     raise HTTPException(
+        #         status_code=status.HTTP_400_BAD_REQUEST,
+        #         detail="Un utilisateur avec cet email existe déjà.",
+        #     )
+
+        password_hash = self.get_password_hash(request.password)
+
+        # TODO: Créer l'utilisateur dans la BDD
+
+        # TODO : Créer le bucket du user pour MinIO
+        # user_id = None Temporaire le temps de récup le vrai userID
+        # self.minio_service.create_user_bucket(user_id)
+
+        token = self.create_access_token(
+            {
+                "sub": request.email,
+            }
+        )  # + qlq infos du modele User
+        # TODO : Ajouter le token en BDD
+
+        return {"user": {}, "token": token}
+
+
+def get_auth_service(minio=Depends(get_minio_service)) -> AuthService:
     """
     Fournit une instance du service d'authentification.
     Utilisé pour l'injection de dépendances dans FastAPI.
 
+
+    Args:
+        minio : Une instance de MinioService
+
     Returns:
         AuthService: Instance du service.
     """
-    return AuthService()
+    return AuthService(minio)
