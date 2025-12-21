@@ -19,5 +19,15 @@ class CreateFolder(BaseModel):
     folderPath: str
 
 
+class RenameItem(BaseModel):
+    path: str
+    new_name: str
+
+
+class MoveItem(BaseModel):
+    source_path: str
+    destination_folder: str
+
+
 class FileUploadResponse(BaseResponse[FileMetadata]):
     message: str = "File uploaded successfully"
