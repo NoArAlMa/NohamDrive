@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, UploadFile, Depends, status, Query
 from app.services.minio_service import MinioService, get_minio_service
 from app.schemas.file_tree import SimpleFileTreeResponse, TreeResponse
-from app.schemas.files import CreateFolder, FileUploadResponse, RenameItem
+from app.schemas.files import CreateFolder, FileUploadResponse, RenameItem, MoveItem
 from app.utils.response import BaseResponse
 
 
@@ -259,3 +259,94 @@ async def rename_endpoint(
         data=None,
         message="Renommage effectué avec succès",
     )
+
+
+@router.post(
+    "/move",
+    response_model=BaseResponse,
+    status_code=status.HTTP_200_OK,
+    responses={
+        200: {
+            "description": "Fichier ou dossier déplacé avec succès.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "success": True,
+                        "data": None,
+                        "message": "Déplacement effectué avec succès.",
+                    }
+                }
+            },
+        },
+        400: {
+            "description": "Requête invalide (chemin invalide).",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "success": False,
+                        "data": None,
+                        "message": "Chemin invalide (accès non autorisé).",
+                    }
+                }
+            },
+        },
+        404: {
+            "description": "Source introuvable.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "success": False,
+                        "data": None,
+                        "message": "Source introuvable.",
+                    }
+                }
+            },
+        },
+        500: {
+            "description": "Erreur interne.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "success": False,
+                        "data": None,
+                        "message": "Erreur lors du déplacement.",
+                    }
+                }
+            },
+        },
+    },
+)
+async def move_endpoint(
+    payload: MoveItem,
+    minio_service: MinioService = Depends(get_minio_service),
+    user_id: int = 1,  # TODO: Remplacer par l'ID réel (via auth)
+) -> BaseResponse:
+    """
+    Déplace un fichier ou un dossier dans le bucket utilisateur.
+
+    **Args:**
+        - **payload (MoveItem):** Objet contenant:
+            - `source_path (str)`: Chemin source (ex: "dossier1/fichier.txt" ou "dossier1/").
+            - `destination_folder (str)`: Chemin de destination (ex: "dossier2/").
+            - `is_folder (bool)`: Si True, traite la source comme un dossier.
+
+    **Returns:**
+        - **BaseResponse**: Réponse standard avec:
+            - `success (bool)`: Statut de la requête.
+            - `data (None)`: Toujours None.
+            - `message (str)`: Message de confirmation ou d'erreur.
+    """
+    try:
+        await minio_service.move(
+            user_id=user_id,
+            source_path=payload.source_path,
+            destination_folder=payload.destination_folder,
+    
+        )
+        return BaseResponse(
+            success=True,
+            data=None,
+            message="Déplacement effectué avec succès.",
+        )
+    except HTTPException as e:
+        raise e
