@@ -105,7 +105,7 @@ async def download_file_endpoint(
          **user_id** : ID de l'utilisateur (injecté par l'auth)
 
     """
-    return await minio_service.download_file(user_id, object_name)
+    return await minio_service.download_object(user_id, object_name)
 
 
 @router.post(
@@ -341,7 +341,6 @@ async def move_endpoint(
             user_id=user_id,
             source_path=payload.source_path,
             destination_folder=payload.destination_folder,
-    
         )
         return BaseResponse(
             success=True,
