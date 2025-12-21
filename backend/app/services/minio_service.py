@@ -10,7 +10,7 @@ from fastapi import UploadFile, HTTPException, status, Request
 from fastapi.responses import StreamingResponse
 import io
 import re
-
+import zipfile
 
 # Initialisation du logger
 logger = setup_logger(__name__)
@@ -313,61 +313,87 @@ class MinioService:
                 detail="Impossible de lister le chemin",
             )
 
-    async def download_file(self, user_id: int, object_name: str) -> StreamingResponse:
+    async def download_object(
+        self, user_id: int, object_name: str
+    ) -> StreamingResponse:
         """
-        Télécharge un fichier depuis MinIO.
+        Télécharge un fichier ou un dossier depuis MinIO.
+
+        - Si `object_name` est un fichier → streaming direct.
+        - Si `object_name` est un dossier → compression ZIP et streaming.
 
         Args:
-            user_id: ID de l'utilisateur (pour déterminer le bucket si non fourni).
-            object_name: Nom de l'objet dans MinIO.
-            bucket_name: Nom du bucket (optionnel, sinon déduit de user_id).
+            user_id: ID de l'utilisateur (détermine le bucket).
+            object_name: Nom de l'objet ou préfixe de dossier.
 
         Returns:
-            StreamingResponse: Flux du fichier à télécharger.
+            StreamingResponse: Flux du fichier ou ZIP à télécharger.
 
         Raises:
-            HTTPException: 404 si le fichier ou le bucket n'existe pas.
-                          403 si accès non autorisé.
-                          500 en cas d'erreur interne.
+            HTTPException: 404 si le fichier ou le bucket n'existe pas,
+                        400 si chemin invalide,
+                        500 en cas d'erreur interne.
         """
+        bucket_name = await self.get_user_bucket(user_id)
+
+        # Vérifie le chemin
+        if ".." in object_name or object_name.startswith("/"):
+            raise HTTPException(status_code=400, detail="Chemin invalide.")
+
         try:
-            bucket_name = await self.get_user_bucket(user_id)
-
-            # Vérifie que le bucket existe
-            if not self.minio.bucket_exists(bucket_name):
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Bucket non trouvé.",
-                )
-
-            # Récupère les métadonnées de l'objet pour vérifier son existence
+            # Vérifie si c'est un fichier existant
             try:
-                # On nettoie le chemin au cas où il y aurait des pépins
-                if ".." in object_name or object_name.startswith("/"):
-                    raise HTTPException(status_code=400, detail="Chemin invalide.")
-
                 obj = self.minio.stat_object(bucket_name, object_name)
+                is_file = True
             except S3Error as e:
                 if e.code == "NoSuchKey":
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail=f"Fichier {object_name} non trouvé.",
-                    )
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"Erreur lors de la vérification du fichier: {str(e)}",
+                    is_file = False
+                else:
+                    raise
+
+            # Si c'est un fichier, on stream directement
+            if is_file:
+                file_stream = self.minio.get_object(bucket_name, object_name)
+                return StreamingResponse(
+                    content=file_stream.stream(amt=1024 * 1024),  # chunks de 1 Mo
+                    media_type=obj.content_type or "application/octet-stream",
+                    headers={
+                        "Content-Disposition": f"attachment; filename={object_name.split('/')[-1]}",
+                        "Content-Length": str(obj.size),
+                    },
                 )
 
-            # Stream le fichier en chunks pour éviter de tout charger en mémoire
-            file_stream = self.minio.get_object(bucket_name, object_name)
+            # On normalise le prefix pour lister les objets, mais on garde object_name pour le nom du ZIP
+            prefix = object_name.rstrip("/") + "/"
 
-            # Construit la réponse en streaming
+            objects = list(
+                self.minio.list_objects(bucket_name, prefix=prefix, recursive=True)
+            )
+            if not objects:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Objet ou dossier {object_name} introuvable.",
+                )
+
+            # Création du ZIP en mémoire
+            zip_buffer = io.BytesIO()
+            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
+                for obj in objects:
+                    if not obj.object_name or obj.object_name.endswith("/"):
+                        continue  # ignore les "dossiers" vides
+                    data = self.minio.get_object(bucket_name, obj.object_name)
+                    file_bytes = data.read()
+                    # Chemin relatif correct
+                    relative_name = obj.object_name[len(prefix) :]
+                    zipf.writestr(relative_name, file_bytes)
+
+            zip_buffer.seek(0)
+
             return StreamingResponse(
-                content=file_stream.stream(amt=1024 * 1024),  # Chunks de 1 Mo
-                media_type=obj.content_type or "application/octet-stream",
+                zip_buffer,
+                media_type="application/zip",
                 headers={
-                    "Content-Disposition": f"attachment; filename={object_name.split('/')[-1]}",
-                    "Content-Length": str(obj.size),
+                    "Content-Disposition": f"attachment; filename={object_name.split('/')[-1]}.zip"
                 },
             )
 
@@ -377,7 +403,7 @@ class MinioService:
                 extra={"user_id": user_id, "object_name": object_name, "error": str(e)},
             )
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                status_code=500,
                 detail=f"Erreur lors du téléchargement: {str(e)}",
             )
 
