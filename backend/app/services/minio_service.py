@@ -131,67 +131,84 @@ class MinioService:
                 detail=f"Échec de l'upload: {str(e)}",
             )
 
-    async def delete_file(self, user_id: int, object_name: str):
+    async def delete_object(self, user_id: int, path: str) -> dict:
+        """
+        Supprime un fichier ou un dossier (récursif) dans MinIO.
+
+        - Fichier : "docs/file.txt"
+        - Dossier : "docs/folder/"
+        """
+
         bucket_name = await self.get_user_bucket(user_id)
 
-        if ".." in object_name or object_name.startswith("/"):
+        # Sécurité & normalisation
+
+        if ".." in path:
             raise HTTPException(status_code=400, detail="Chemin invalide.")
 
-        try:
-            self.minio.stat_object(bucket_name, object_name)
-        except S3Error as e:
-            if e.code == "NoSuchKey":
-                raise HTTPException(status_code=404, detail="Fichier non trouvé")
-            else:
-                raise HTTPException(status_code=500, detail=f"Erreur : {str(e)}")
+        is_folder = path.endswith("/")
+
+        path = path.strip("/")
+
+        if is_folder:
+            path = path.rstrip("/") + "/"
+
+        # Suppression dossier
 
         try:
-            self.minio.remove_object(bucket_name, object_name)
-            return f"Fichier {object_name} supprimé avec succès"
-        except S3Error as e:
-            raise HTTPException(
-                status_code=500, detail=f"Erreur lors de la suppression : {str(e)}"
-            )
-
-    async def delete_folder(self, user_id: int, folder_path: str):
-        bucket_name = await self.get_user_bucket(user_id)
-
-        # Normalisation
-        folder_path = folder_path.strip("/").rstrip("/") + "/"
-        if ".." in folder_path or folder_path.startswith("/"):
-            raise HTTPException(status_code=400, detail="Chemin invalide.")
-
-        objects_to_delete = self.minio.list_objects(
-            bucket_name, prefix=folder_path, recursive=True
-        )
-
-        to_delete = [
-            DeleteObject(obj.object_name)
-            for obj in objects_to_delete
-            if obj.object_name
-        ]
-
-        if not to_delete:
-            raise HTTPException(status_code=404, detail="Dossier vide ou inexistant")
-
-        try:
-            # Supprime tous les objets et consomme le générateur
-            errors = list(self.minio.remove_objects(bucket_name, to_delete))
-
-            # Log des éventuelles erreurs
-            if errors:
-                raise HTTPException(
-                    status_code=500,
-                    detail="Erreur lors de la suppression de certains objets",
+            if is_folder:
+                objects = list(
+                    self.minio.list_objects(
+                        bucket_name,
+                        prefix=path,
+                        recursive=True,
+                    )
                 )
 
-            return {
-                "detail": f"Dossier {folder_path} supprimé avec {len(to_delete)} objets"
-            }
+                if not objects:
+                    raise HTTPException(
+                        status_code=404,
+                        detail="Dossier vide ou inexistant",
+                    )
+
+                delete_errors = self.minio.remove_objects(
+                    bucket_name,
+                    (
+                        DeleteObject(obj.object_name)
+                        for obj in objects
+                        if obj.object_name
+                    ),
+                )
+
+                for err in delete_errors:
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"Erreur suppression: {err.message}",
+                    )
+
+                return {"detail": f"Dossier '{path}' supprimé ({len(objects)} objets)"}
+
+            # Suppression fichier
+
+            else:
+                try:
+                    self.minio.stat_object(bucket_name, path)
+                except S3Error as e:
+                    if e.code == "NoSuchKey":
+                        raise HTTPException(
+                            status_code=404,
+                            detail="Fichier non trouvé",
+                        )
+                    raise
+
+                self.minio.remove_object(bucket_name, path)
+
+                return {"detail": f"Fichier '{path}' supprimé avec succès"}
 
         except S3Error as e:
             raise HTTPException(
-                status_code=500, detail=f"Erreur lors de la suppression : {str(e)}"
+                status_code=500,
+                detail=f"Erreur lors de la suppression : {str(e)}",
             )
 
     async def create_folder(
@@ -410,6 +427,7 @@ class MinioService:
     async def rename(self, user_id: int, path: str, new_name: str):
         bucket_name = await self.get_user_bucket(user_id)
 
+        # Validation & normalisation
         if ".." in path or ".." in new_name or "/" in new_name:
             raise HTTPException(status_code=400, detail="Chemin invalide")
 
@@ -420,65 +438,82 @@ class MinioService:
         parent = f"{parent}/" if parent else ""
 
         old_prefix = path
-        new_prefix = f"{parent}{new_name}"
-        if is_folder:
-            new_prefix += "/"
 
-        # DOSSIER
-        if is_folder:
-            objects = list(
-                self.minio.list_objects(
-                    bucket_name,
-                    prefix=old_prefix,
-                    recursive=True,
-                )
-            )
+        # Génération du nouveau nom disponible
 
-            if not objects:
-                raise HTTPException(status_code=404, detail="Dossier introuvable")
-
-            for obj in objects:
-                if obj.object_name:
-                    new_object_name = obj.object_name.replace(old_prefix, new_prefix, 1)
-
-                    self.minio.copy_object(
-                        bucket_name,
-                        new_object_name,
-                        CopySource(bucket_name, obj.object_name),
-                    )
-
-            delete_errors = self.minio.remove_objects(
-                bucket_name,
-                (DeleteObject(obj.object_name) for obj in objects if obj.object_name),
-            )
-            for err in delete_errors:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Erreur suppression objet {err}",
-                )
-
-            try:
-                self.minio.remove_object(bucket_name, old_prefix)
-            except Exception:
-                pass
-
-            return {"detail": "Dossier renommé avec succès"}
-
-        # FICHIER
-        try:
-            self.minio.stat_object(bucket_name, path)
-        except Exception:
-            raise HTTPException(status_code=404, detail="Fichier introuvable")
-
-        self.minio.copy_object(
-            bucket_name,
-            new_prefix,
-            CopySource(bucket_name, path),
+        new_prefix = self._generate_available_name(
+            bucket_name=bucket_name,
+            base_name=new_name,
+            parent_path=parent,
+            is_folder=is_folder,
         )
 
-        self.minio.remove_object(bucket_name, path)
+        if is_folder:
+            new_prefix = new_prefix.rstrip("/") + "/"
 
-        return {"detail": "Fichier renommé avec succès"}
+        # Récupération et vérification
+
+        try:
+            if is_folder:
+                objects = list(
+                    self.minio.list_objects(
+                        bucket_name, prefix=old_prefix, recursive=True
+                    )
+                )
+                if not objects:
+                    raise HTTPException(status_code=404, detail="Dossier introuvable")
+            else:
+                self.minio.stat_object(bucket_name, path)
+        except S3Error as e:
+            if e.code == "NoSuchKey":
+                raise HTTPException(status_code=404, detail="Objet introuvable")
+            raise HTTPException(status_code=500, detail=f"Erreur MinIO: {str(e)}")
+
+        # Renommage
+
+        try:
+            if is_folder:
+                # Copie récursive
+                for obj in objects:
+                    if obj.object_name:
+                        relative_path = obj.object_name[len(old_prefix) :]
+                        new_object_name = new_prefix + relative_path
+                        self.minio.copy_object(
+                            bucket_name,
+                            new_object_name,
+                            CopySource(bucket_name, obj.object_name),
+                        )
+
+                # Suppression des anciens objets
+                delete_errors = self.minio.remove_objects(
+                    bucket_name,
+                    (
+                        DeleteObject(obj.object_name)
+                        for obj in objects
+                        if obj.object_name
+                    ),
+                )
+                for err in delete_errors:
+                    raise HTTPException(
+                        status_code=500, detail=f"Erreur suppression objet {err}"
+                    )
+            else:
+                # Fichier unique
+                self.minio.copy_object(
+                    bucket_name,
+                    new_prefix,
+                    CopySource(bucket_name, path),
+                )
+                self.minio.remove_object(bucket_name, path)
+
+            return {
+                "detail": f"{'Dossier' if is_folder else 'Fichier'} renommé avec succès : {new_prefix}"
+            }
+
+        except S3Error as e:
+            raise HTTPException(
+                status_code=500, detail=f"Erreur lors du renommage: {str(e)}"
+            )
 
     async def move(
         self,
@@ -503,22 +538,43 @@ class MinioService:
         """
         bucket_name = await self.get_user_bucket(user_id)
 
-        # Nettoyage et validation des chemins
-        source_path = source_path.strip("/")
+        # -------------------------
+        # Normalisation des chemins
+        # -------------------------
+
+        def normalize_folder(path: str) -> str:
+            return path.strip("/").rstrip("/") + "/"
+
+        if ".." in source_path or ".." in destination_folder:
+            raise HTTPException(400, "Chemin invalide.")
+
         is_folder = source_path.endswith("/")
-        base_name = source_path.split("/")[-1]
+
+        source_path = source_path.strip("/")
+        if is_folder:
+            source_path += "/"
+
+        destination_folder = normalize_folder(destination_folder)
+
+        # -------------------------
+        # Détection nom de base
+        # -------------------------
+
+        clean_source = source_path.rstrip("/")
+        base_name = clean_source.split("/")[-1]
 
         source_parent = (
-            "/".join(source_path.split("/")[:-1]) + "/" if "/" in source_path else ""
+            "/".join(clean_source.split("/")[:-1]) + "/" if "/" in clean_source else ""
         )
 
-        same_folder = source_parent == destination_folder
-
-        if same_folder:
+        if normalize_folder(source_parent) == destination_folder:
             raise HTTPException(
-                status_code=409,
-                detail="Impossible de déplacer un élément dans le même dossier",
+                409, "Impossible de déplacer un élément dans le même dossier."
             )
+
+        # -------------------------
+        # Génération chemin destination
+        # -------------------------
 
         destination_path = self._generate_available_name(
             bucket_name=bucket_name,
@@ -527,69 +583,63 @@ class MinioService:
             is_folder=is_folder,
         )
 
-        if ".." in source_path or ".." in destination_folder:
-            raise HTTPException(
-                status_code=400, detail="Chemin invalide (accès non autorisé)."
-            )
+        if is_folder:
+            destination_path = destination_path.rstrip("/") + "/"
 
-        # Vérifie que la source existe
+        # -------------------------
+        # Vérification existence source
+        # -------------------------
+
         try:
             if is_folder:
-                source_path = source_path.rstrip("/") + "/"
-                # Pour un dossier, on vérifie qu'il y a au moins un objet avec ce préfixe
                 objects = list(
                     self.minio.list_objects(
-                        bucket_name, prefix=source_path, recursive=True
+                        bucket_name,
+                        prefix=source_path,
+                        recursive=True,
                     )
                 )
                 if not objects:
-                    try:
-                        self.minio.stat_object(bucket_name, source_path)
-                    except S3Error:
-                        raise HTTPException(
-                            status_code=404, detail="Dossier source introuvable."
-                        )
-
+                    raise HTTPException(404, "Dossier introuvable ou vide.")
             else:
-                # Pour un fichier, on vérifie son existence
                 self.minio.stat_object(bucket_name, source_path)
 
         except S3Error as e:
             if e.code == "NoSuchKey":
-                raise HTTPException(status_code=404, detail="Source introuvable.")
-            raise HTTPException(
-                status_code=500, detail=f"Erreur lors de la vérification: {str(e)}"
-            )
+                raise HTTPException(404, "Source introuvable.")
+            raise HTTPException(500, f"Erreur MinIO: {str(e)}")
 
-        # Gestion du déplacement
+        # -------------------------
+        # Déplacement
+        # -------------------------
+
         try:
             if is_folder:
-                # Déplacement d'un dossier: copie récursive + suppression
-                objects = self.minio.list_objects(
-                    bucket_name, prefix=source_path, recursive=True
-                )
-
-                objects = list(objects)
+                # Vérifie collision dossier
                 existing = list(
                     self.minio.list_objects(
-                        bucket_name, prefix=destination_path, recursive=True
+                        bucket_name,
+                        prefix=destination_path,
+                        recursive=True,
                     )
                 )
                 if existing:
-                    raise HTTPException(
-                        status_code=409,
-                        detail="Un dossier du même nom existe déjà dans la destination.",
-                    )
+                    raise HTTPException(409, "Un dossier du même nom existe déjà.")
+
+                # Copie récursive
                 for obj in objects:
                     if obj.object_name:
                         relative_path = obj.object_name[len(source_path) :]
-                        new_object_name = f"{destination_path}{relative_path}"
+                        new_object_name = destination_path + relative_path
+
                         self.minio.copy_object(
                             bucket_name,
                             new_object_name,
                             CopySource(bucket_name, obj.object_name),
                         )
+
                 # Suppression des anciens objets
+
                 delete_errors = self.minio.remove_objects(
                     bucket_name,
                     (
@@ -600,43 +650,39 @@ class MinioService:
                 )
 
                 for err in delete_errors:
-                    logger.error(f"Erreur suppression objet: {err.message}")
                     raise HTTPException(
-                        status_code=500, detail="Erreur lors du déplacement."
+                        500,
+                        f"Erreur suppression: {err.message}",
                     )
+
             else:
-                # On vérifie si le fichier existe déjà
+                # Vérifie collision fichier
                 try:
                     self.minio.stat_object(bucket_name, destination_path)
                     raise HTTPException(
-                        status_code=409,
-                        detail="Un fichier du même nom existe déjà dans le dossier de destination.",
+                        409,
+                        "Un fichier du même nom existe déjà.",
                     )
                 except S3Error as e:
                     if e.code != "NoSuchKey":
                         raise
-                # Déplacement d'un fichier
+
                 self.minio.copy_object(
                     bucket_name,
                     destination_path,
                     CopySource(bucket_name, source_path),
                 )
 
-                try:
-                    self.minio.remove_object(bucket_name, source_path)
-                except S3Error:
-                    pass
                 self.minio.remove_object(bucket_name, source_path)
-
             logger.info(f"Déplacement de {source_path} vers {destination_path} réussi.")
             return {
-                "detail": f"Déplacement de {source_path} vers {destination_path} réussi."
+                "detail": f"Déplacement de '{source_path}' vers '{destination_path}' réussi."
             }
 
         except S3Error as e:
-            logger.error(f"Erreur lors du déplacement: {str(e)}")
             raise HTTPException(
-                status_code=500, detail=f"Erreur lors du déplacement: {str(e)}"
+                500,
+                f"Erreur lors du déplacement: {str(e)}",
             )
 
     def _generate_available_name(
