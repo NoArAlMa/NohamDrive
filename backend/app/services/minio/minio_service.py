@@ -1,4 +1,4 @@
-from fastapi import HTTPException, Request
+from fastapi import HTTPException, Query, Request
 from minio import Minio
 from minio.error import S3Error
 
@@ -23,7 +23,11 @@ class MinioService:
         self.download_service = DownloadService(minio, self.bucket_service)
 
     async def simple_list_path(
-        self, path: str = "", user_id: int = 1, limit: int = 30
+        self,
+        path: str = "",
+        user_id: int = 1,
+        page: int = Query(1, gt=0),
+        per_page: int = Query(30, gt=0, le=100),
     ) -> SimpleFileTreeResponse:
         try:
             bucket_name = await self.bucket_service.get_user_bucket(user_id=user_id)
@@ -59,9 +63,19 @@ class MinioService:
 
             items.sort(key=lambda x: (not x.is_dir, x.name.lower()))
 
+            total_items = len(items)
+            total_pages = (total_items + per_page - 1) // per_page
+            start = (page - 1) * per_page
+            end = start + per_page
+            paginated_items = items[start:end]
+
             return SimpleFileTreeResponse(
                 path="/" + normalized_path if normalized_path else "/",
-                items=items[:limit],
+                items=paginated_items,
+                total_pages=total_pages,
+                total_items=total_items,
+                per_page=per_page,
+                page=page,
             )
 
         except S3Error as e:

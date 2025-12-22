@@ -52,6 +52,8 @@ async def upload_file_endpoint(
 async def list_path(
     path: str = "",
     user_id: int = 1,
+    page: int = 1,
+    per_page: int = 30,
     minio_service: MinioService = Depends(get_minio_service),
 ) -> BaseResponse:
     """
@@ -63,7 +65,7 @@ async def list_path(
     """
 
     tree: SimpleFileTreeResponse = await minio_service.simple_list_path(
-        user_id=user_id, path=path
+        user_id=user_id, path=path, per_page=per_page, page=page
     )
 
     return BaseResponse(
