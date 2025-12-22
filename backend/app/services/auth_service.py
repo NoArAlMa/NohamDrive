@@ -7,7 +7,7 @@ from jose import jwt, JWTError
 from app.schemas.auth import UserCreate
 from core.config import settings
 from core.logging import setup_logger
-from app.services.minio_service import MinioService, get_minio_service
+from app.services.minio.minio_service import MinioService, get_minio_service
 import uuid
 
 # Configuration du logger pour ce module

@@ -1,9 +1,8 @@
 from fastapi import APIRouter, HTTPException, UploadFile, Depends, status, Query
-from app.services.minio_service import MinioService, get_minio_service
+from app.services.minio.minio_service import MinioService, get_minio_service
 from app.schemas.file_tree import SimpleFileTreeResponse
 from app.schemas.files import (
     CreateFolder,
-    FileUploadResponse,
     RenameItem,
     MoveItem,
     CopyItem,
@@ -15,14 +14,14 @@ router = APIRouter(prefix="/storage", tags=["Storage"])
 
 
 @router.post(
-    "/upload", response_model=FileUploadResponse, status_code=status.HTTP_201_CREATED
+    "/upload", response_model=BaseResponse, status_code=status.HTTP_201_CREATED
 )
 async def upload_file_endpoint(
     file: UploadFile,
     minio_service: MinioService = Depends(get_minio_service),
     user_id: int = 1,  # TODO : À remplacer par l'ID réel (via auth)
     path: str = "",
-) -> FileUploadResponse:
+) -> BaseResponse:
     """
     Upload un fichier dans le bucket utilisateur.
 
@@ -37,13 +36,12 @@ async def upload_file_endpoint(
     if not file.filename:
         raise HTTPException(status_code=400, detail="Nom de fichier vide.")
 
-    try:
-        metadata = await minio_service.upload_file(user_id, file, path)
-        return FileUploadResponse(data=metadata, status_code=status.HTTP_201_CREATED)
-    except HTTPException as e:
-        # Log côté endpoint si nécessaire
-        # logger.error(f"Erreur upload user {user_id}, fichier {file.filename}: {e.detail}")
-        raise e
+    message, metadata = await minio_service.download_service.upload_file(
+        user_id, file, path
+    )
+    return BaseResponse(
+        data=metadata, message=message, status_code=status.HTTP_201_CREATED
+    )
 
 
 @router.get(
@@ -51,7 +49,9 @@ async def upload_file_endpoint(
     response_model=BaseResponse,
 )
 async def list_path(
-    path: str = "", minio_service: MinioService = Depends(get_minio_service)
+    path: str = "",
+    user_id: int = 1,
+    minio_service: MinioService = Depends(get_minio_service),
 ) -> BaseResponse:
     """
     Liste le contenu d'un chemin dans le bucket utilisateur.
@@ -60,11 +60,9 @@ async def list_path(
     Returns:
         TreeResponse: Arborescence du chemin.
     """
-    bucket_name = await minio_service.ensure_bucket_exists(
-        user_id=1
-    )  # TODO : À adapter au système d'auth
+
     tree: SimpleFileTreeResponse = await minio_service.simple_list_path(
-        bucket_name, path
+        user_id=user_id, path=path
     )
 
     return BaseResponse(
@@ -89,7 +87,7 @@ async def download_file_endpoint(
          **user_id** : ID de l'utilisateur (injecté par l'auth)
 
     """
-    return await minio_service.download_object(user_id, object_name)
+    return await minio_service.download_service.download_object(user_id, object_name)
 
 
 @router.post(
@@ -120,7 +118,7 @@ async def create_folder_endpoint(
 
     """
 
-    folder_path = await minio_service.create_folder(
+    folder_path = await minio_service.object_service.create_folder(
         user_id=user_id,
         current_path=request.currentPath,
         folder_path=request.folderPath,
@@ -143,7 +141,9 @@ async def delete_object_endpoint(
     minio_service: MinioService = Depends(get_minio_service),
     user_id: int = 1,
 ):
-    message, data = await minio_service.delete_object(user_id, folder_path)
+    message, data = await minio_service.object_service.delete_object(
+        user_id, folder_path
+    )
 
     return BaseResponse(
         success=True,
@@ -163,7 +163,7 @@ async def rename_endpoint(
     minio_service: MinioService = Depends(get_minio_service),
     user_id: int = 1,
 ):
-    message, data = await minio_service.rename(
+    message, data = await minio_service.object_service.rename(
         user_id=user_id,
         path=payload.path,
         new_name=payload.new_name,
@@ -200,7 +200,7 @@ async def move_endpoint(
             - `message (str)`: Message de confirmation ou d'erreur.
     """
 
-    message, data = await minio_service.move(
+    message, data = await minio_service.object_service.move(
         user_id=user_id,
         source_path=payload.source_path,
         destination_folder=payload.destination_folder,
@@ -218,7 +218,7 @@ async def copy_endpoint(
     minio_service: MinioService = Depends(get_minio_service),
     user_id: int = 1,  # TODO: Remplacer par l'ID réel (via auth)
 ):
-    message, data = await minio_service.copy(
+    message, data = await minio_service.object_service.copy(
         user_id, payload.source_path, payload.destination_folder
     )
 
