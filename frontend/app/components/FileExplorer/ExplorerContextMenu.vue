@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { ContextMenuItem, TableRow } from "@nuxt/ui";
+import { useFileRenameRegistry } from "~/composables/file/RenameRegistry";
 import type { ApiFileItem } from "~~/shared/types/file_tree";
 
 const props = defineProps<{
@@ -7,6 +8,9 @@ const props = defineProps<{
 }>();
 
 const fsActions = useFsActions();
+const FSStore = useFSStore();
+
+const { start } = useFileRenameRegistry();
 
 // Génère les items du context menu selon le type de fichier
 function getRowItems(row: TableRow<ApiFileItem>): ContextMenuItem[] {
@@ -32,7 +36,12 @@ function getRowItems(row: TableRow<ApiFileItem>): ContextMenuItem[] {
       {
         label: "Renommer",
         icon: "material-symbols:edit-outline-rounded",
-        onSelect() {},
+        onSelect() {
+          if (props.row) {
+            const key = joinPath(FSStore.currentPath, props.row.original.name);
+            start(key);
+          }
+        },
       },
       {
         label: "Supprimer",
@@ -63,7 +72,12 @@ function getRowItems(row: TableRow<ApiFileItem>): ContextMenuItem[] {
       {
         label: "Renommer",
         icon: "material-symbols:edit-outline-rounded",
-        onSelect() {},
+        onSelect() {
+          if (props.row) {
+            const key = joinPath(FSStore.currentPath, props.row.original.name);
+            start(key);
+          }
+        },
       },
       {
         label: "Supprimer",
@@ -83,7 +97,7 @@ function getRowItems(row: TableRow<ApiFileItem>): ContextMenuItem[] {
 </script>
 
 <template>
-  <UContextMenu :items="row ? getRowItems(row) : []">
+  <UContextMenu :items="row ? getRowItems(row) : []" :aria-hidden="false">
     <slot />
   </UContextMenu>
 </template>
