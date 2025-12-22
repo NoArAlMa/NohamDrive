@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, UploadFile, Depends, status, Query
+from fastapi.responses import StreamingResponse
 from app.services.minio.minio_service import MinioService, get_minio_service
 from app.schemas.file_tree import SimpleFileTreeResponse
 from app.schemas.files import (
@@ -73,12 +74,15 @@ async def list_path(
     )
 
 
-@router.get("/download/{object_name:path}", status_code=status.HTTP_200_OK)
+@router.get(
+    "/download/{object_name:path}",
+    response_class=StreamingResponse,
+)
 async def download_file_endpoint(
     object_name: str,
     user_id: int = 1,  # TODO: Remplacer par l'ID réel (via auth)
     minio_service: MinioService = Depends(get_minio_service),
-):
+) -> StreamingResponse:
     """
     Télécharge un fichier depuis le bucket utilisateur.
 
