@@ -3,8 +3,6 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 
-from app.utils.response import BaseResponse
-
 
 class SimpleFileItem(BaseModel):
     """Un objet MinIO brut, sans traitement complexe."""
@@ -20,7 +18,7 @@ class SimpleFileTreeResponse(BaseModel):
 
     path: str  # Chemin actuel (ex: "mon-dossier/")
     items: List[SimpleFileItem]  # Liste des objets
-
-
-class TreeResponse(BaseResponse[SimpleFileTreeResponse]):
-    pass
+    page: int
+    per_page: int
+    total_items: int
+    total_pages: int

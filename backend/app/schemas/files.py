@@ -19,6 +19,11 @@ class CreateFolder(BaseModel):
     folderPath: str
 
 
+class CopyItem(BaseModel):
+    source_path: str
+    destination_folder: str
+
+
 class RenameItem(BaseModel):
     path: str
     new_name: str

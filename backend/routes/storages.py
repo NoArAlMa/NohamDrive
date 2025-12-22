@@ -1,7 +1,13 @@
 from fastapi import APIRouter, HTTPException, UploadFile, Depends, status, Query
-from app.services.minio_service import MinioService, get_minio_service
-from app.schemas.file_tree import SimpleFileTreeResponse, TreeResponse
-from app.schemas.files import CreateFolder, FileUploadResponse, RenameItem, MoveItem
+from fastapi.responses import StreamingResponse
+from app.services.minio.minio_service import MinioService, get_minio_service
+from app.schemas.file_tree import SimpleFileTreeResponse
+from app.schemas.files import (
+    CreateFolder,
+    RenameItem,
+    MoveItem,
+    CopyItem,
+)
 from app.utils.response import BaseResponse
 
 
@@ -9,14 +15,14 @@ router = APIRouter(prefix="/storage", tags=["Storage"])
 
 
 @router.post(
-    "/upload", response_model=FileUploadResponse, status_code=status.HTTP_201_CREATED
+    "/upload", response_model=BaseResponse, status_code=status.HTTP_201_CREATED
 )
 async def upload_file_endpoint(
     file: UploadFile,
     minio_service: MinioService = Depends(get_minio_service),
     user_id: int = 1,  # TODO : À remplacer par l'ID réel (via auth)
     path: str = "",
-) -> FileUploadResponse:
+) -> BaseResponse:
     """
     Upload un fichier dans le bucket utilisateur.
 
@@ -31,26 +37,25 @@ async def upload_file_endpoint(
     if not file.filename:
         raise HTTPException(status_code=400, detail="Nom de fichier vide.")
 
-    try:
-        metadata = await minio_service.upload_file(user_id, file, path)
-        return FileUploadResponse(data=metadata, status_code=status.HTTP_201_CREATED)
-    except HTTPException as e:
-        # Log côté endpoint si nécessaire
-        # logger.error(f"Erreur upload user {user_id}, fichier {file.filename}: {e.detail}")
-        raise e
+    message, metadata = await minio_service.download_service.upload_file(
+        user_id, file, path
+    )
+    return BaseResponse(
+        data=metadata, message=message, status_code=status.HTTP_201_CREATED
+    )
 
 
 @router.get(
     "/tree",
-    response_model=TreeResponse,
-    responses={
-        404: {"message": "Not Found"},
-        500: {"message": "Internal Server Error"},
-    },
+    response_model=BaseResponse,
 )
 async def list_path(
-    path: str = "", minio_service: MinioService = Depends(get_minio_service)
-) -> TreeResponse:
+    path: str = "",
+    user_id: int = 1,
+    page: int = 1,
+    per_page: int = 30,
+    minio_service: MinioService = Depends(get_minio_service),
+) -> BaseResponse:
     """
     Liste le contenu d'un chemin dans le bucket utilisateur.
     Args:
@@ -58,14 +63,12 @@ async def list_path(
     Returns:
         TreeResponse: Arborescence du chemin.
     """
-    bucket_name = await minio_service.ensure_bucket_exists(
-        user_id=1
-    )  # TODO : À adapter au système d'auth
+
     tree: SimpleFileTreeResponse = await minio_service.simple_list_path(
-        bucket_name, path
+        user_id=user_id, path=path, per_page=per_page, page=page
     )
 
-    return TreeResponse(
+    return BaseResponse(
         success=True if tree.items else False,
         data=tree,
         status_code=status.HTTP_200_OK,
@@ -75,28 +78,13 @@ async def list_path(
 
 @router.get(
     "/download/{object_name:path}",
-    responses={
-        200: {
-            "description": "Fichier téléchargé avec succès.",
-            "content": {"application/octet-stream": {}},
-        },
-        404: {
-            "description": "Fichier ou bucket non trouvé.",
-            "content": {
-                "application/json": {"example": {"detail": "Fichier non trouvé."}}
-            },
-        },
-        500: {
-            "description": "Erreur interne.",
-            "content": {"application/json": {"example": {"detail": "Erreur interne."}}},
-        },
-    },
+    response_class=StreamingResponse,
 )
 async def download_file_endpoint(
     object_name: str,
     user_id: int = 1,  # TODO: Remplacer par l'ID réel (via auth)
     minio_service: MinioService = Depends(get_minio_service),
-):
+) -> StreamingResponse:
     """
     Télécharge un fichier depuis le bucket utilisateur.
 
@@ -105,51 +93,13 @@ async def download_file_endpoint(
          **user_id** : ID de l'utilisateur (injecté par l'auth)
 
     """
-    return await minio_service.download_file(user_id, object_name)
+    return await minio_service.download_service.download_object(user_id, object_name)
 
 
 @router.post(
     "/folder",
     response_model=BaseResponse[str],
     status_code=status.HTTP_201_CREATED,
-    responses={
-        201: {
-            "description": "Dossier créé avec succès.",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "success": True,
-                        "data": "dossier_parent/nouveau_dossier/",
-                        "message": "Dossier créé avec succès.",
-                    }
-                }
-            },
-        },
-        400: {
-            "description": "Requête invalide (chemin ou dossier existant).",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "success": False,
-                        "data": None,
-                        "message": "Le dossier 'dossier/' existe déjà.",
-                    }
-                }
-            },
-        },
-        500: {
-            "description": "Erreur interne.",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "success": False,
-                        "data": None,
-                        "message": "Impossible de créer le dossier.",
-                    }
-                }
-            },
-        },
-    },
 )
 async def create_folder_endpoint(
     request: CreateFolder,
@@ -173,68 +123,58 @@ async def create_folder_endpoint(
 
 
     """
-    try:
-        folder_path = await minio_service.create_folder(
-            user_id=user_id,
-            current_path=request.currentPath,
-            folder_path=request.folderPath,
-        )
-        return BaseResponse(
-            success=True,
-            data=folder_path,
-            message="Dossier créé avec succès.",
-        )
-    except HTTPException as e:
-        raise e
 
-
-@router.delete(
-    "/file",
-    response_model=BaseResponse,
-    status_code=status.HTTP_200_OK,
-    responses={
-        200: {"description": "Fichier supprimé avec succès"},
-        404: {"description": "Fichier inexistant"},
-        500: {"description": "Erreur interne"},
-    },
-)
-async def delete_file_endpoint(
-    object_name: str = Query(..., description="Nom du fichier à supprimer"),
-    minio_service: MinioService = Depends(get_minio_service),
-    user_id: int = 1,
-):
-    await minio_service.delete_file(user_id, object_name)
-
+    folder_path = await minio_service.object_service.create_folder(
+        user_id=user_id,
+        current_path=request.currentPath,
+        folder_path=request.folderPath,
+    )
     return BaseResponse(
         success=True,
-        data=None,
-        message="Fichier supprimé avec succès",
-        status_code=status.HTTP_200_OK,
+        data=folder_path,
+        message="Dossier créé avec succès.",
+        status_code=status.HTTP_201_CREATED,
     )
 
 
 @router.delete(
-    "/folder",
+    "/object",
     response_model=BaseResponse,
     status_code=status.HTTP_200_OK,
-    responses={
-        200: {"description": "Dossier supprimé avec succès"},
-        404: {"description": "Dossier inexistant"},
-        500: {"description": "Erreur interne"},
-    },
 )
-async def delete_folder_endpoint(
-    folder_path: str = Query(..., description="Chemin du dossier à supprimer"),
+async def delete_object_endpoint(
+    folder_path: str = Query(..., description="Chemin de l'objet à supprimer"),
     minio_service: MinioService = Depends(get_minio_service),
     user_id: int = 1,
 ):
-    await minio_service.delete_folder(user_id, folder_path)
+    message, data = await minio_service.object_service.delete_object(
+        user_id, folder_path
+    )
 
     return BaseResponse(
         success=True,
-        data=None,
-        message="Dossier supprimé avec succès",
+        data=data,
+        message=message,
         status_code=status.HTTP_200_OK,
+    )
+
+
+@router.get(
+    "/stats/{object_path:path}",
+    response_model=BaseResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def stats_endpoint(
+    user_id: int = 1,
+    object_path: str = "",
+    minio_service: MinioService = Depends(get_minio_service),
+) -> BaseResponse:
+    data = await minio_service.object_service.get_object_metadata(user_id, object_path)
+    return BaseResponse(
+        message="Metadatas du fichier récupérées",
+        data=data,
+        success=True,
+        status_code=200,
     )
 
 
@@ -248,16 +188,14 @@ async def rename_endpoint(
     minio_service: MinioService = Depends(get_minio_service),
     user_id: int = 1,
 ):
-    await minio_service.rename(
+    message, data = await minio_service.object_service.rename(
         user_id=user_id,
         path=payload.path,
         new_name=payload.new_name,
     )
 
     return BaseResponse(
-        success=True,
-        data=None,
-        message="Renommage effectué avec succès",
+        success=True, data=data, message=message, status_code=status.HTTP_200_OK
     )
 
 
@@ -265,56 +203,6 @@ async def rename_endpoint(
     "/move",
     response_model=BaseResponse,
     status_code=status.HTTP_200_OK,
-    responses={
-        200: {
-            "description": "Fichier ou dossier déplacé avec succès.",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "success": True,
-                        "data": None,
-                        "message": "Déplacement effectué avec succès.",
-                    }
-                }
-            },
-        },
-        400: {
-            "description": "Requête invalide (chemin invalide).",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "success": False,
-                        "data": None,
-                        "message": "Chemin invalide (accès non autorisé).",
-                    }
-                }
-            },
-        },
-        404: {
-            "description": "Source introuvable.",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "success": False,
-                        "data": None,
-                        "message": "Source introuvable.",
-                    }
-                }
-            },
-        },
-        500: {
-            "description": "Erreur interne.",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "success": False,
-                        "data": None,
-                        "message": "Erreur lors du déplacement.",
-                    }
-                }
-            },
-        },
-    },
 )
 async def move_endpoint(
     payload: MoveItem,
@@ -336,17 +224,29 @@ async def move_endpoint(
             - `data (None)`: Toujours None.
             - `message (str)`: Message de confirmation ou d'erreur.
     """
-    try:
-        await minio_service.move(
-            user_id=user_id,
-            source_path=payload.source_path,
-            destination_folder=payload.destination_folder,
-    
-        )
-        return BaseResponse(
-            success=True,
-            data=None,
-            message="Déplacement effectué avec succès.",
-        )
-    except HTTPException as e:
-        raise e
+
+    message, data = await minio_service.object_service.move(
+        user_id=user_id,
+        source_path=payload.source_path,
+        destination_folder=payload.destination_folder,
+    )
+    return BaseResponse(
+        success=True,
+        data=data,
+        message=message,
+    )
+
+
+@router.post("/copy", response_model=BaseResponse, status_code=status.HTTP_200_OK)
+async def copy_endpoint(
+    payload: CopyItem,
+    minio_service: MinioService = Depends(get_minio_service),
+    user_id: int = 1,  # TODO: Remplacer par l'ID réel (via auth)
+):
+    message, data = await minio_service.object_service.copy(
+        user_id, payload.source_path, payload.destination_folder
+    )
+
+    return BaseResponse(
+        success=True, message=message, data=data, status_code=status.HTTP_200_OK
+    )
