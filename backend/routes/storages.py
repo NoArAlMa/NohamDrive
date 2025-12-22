@@ -1,7 +1,13 @@
 from fastapi import APIRouter, HTTPException, UploadFile, Depends, status, Query
 from app.services.minio_service import MinioService, get_minio_service
 from app.schemas.file_tree import SimpleFileTreeResponse
-from app.schemas.files import CreateFolder, FileUploadResponse, RenameItem, MoveItem
+from app.schemas.files import (
+    CreateFolder,
+    FileUploadResponse,
+    RenameItem,
+    MoveItem,
+    CopyItem,
+)
 from app.utils.response import BaseResponse
 
 
@@ -137,12 +143,12 @@ async def delete_object_endpoint(
     minio_service: MinioService = Depends(get_minio_service),
     user_id: int = 1,
 ):
-    await minio_service.delete_object(user_id, folder_path)
+    message, data = await minio_service.delete_object(user_id, folder_path)
 
     return BaseResponse(
         success=True,
-        data=None,
-        message="Objet supprimé avec succès",
+        data=data,
+        message=message,
         status_code=status.HTTP_200_OK,
     )
 
@@ -157,16 +163,14 @@ async def rename_endpoint(
     minio_service: MinioService = Depends(get_minio_service),
     user_id: int = 1,
 ):
-    await minio_service.rename(
+    message, data = await minio_service.rename(
         user_id=user_id,
         path=payload.path,
         new_name=payload.new_name,
     )
 
     return BaseResponse(
-        success=True,
-        data=None,
-        message="Renommage effectué avec succès",
+        success=True, data=data, message=message, status_code=status.HTTP_200_OK
     )
 
 
@@ -195,16 +199,29 @@ async def move_endpoint(
             - `data (None)`: Toujours None.
             - `message (str)`: Message de confirmation ou d'erreur.
     """
-    try:
-        await minio_service.move(
-            user_id=user_id,
-            source_path=payload.source_path,
-            destination_folder=payload.destination_folder,
-        )
-        return BaseResponse(
-            success=True,
-            data=None,
-            message="Déplacement effectué avec succès.",
-        )
-    except HTTPException as e:
-        raise e
+
+    message, data = await minio_service.move(
+        user_id=user_id,
+        source_path=payload.source_path,
+        destination_folder=payload.destination_folder,
+    )
+    return BaseResponse(
+        success=True,
+        data=data,
+        message=message,
+    )
+
+
+@router.post("/copy", response_model=BaseResponse, status_code=status.HTTP_200_OK)
+async def copy_endpoint(
+    payload: CopyItem,
+    minio_service: MinioService = Depends(get_minio_service),
+    user_id: int = 1,  # TODO: Remplacer par l'ID réel (via auth)
+):
+    message, data = await minio_service.copy(
+        user_id, payload.source_path, payload.destination_folder
+    )
+
+    return BaseResponse(
+        success=True, message=message, data=data, status_code=status.HTTP_200_OK
+    )

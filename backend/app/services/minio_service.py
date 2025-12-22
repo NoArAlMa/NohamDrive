@@ -131,7 +131,7 @@ class MinioService:
                 detail=f"Échec de l'upload: {str(e)}",
             )
 
-    async def delete_object(self, user_id: int, path: str) -> dict:
+    async def delete_object(self, user_id: int, path: str) -> tuple:
         """
         Supprime un fichier ou un dossier (récursif) dans MinIO.
 
@@ -186,7 +186,12 @@ class MinioService:
                         detail=f"Erreur suppression: {err.message}",
                     )
 
-                return {"detail": f"Dossier '{path}' supprimé ({len(objects)} objets)"}
+                return (
+                    f"Dossier '{path}' supprimé ({len(objects)} objets)",
+                    {
+                        "path": path,
+                    },
+                )
 
             # Suppression fichier
 
@@ -203,7 +208,7 @@ class MinioService:
 
                 self.minio.remove_object(bucket_name, path)
 
-                return {"detail": f"Fichier '{path}' supprimé avec succès"}
+                return (f"Fichier '{path}' supprimé avec succès", {"path": path})
 
         except S3Error as e:
             raise HTTPException(
@@ -424,7 +429,7 @@ class MinioService:
                 detail=f"Erreur lors du téléchargement: {str(e)}",
             )
 
-    async def rename(self, user_id: int, path: str, new_name: str):
+    async def rename(self, user_id: int, path: str, new_name: str) -> tuple:
         bucket_name = await self.get_user_bucket(user_id)
 
         # Validation & normalisation
@@ -506,9 +511,10 @@ class MinioService:
                 )
                 self.minio.remove_object(bucket_name, path)
 
-            return {
-                "detail": f"{'Dossier' if is_folder else 'Fichier'} renommé avec succès : {new_prefix}"
-            }
+            return (
+                f"{'Dossier' if is_folder else 'Fichier'} renommé avec succès : {new_prefix}",
+                {"old_prefix": old_prefix, "new_prefix": new_prefix},
+            )
 
         except S3Error as e:
             raise HTTPException(
@@ -520,7 +526,7 @@ class MinioService:
         user_id: int,
         source_path: str,
         destination_folder: str,
-    ) -> dict:
+    ) -> tuple:
         """
         Déplace un fichier ou un dossier dans MinIO.
 
@@ -531,17 +537,14 @@ class MinioService:
             is_folder: Si True, traite le source_path comme un dossier.
 
         Returns:
-            dict: Message de succès.
+            tuple: Message de succès, data.
 
         Raises:
             HTTPException: 400 si chemin invalide, 404 si source introuvable, 500 en cas d'erreur.
         """
         bucket_name = await self.get_user_bucket(user_id)
 
-        # -------------------------
         # Normalisation des chemins
-        # -------------------------
-
         def normalize_folder(path: str) -> str:
             return path.strip("/").rstrip("/") + "/"
 
@@ -556,10 +559,7 @@ class MinioService:
 
         destination_folder = normalize_folder(destination_folder)
 
-        # -------------------------
         # Détection nom de base
-        # -------------------------
-
         clean_source = source_path.rstrip("/")
         base_name = clean_source.split("/")[-1]
 
@@ -572,10 +572,7 @@ class MinioService:
                 409, "Impossible de déplacer un élément dans le même dossier."
             )
 
-        # -------------------------
         # Génération chemin destination
-        # -------------------------
-
         destination_path = self._generate_available_name(
             bucket_name=bucket_name,
             base_name=base_name,
@@ -586,10 +583,7 @@ class MinioService:
         if is_folder:
             destination_path = destination_path.rstrip("/") + "/"
 
-        # -------------------------
         # Vérification existence source
-        # -------------------------
-
         try:
             if is_folder:
                 objects = list(
@@ -609,10 +603,7 @@ class MinioService:
                 raise HTTPException(404, "Source introuvable.")
             raise HTTPException(500, f"Erreur MinIO: {str(e)}")
 
-        # -------------------------
         # Déplacement
-        # -------------------------
-
         try:
             if is_folder:
                 # Vérifie collision dossier
@@ -639,7 +630,6 @@ class MinioService:
                         )
 
                 # Suppression des anciens objets
-
                 delete_errors = self.minio.remove_objects(
                     bucket_name,
                     (
@@ -675,15 +665,116 @@ class MinioService:
 
                 self.minio.remove_object(bucket_name, source_path)
             logger.info(f"Déplacement de {source_path} vers {destination_path} réussi.")
-            return {
-                "detail": f"Déplacement de '{source_path}' vers '{destination_path}' réussi."
-            }
+            return (
+                f"Déplacement de '{source_path}' vers '{destination_path}' réussi.",
+                {"source_path": source_path, "destination_path": destination_path},
+            )
 
         except S3Error as e:
             raise HTTPException(
                 500,
                 f"Erreur lors du déplacement: {str(e)}",
             )
+
+    async def copy(
+        self,
+        user_id: int,
+        source_path: str,
+        destination_folder: str,
+    ) -> tuple:
+        """
+        Copie un fichier ou un dossier dans MinIO.
+        """
+        bucket_name = await self.get_user_bucket(user_id)
+
+        # Normalisation des chemins
+        if ".." in source_path or ".." in destination_folder:
+            raise HTTPException(400, "Chemin invalide.")
+
+        is_folder = source_path.endswith("/")
+        source_path = source_path.strip("/")
+        if is_folder:
+            source_path += "/"
+
+        destination_folder = destination_folder.strip("/")
+
+        if destination_folder:
+            destination_folder += "/"
+
+        # Détection du nom de base
+        clean_source = source_path.rstrip("/")
+        base_name = clean_source.split("/")[-1]
+
+        # Génération du chemin de destination (avec gestion des doublons)
+        destination_path = self._generate_available_name(
+            bucket_name=bucket_name,
+            base_name=base_name,
+            parent_path=destination_folder,
+            is_folder=is_folder,
+        )
+
+        if is_folder:
+            destination_path = destination_path.rstrip("/") + "/"
+
+        # Vérification de l'existence de la source
+        try:
+            if is_folder:
+                objects = list(
+                    self.minio.list_objects(
+                        bucket_name,
+                        prefix=source_path,
+                        recursive=True,
+                    )
+                )
+                if not objects:
+                    raise HTTPException(404, "Dossier introuvable ou vide.")
+            else:
+                self.minio.stat_object(bucket_name, source_path)
+
+        except S3Error as e:
+            if e.code == "NoSuchKey":
+                raise HTTPException(404, "Source introuvable.")
+            raise HTTPException(500, f"Erreur MinIO: {str(e)}")
+
+        # Copie
+        try:
+            if is_folder:
+                for obj in objects:
+                    if obj.object_name:
+                        relative_path = obj.object_name[len(source_path) :]
+                        new_object_name = destination_path + relative_path
+                        # Vérifie que source ≠ destination
+                        if obj.object_name != new_object_name:
+                            self.minio.copy_object(
+                                bucket_name,
+                                new_object_name,
+                                CopySource(bucket_name, obj.object_name),
+                            )
+            else:
+                # Vérifie que source ≠ destination
+                if source_path != destination_path:
+                    self.minio.copy_object(
+                        bucket_name,
+                        destination_path,
+                        CopySource(bucket_name, source_path),
+                    )
+                else:
+                    raise HTTPException(
+                        400,
+                        "Impossible de copier un objet sur lui-même sans modification.",
+                    )
+
+            logger.info(f"Copie de {source_path} vers {destination_path} réussie.")
+            return (
+                f"Copie de '{source_path}' vers '{destination_path}' réussie.",
+                {
+                    "source_path": source_path,
+                    "destination_path": destination_path,
+                },
+            )
+
+        except S3Error as e:
+            raise HTTPException(500, f"Erreur lors de la copie: {str(e)}")
 
     def _generate_available_name(
         self,
@@ -693,15 +784,22 @@ class MinioService:
         is_folder: bool,
     ) -> str:
         """
-        Génère un nom disponible façon Windows:
+        Génère un nom disponible façon Windows :
         file.txt → file (1).txt
         folder/ → folder (1)/
         """
+        # Normalisation du parent path : "" pour racine, sinon "dossier/"
+        parent_path = parent_path.strip("/")
+        if parent_path:
+            parent_path += "/"
+
+        # Séparation nom / extension pour fichiers
         if is_folder:
             name = base_name.rstrip("/")
             ext = ""
         else:
-            if "." in base_name:
+            # Cas spécial fichiers commençant par un point, ex: ".env" ce fdp
+            if "." in base_name and not base_name.startswith("."):
                 name, ext = base_name.rsplit(".", 1)
                 ext = "." + ext
             else:
@@ -715,14 +813,26 @@ class MinioService:
             if is_folder:
                 candidate += "/"
 
-            exists = list(
-                self.minio.list_objects(
-                    bucket_name,
-                    prefix=candidate,
-                    recursive=True,
+            # Vérifie si le candidate existe
+            exists = False
+            if is_folder:
+                objs = list(
+                    self.minio.list_objects(
+                        bucket_name, prefix=candidate, recursive=True
+                    )
                 )
-            )
+                exists = len(objs) > 0
+            else:
+                try:
+                    self.minio.stat_object(bucket_name, candidate)
+                    exists = True
+                except S3Error as e:
+                    if e.code == "NoSuchKey":
+                        exists = False
+                    else:
+                        raise
 
+            # S'assure que candidate n'est pas identique à la source
             if not exists:
                 return candidate
 
