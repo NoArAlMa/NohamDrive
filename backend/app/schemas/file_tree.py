@@ -3,7 +3,6 @@ from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 
-from app.utils.response import BaseResponse
 
 
 class SimpleFileItem(BaseModel):
@@ -22,5 +21,4 @@ class SimpleFileTreeResponse(BaseModel):
     items: List[SimpleFileItem]  # Liste des objets
 
 
-class TreeResponse(BaseResponse[SimpleFileTreeResponse]):
-    pass
+

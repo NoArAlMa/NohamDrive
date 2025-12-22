@@ -1,9 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from routes import storages, auth
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from core.minio_client import get_healthy_minio
+from datetime import datetime
 
 
 @asynccontextmanager
@@ -35,6 +39,50 @@ app.add_middleware(
 
 app.include_router(storages.router)
 app.include_router(auth.router)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "success": False,
+            "data": None,
+            "message": exc.detail if hasattr(exc, "detail") else "Erreur HTTP",
+            "timestamp": datetime.now().isoformat(),
+            "status_code": exc.status_code,
+        },
+    )
+
+
+# Gestion des erreurs de validation (ex: Query, Body)
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=422,
+        content={
+            "success": False,
+            "data": None,
+            "message": str(exc),
+            "timestamp": datetime.now().isoformat(),
+            "status_code": 422,
+        },
+    )
+
+
+# Gestion des exceptions génériques
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={
+            "success": False,
+            "data": None,
+            "message": str(exc),
+            "timestamp": datetime.now().isoformat(),
+            "status_code": 500,
+        },
+    )
 
 
 @app.get("/")

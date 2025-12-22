@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, UploadFile, Depends, status, Query
 from app.services.minio_service import MinioService, get_minio_service
-from app.schemas.file_tree import SimpleFileTreeResponse, TreeResponse
+from app.schemas.file_tree import SimpleFileTreeResponse
 from app.schemas.files import CreateFolder, FileUploadResponse, RenameItem, MoveItem
 from app.utils.response import BaseResponse
 
@@ -42,15 +42,11 @@ async def upload_file_endpoint(
 
 @router.get(
     "/tree",
-    response_model=TreeResponse,
-    responses={
-        404: {"message": "Not Found"},
-        500: {"message": "Internal Server Error"},
-    },
+    response_model=BaseResponse,
 )
 async def list_path(
     path: str = "", minio_service: MinioService = Depends(get_minio_service)
-) -> TreeResponse:
+) -> BaseResponse:
     """
     Liste le contenu d'un chemin dans le bucket utilisateur.
     Args:
@@ -65,7 +61,7 @@ async def list_path(
         bucket_name, path
     )
 
-    return TreeResponse(
+    return BaseResponse(
         success=True if tree.items else False,
         data=tree,
         status_code=status.HTTP_200_OK,
@@ -73,25 +69,7 @@ async def list_path(
     )
 
 
-@router.get(
-    "/download/{object_name:path}",
-    responses={
-        200: {
-            "description": "Fichier téléchargé avec succès.",
-            "content": {"application/octet-stream": {}},
-        },
-        404: {
-            "description": "Fichier ou bucket non trouvé.",
-            "content": {
-                "application/json": {"example": {"detail": "Fichier non trouvé."}}
-            },
-        },
-        500: {
-            "description": "Erreur interne.",
-            "content": {"application/json": {"example": {"detail": "Erreur interne."}}},
-        },
-    },
-)
+@router.get("/download/{object_name:path}", status_code=status.HTTP_200_OK)
 async def download_file_endpoint(
     object_name: str,
     user_id: int = 1,  # TODO: Remplacer par l'ID réel (via auth)
@@ -112,44 +90,6 @@ async def download_file_endpoint(
     "/folder",
     response_model=BaseResponse[str],
     status_code=status.HTTP_201_CREATED,
-    responses={
-        201: {
-            "description": "Dossier créé avec succès.",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "success": True,
-                        "data": "dossier_parent/nouveau_dossier/",
-                        "message": "Dossier créé avec succès.",
-                    }
-                }
-            },
-        },
-        400: {
-            "description": "Requête invalide (chemin ou dossier existant).",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "success": False,
-                        "data": None,
-                        "message": "Le dossier 'dossier/' existe déjà.",
-                    }
-                }
-            },
-        },
-        500: {
-            "description": "Erreur interne.",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "success": False,
-                        "data": None,
-                        "message": "Impossible de créer le dossier.",
-                    }
-                }
-            },
-        },
-    },
 )
 async def create_folder_endpoint(
     request: CreateFolder,
@@ -173,32 +113,26 @@ async def create_folder_endpoint(
 
 
     """
-    try:
-        folder_path = await minio_service.create_folder(
-            user_id=user_id,
-            current_path=request.currentPath,
-            folder_path=request.folderPath,
-        )
-        return BaseResponse(
-            success=True,
-            data=folder_path,
-            message="Dossier créé avec succès.",
-        )
-    except HTTPException as e:
-        raise e
+
+    folder_path = await minio_service.create_folder(
+        user_id=user_id,
+        current_path=request.currentPath,
+        folder_path=request.folderPath,
+    )
+    return BaseResponse(
+        success=True,
+        data=folder_path,
+        message="Dossier créé avec succès.",
+        status_code=status.HTTP_201_CREATED,
+    )
 
 
 @router.delete(
     "/object",
     response_model=BaseResponse,
     status_code=status.HTTP_200_OK,
-    responses={
-        200: {"description": "Objet supprimé avec succès"},
-        404: {"description": "Objet inexistant"},
-        500: {"description": "Erreur interne"},
-    },
 )
-async def delete_folder_endpoint(
+async def delete_object_endpoint(
     folder_path: str = Query(..., description="Chemin de l'objet à supprimer"),
     minio_service: MinioService = Depends(get_minio_service),
     user_id: int = 1,
@@ -240,56 +174,6 @@ async def rename_endpoint(
     "/move",
     response_model=BaseResponse,
     status_code=status.HTTP_200_OK,
-    responses={
-        200: {
-            "description": "Fichier ou dossier déplacé avec succès.",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "success": True,
-                        "data": None,
-                        "message": "Déplacement effectué avec succès.",
-                    }
-                }
-            },
-        },
-        400: {
-            "description": "Requête invalide (chemin invalide).",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "success": False,
-                        "data": None,
-                        "message": "Chemin invalide (accès non autorisé).",
-                    }
-                }
-            },
-        },
-        404: {
-            "description": "Source introuvable.",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "success": False,
-                        "data": None,
-                        "message": "Source introuvable.",
-                    }
-                }
-            },
-        },
-        500: {
-            "description": "Erreur interne.",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "success": False,
-                        "data": None,
-                        "message": "Erreur lors du déplacement.",
-                    }
-                }
-            },
-        },
-    },
 )
 async def move_endpoint(
     payload: MoveItem,
