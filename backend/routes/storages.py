@@ -157,6 +157,25 @@ async def delete_object_endpoint(
     )
 
 
+@router.get(
+    "/stats/{object_path:path}",
+    response_model=BaseResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def stats_endpoint(
+    user_id: int = 1,
+    object_path: str = "",
+    minio_service: MinioService = Depends(get_minio_service),
+) -> BaseResponse:
+    data = await minio_service.object_service.get_object_metadata(user_id, object_path)
+    return BaseResponse(
+        message="Metadatas du fichier récupérées",
+        data=data,
+        success=True,
+        status_code=200,
+    )
+
+
 @router.patch(
     "/rename",
     response_model=BaseResponse,

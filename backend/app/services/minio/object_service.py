@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import HTTPException, status
 from minio import Minio, S3Error
 from app.services.minio.bucket_service import BucketService
@@ -25,11 +26,9 @@ class ObjectService:
 
         bucket_name = await self.bucket_service.get_user_bucket(user_id)
 
-   
         # Normalisation & sécurité
         is_folder = path.endswith("/")
         path = MinioUtils.normalize_path(path, is_folder=is_folder)
-
 
         # Suppression dossier
         try:
@@ -414,14 +413,10 @@ class ObjectService:
 
         is_folder = source_path.endswith("/")
 
-        source_path = MinioUtils.normalize_path(
-            source_path,
-            is_folder=is_folder
-        )
+        source_path = MinioUtils.normalize_path(source_path, is_folder=is_folder)
 
         destination_folder = MinioUtils.normalize_path(
-            destination_folder,
-            is_folder=True
+            destination_folder, is_folder=True
         )
 
         # Détection du nom de base
@@ -439,8 +434,7 @@ class ObjectService:
 
         # Sécurité finale (important pour les dossiers)
         destination_path = MinioUtils.normalize_path(
-            destination_path,
-            is_folder=is_folder
+            destination_path, is_folder=is_folder
         )
         # Vérification de l'existence de la source
         try:
@@ -501,3 +495,76 @@ class ObjectService:
 
         except S3Error as e:
             raise HTTPException(500, f"Erreur lors de la copie: {str(e)}")
+
+    async def get_object_metadata(self, user_id: int, path: str) -> dict:
+        """
+        Récupère les métadonnées d'un fichier ou dossier dans MinIO.
+
+        Args:
+            user_id: ID de l'utilisateur (pour déterminer le bucket).
+            path: Chemin de l'objet (ex: "dossier/fichier.txt" ou "dossier/").
+
+        Returns:
+            Dict[str, str]: Dictionnaire contenant les métadonnées.
+
+        Raises:
+            HTTPException: 404 si l'objet n'existe pas, 500 en cas d'erreur MinIO.
+        """
+        bucket_name = await self.bucket_service.get_user_bucket(user_id)
+        path = MinioUtils.normalize_path(path, is_folder=path.endswith("/"))
+        is_folder = path.endswith("/")
+
+        try:
+            if is_folder:
+                # Pour un dossier, on liste les objets avec ce préfixe
+                objects = list(
+                    self.minio.list_objects(bucket_name, prefix=path, recursive=False)
+                )
+                if not objects:
+                    raise HTTPException(
+                        status_code=404, detail="Dossier vide ou introuvable"
+                    )
+
+                # Métadonnées "virtuelles" pour le dossier
+                metadata = {
+                    "nom": path.split("/")[-2],
+                    "taille_octets": None,
+                    "taille_ko": None,
+                    "type_mime": "application/x-directory",
+                    "date_modification": None,
+                    "chemin": path,
+                    "etag": None,
+                    "version_id": None,
+                    "nombre_fichiers": len(
+                        list(
+                            self.minio.list_objects(
+                                bucket_name, prefix=path, recursive=True
+                            )
+                        )
+                    ),
+                }
+            else:
+                # Pour un fichier, on utilise stat_object
+                stat = self.minio.stat_object(bucket_name, path)
+                if stat.last_modified:
+                    last_modified = datetime.fromtimestamp(
+                        stat.last_modified.timestamp()
+                    ).strftime("%Y-%m-%d %H:%M:%S")
+                metadata = {
+                    "nom": path.split("/")[-1],
+                    "taille_octets": stat.size,
+                    "taille_ko": round(stat.size / 1024, 2) if stat.size else None,
+                    "type_mime": stat.content_type,
+                    "date_modification": last_modified,
+                    "chemin": path,
+                    "est_dossier": False,
+                    "etag": stat.etag,
+                    "version_id": stat.version_id,
+                }
+
+            return metadata
+
+        except S3Error as e:
+            if e.code == "NoSuchKey":
+                raise HTTPException(status_code=404, detail="Objet non trouvé")
+            raise HTTPException(status_code=500, detail=f"Erreur MinIO: {str(e)}")
