@@ -26,13 +26,7 @@ function getRowItems(row: TableRow<ApiFileItem>): ContextMenuItem[] {
         onSelect() {},
       },
       { type: "separator" as const },
-      {
-        label: "Ouvrir le dossier",
-        icon: "material-symbols:folder-open-outline-rounded",
-        onSelect() {
-          fsActions.open(item);
-        },
-      },
+
       {
         label: "Renommer",
         icon: "material-symbols:edit-outline-rounded",
@@ -57,6 +51,8 @@ function getRowItems(row: TableRow<ApiFileItem>): ContextMenuItem[] {
           fsActions.copy(item);
         },
       },
+
+      { type: "separator" as const },
       {
         label: "Supprimer",
         icon: "material-symbols:delete-outline-rounded",
@@ -65,7 +61,6 @@ function getRowItems(row: TableRow<ApiFileItem>): ContextMenuItem[] {
           fsActions.del(item);
         },
       },
-      { type: "separator" as const },
       {
         label: "Propriétés",
         icon: "material-symbols:info-outline-rounded",
@@ -106,6 +101,8 @@ function getRowItems(row: TableRow<ApiFileItem>): ContextMenuItem[] {
           }
         },
       },
+
+      { type: "separator" as const },
       {
         label: "Supprimer",
         icon: "material-symbols:delete-outline-rounded",
@@ -114,7 +111,6 @@ function getRowItems(row: TableRow<ApiFileItem>): ContextMenuItem[] {
           fsActions.del(item);
         },
       },
-      { type: "separator" as const },
       {
         label: "Propriétés",
         icon: "material-symbols:info-outline-rounded",
