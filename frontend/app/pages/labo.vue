@@ -1,8 +1,9 @@
 <script lang="ts" setup></script>
 
 <template>
-  <h1>LABO</h1>
-  <UApp>
-    <FileExplorer />
+  <UApp class="w-screen h-screen">
+    <div class="w-full h-screen">
+      <FileExplorerContainer />
+    </div>
   </UApp>
 </template>

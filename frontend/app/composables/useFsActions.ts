@@ -1,3 +1,4 @@
+import type { RenameFilePayload } from "~~/shared/types/file_request";
 import type { ApiFileItem } from "~~/shared/types/file_tree";
 
 export const useFsActions = () => {
@@ -12,19 +13,22 @@ export const useFsActions = () => {
     old_name: string,
     newName: string,
     item: ApiFileItem
-  ): Promise<RenameFileResponse | null> => {
+  ): Promise<GenericAPIResponse<RenameFilePayload>> => {
     const full_path = item.is_dir
       ? `${joinPath(FSStore.currentPath, old_name)}/`
       : joinPath(FSStore.currentPath, old_name);
 
     try {
-      const req = await $fetch<RenameFileResponse>("/storage/rename", {
-        method: "PATCH",
-        body: {
-          path: full_path,
-          new_name: newName,
-        },
-      });
+      const req = await $fetch<GenericAPIResponse<RenameFilePayload>>(
+        "/storage/rename",
+        {
+          method: "PATCH",
+          body: {
+            path: full_path,
+            new_name: newName,
+          },
+        }
+      );
 
       useFileTree().retryFetching();
       toast.add({ title: "Renommé avec succès", color: "success" });

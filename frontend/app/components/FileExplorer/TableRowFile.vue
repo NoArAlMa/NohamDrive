@@ -35,6 +35,7 @@ const inputRef = ref<HTMLInputElement | null>(null);
 const key = computed(() =>
   joinPath(FSStore.currentPath, props.row.original.name)
 );
+const error = ref<string | null>(null);
 
 // Quand la clé change (ex: on change de dossier), on met à jour l'enregistrement.
 // Cela permet de savoir quelle fonction appeler pour éditer ce fichier/dossier.
@@ -91,11 +92,21 @@ async function submitEditing() {
   }
 
   try {
-    await action.rename(props.row.original.name, newName, props.row.original);
+    const response = await action.rename(
+      props.row.original.name,
+      newName,
+      props.row.original
+    );
+    // Mise à jour locale du nom dans la row
+    if (response?.success) {
+      props.row.original.name = newName;
+    }
+  } catch (e) {
+    error.value = "Erreur lors du renommage";
+    console.error(e);
   } finally {
-    // Dans tous les cas, on réinitialise l'état.
     isSubmitting.value = false;
-    isEditing.value = false;
+    if (!error.value) isEditing.value = false;
   }
 }
 
@@ -156,6 +167,8 @@ function onRowClick() {
         size="md"
         class="w-auto"
         :ui="{ base: 'h-6' }"
+        :loading="isSubmitting"
+        loading-icon="material-symbols:progress-activity"
         autofocus
         @keydown.enter.prevent="submitEditing"
         @keydown.esc="cancelEditing"
