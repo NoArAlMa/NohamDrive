@@ -4,11 +4,15 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const path = (query.path as string) || "/";
   const API_URL = useRuntimeConfig().public.apiBaseUrl;
+
   try {
     const data = await $fetch<ApiFileTreeResponse[]>(
       `${API_URL}/storage/tree?path=${encodeURIComponent(path)}`,
       {
         method: "GET",
+        query: {
+          path: path,
+        },
       }
     );
     return data;

@@ -44,16 +44,27 @@ function getRowItems(row: TableRow<ApiFileItem>): ContextMenuItem[] {
         },
       },
       {
+        label: "Télécharger",
+        icon: "material-symbols:download-rounded",
+        onSelect() {
+          fsActions.download(item);
+        },
+      },
+      {
         label: "Supprimer",
         icon: "material-symbols:delete-outline-rounded",
         color: "error" as const,
-        onSelect() {},
+        onSelect() {
+          fsActions.del(item);
+        },
       },
       { type: "separator" as const },
       {
         label: "Propriétés",
         icon: "material-symbols:info-outline-rounded",
-        onSelect() {},
+        onSelect() {
+          fsActions.property(item);
+        },
       },
     ];
   } else {
@@ -67,7 +78,9 @@ function getRowItems(row: TableRow<ApiFileItem>): ContextMenuItem[] {
       {
         label: "Télécharger",
         icon: "material-symbols:download-rounded",
-        onSelect() {},
+        onSelect() {
+          fsActions.download(item);
+        },
       },
       {
         label: "Renommer",
@@ -83,13 +96,17 @@ function getRowItems(row: TableRow<ApiFileItem>): ContextMenuItem[] {
         label: "Supprimer",
         icon: "material-symbols:delete-outline-rounded",
         color: "error" as const,
-        onSelect() {},
+        onSelect() {
+          fsActions.del(item);
+        },
       },
       { type: "separator" as const },
       {
         label: "Propriétés",
         icon: "material-symbols:info-outline-rounded",
-        onSelect() {},
+        onSelect() {
+          fsActions.property(item);
+        },
       },
     ];
   }

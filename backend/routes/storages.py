@@ -50,10 +50,10 @@ async def upload_file_endpoint(
     response_model=BaseResponse,
 )
 async def list_path(
-    path: str = "",
+    path: str = Query(default="/", description="Chemin du dossier"),
     user_id: int = 1,
-    page: int = 1,
-    per_page: int = 30,
+    page: int = Query(default=1, description="Numéro de page"),
+    per_page: int = Query(default=30, description="Nombre d'items par page"),
     minio_service: MinioService = Depends(get_minio_service),
 ) -> BaseResponse:
     """
@@ -143,7 +143,7 @@ async def create_folder_endpoint(
     status_code=status.HTTP_200_OK,
 )
 async def delete_object_endpoint(
-    folder_path: str = Query(..., description="Chemin de l'objet à supprimer"),
+    folder_path: str = Query(description="Chemin de l'objet à supprimer"),
     minio_service: MinioService = Depends(get_minio_service),
     user_id: int = 1,
 ):
@@ -160,13 +160,13 @@ async def delete_object_endpoint(
 
 
 @router.get(
-    "/stats/{object_path:path}",
+    "/stats",
     response_model=BaseResponse,
     status_code=status.HTTP_200_OK,
 )
 async def stats_endpoint(
     user_id: int = 1,
-    object_path: str = "",
+    object_path: str = Query(description="Salut toi"),
     minio_service: MinioService = Depends(get_minio_service),
 ) -> BaseResponse:
     data = await minio_service.object_service.get_object_metadata(user_id, object_path)

@@ -8,7 +8,7 @@ export const useFileTree = () => {
   } = useAsyncData<ApiFileTreeResponse>(
     "file-tree",
     async () => {
-      return $fetch("/api/storage/tree", {
+      return $fetch("/storage/tree", {
         params: { path: FSStore.currentPath },
       });
     },
