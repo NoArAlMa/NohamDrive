@@ -181,5 +181,35 @@ export const useFsActions = () => {
     }
   };
 
-  return { open, rename, del, property, terminal, download, copy };
+  const upload = async (files: File[]) => {
+    if (!files || files.length === 0) return;
+
+    const formData = new FormData();
+
+    // On ajoute tous les fichiers
+    files.forEach((file) => {
+      formData.append("file", file);
+    });
+    formData.append("path", FSStore.currentPath);
+
+    try {
+      const res = await $fetch<GenericAPIResponse<null>>("/storage/upload", {
+        method: "POST",
+        body: formData,
+        headers: {},
+      });
+
+      // Actualisation de l'explorateur
+      useFileTree().retryFetching();
+      toast.add({ title: "Upload réussi", color: "success" });
+      return res;
+    } catch (error: any) {
+      const message =
+        error.data?.statusMessage || "Impossible d'uploader le fichier(s).";
+      toast.add({ title: "Erreur", description: message, color: "error" });
+      throw error;
+    }
+  };
+
+  return { open, rename, del, property, terminal, download, copy, upload };
 };

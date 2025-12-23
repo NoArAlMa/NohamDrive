@@ -8,7 +8,7 @@ export const fileIconMap: Record<string, string> = {
   ppt: "vscode-icons:file-type-powerpoint",
   pptx: "vscode-icons:file-type-powerpoint",
   txt: "vscode-icons:file-type-text",
-  csv: "i-vscode-icons:file-type-csv",
+  csv: "material-symbols:csv-outline-rounded",
   md: "vscode-icons:file-type-markdown",
 
   // Images
