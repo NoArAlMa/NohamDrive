@@ -1,15 +1,14 @@
 import { GenericAPIResponse } from "~~/shared/types/API";
-import { RenameFilePayload } from "~~/shared/types/file_request";
+import { CopyFilePayload } from "~~/shared/types/file_request";
 
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
-
   const API_URL = useRuntimeConfig().public.apiBaseUrl;
   try {
-    const data = (await $fetch)<GenericAPIResponse<RenameFilePayload>>(
-      `${API_URL}/storage/rename`,
+    const data = await $fetch<GenericAPIResponse<CopyFilePayload>>(
+      `${API_URL}/storage/copy`,
       {
-        method: "PATCH",
+        method: "POST",
         body: payload,
       }
     );

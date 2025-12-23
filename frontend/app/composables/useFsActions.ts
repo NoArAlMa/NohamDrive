@@ -1,4 +1,7 @@
-import type { RenameFilePayload } from "~~/shared/types/file_request";
+import type {
+  CopyFilePayload,
+  RenameFilePayload,
+} from "~~/shared/types/file_request";
 import type { ApiFileItem } from "~~/shared/types/file_tree";
 
 export const useFsActions = () => {
@@ -148,5 +151,35 @@ export const useFsActions = () => {
     }
   };
 
-  return { open, rename, del, property, terminal, download };
+  const copy = async (
+    item: ApiFileItem
+  ): Promise<GenericAPIResponse<CopyFilePayload>> => {
+    const full_path = item.is_dir
+      ? `${joinPath(FSStore.currentPath, item.name)}/`
+      : joinPath(FSStore.currentPath, item.name);
+
+    try {
+      const req = await $fetch<GenericAPIResponse<CopyFilePayload>>(
+        "/storage/copy",
+        {
+          method: "POST",
+          body: {
+            source_path: full_path,
+            destination_folder: FSStore.currentPath,
+          },
+        }
+      );
+
+      useFileTree().retryFetching();
+      toast.add({ title: "Copié avec succès", color: "success" });
+      return req;
+    } catch (error: any) {
+      const message =
+        error.data?.statusMessage || "Impossible de copier le fichier/dossier.";
+      toast.add({ title: "Erreur", description: message, color: "error" });
+      throw error;
+    }
+  };
+
+  return { open, rename, del, property, terminal, download, copy };
 };

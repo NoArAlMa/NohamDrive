@@ -51,6 +51,13 @@ function getRowItems(row: TableRow<ApiFileItem>): ContextMenuItem[] {
         },
       },
       {
+        label: "Dupliquer",
+        icon: "material-symbols:content-copy-outline-rounded",
+        onSelect() {
+          fsActions.copy(item);
+        },
+      },
+      {
         label: "Supprimer",
         icon: "material-symbols:delete-outline-rounded",
         color: "error" as const,
@@ -80,6 +87,13 @@ function getRowItems(row: TableRow<ApiFileItem>): ContextMenuItem[] {
         icon: "material-symbols:download-rounded",
         onSelect() {
           fsActions.download(item);
+        },
+      },
+      {
+        label: "Dupliquer",
+        icon: "material-symbols:content-copy-outline-rounded",
+        onSelect() {
+          fsActions.copy(item);
         },
       },
       {
