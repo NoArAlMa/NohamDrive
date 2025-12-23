@@ -184,31 +184,34 @@ export const useFsActions = () => {
   const upload = async (files: File[]) => {
     if (!files || files.length === 0) return;
 
-    const formData = new FormData();
-
-    // On ajoute tous les fichiers
-    files.forEach((file) => {
+    const uploadPromises = files.map(async (file) => {
+      const formData = new FormData();
       formData.append("file", file);
-    });
-    formData.append("path", FSStore.currentPath);
+      formData.append("path", FSStore.currentPath);
 
-    try {
-      const res = await $fetch<GenericAPIResponse<null>>("/storage/upload", {
+      return $fetch<GenericAPIResponse<null>>("/storage/upload", {
         method: "POST",
         body: formData,
         headers: {},
-      });
+      })
+        .then((res) => {
+          console.log(`✅ Upload réussi pour ${file.name}`);
+          return res;
+        })
+        .catch((error) => {
+          const message =
+            error.data?.statusMessage || `Impossible d'uploader ${file.name}.`;
+          console.error(`❌ Erreur pour ${file.name}:`, message);
+          toast.add({ title: "Erreur", description: message, color: "error" });
+          throw error;
+        });
+    });
 
-      // Actualisation de l'explorateur
-      useFileTree().retryFetching();
-      toast.add({ title: "Upload réussi", color: "success" });
-      return res;
-    } catch (error: any) {
-      const message =
-        error.data?.statusMessage || "Impossible d'uploader le fichier(s).";
-      toast.add({ title: "Erreur", description: message, color: "error" });
-      throw error;
-    }
+    // Attendre que tous les uploads soient terminés
+    await Promise.all(uploadPromises);
+    // Actualisation de l'explorateur
+    useFileTree().retryFetching();
+    toast.add({ title: "Upload réussi", color: "success" });
   };
 
   return { open, rename, del, property, terminal, download, copy, upload };

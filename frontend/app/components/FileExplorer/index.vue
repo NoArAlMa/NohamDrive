@@ -58,16 +58,8 @@ function onDrop(e: DragEvent) {
 
   const files = Array.from(e.dataTransfer?.files ?? []);
 
-  if (files.length === 0) return;
-
-  console.log("📦 Fichiers droppés :", files);
-
-  // MOCK UPLOAD
+  // UPLOAD
   useFsActions().upload(files);
-
-  setTimeout(() => {
-    console.log("✅ Upload terminé (mock)");
-  }, 1000);
 }
 </script>
 
