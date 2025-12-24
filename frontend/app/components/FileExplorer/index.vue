@@ -6,11 +6,14 @@ import ExplorerContextMenu from "./ExplorerContextMenu.vue";
 import FileBreadcrumb from "./Breadcrumb.vue";
 import ExplorerError from "./ExplorerError.vue";
 import ExplorerLoader from "./ExplorerLoader.vue";
+import { useDropZone } from "@vueuse/core";
+import { useTemplateRef } from "vue";
 
 const { fileTree, hasError, errorMessage, errorStatus, loading } =
   useFileTree();
 
 // Importation des components Nuxt UI pour pouvoir les utiliser en JS
+
 const contextRow = ref<TableRow<ApiFileItem> | null>(null);
 
 const ui = {
@@ -26,103 +29,68 @@ const sorting = ref([]);
 
 // Variable "debounced" du loading
 
-const loading_debounced = refDebounced(loading, 500);
+const loading_debounced = refDebounced(loading, 100);
 
 // --- DRAG & DROP NATIF ---
 const isDragging = ref(false);
 const dragCounter = ref(0);
+const dropZoneRef = ref<HTMLElement | null>(null);
 
-function onDragEnter(e: DragEvent) {
-  e.preventDefault();
-  dragCounter.value++;
-  isDragging.value = true;
-}
+function onDrop(files: File[] | null) {
+  if (!files || files.length === 0) return;
 
-function onDragLeave(e: DragEvent) {
-  e.preventDefault();
-  dragCounter.value--;
-
-  if (dragCounter.value === 0) {
-    isDragging.value = false;
-  }
-}
-
-function onDragOver(e: DragEvent) {
-  e.preventDefault();
-}
-
-function onDrop(e: DragEvent) {
-  e.preventDefault();
   dragCounter.value = 0;
   isDragging.value = false;
 
-  const files = Array.from(e.dataTransfer?.files ?? []);
-
-  // UPLOAD
   useFsActions().upload(files);
 }
 </script>
 
 <template>
   <ExplorerContextMenu :row="contextRow">
-    <div
-      class="relative"
-      @dragenter="onDragEnter"
-      @dragover="onDragOver"
-      @dragleave="onDragLeave"
-      @drop="onDrop"
+    <UTable
+      v-model:sorting="sorting"
+      :loading="loading"
+      loading-color="info"
+      :sticky="true"
+      :data="fileTree"
+      :columns="columns"
+      :ui="{
+        tbody: 'file-explorer-tbody',
+      }"
+      @hover=""
+      @contextmenu="(e, row) => (contextRow = row)"
     >
-      <div
-        v-show="isDragging"
-        class="absolute inset-0 z-50 flex flex-col gap-3 items-center justify-center bg-gray-900/60 border-2 rounded-md border-dashed pointer-events-none"
-      >
-        <UIcon name="material-symbols:file-copy-outline" class="size-10" />
-        <p class="text-xl font-bold">Drop your file here</p>
-      </div>
-      <UTable
-        v-model:sorting="sorting"
-        :loading="false"
-        loading-color="info"
-        :sticky="true"
-        :data="fileTree"
-        :columns="columns"
-        :ui="{
-          tbody: 'file-explorer-tbody',
-        }"
-        @hover=""
-        @contextmenu="(e, row) => (contextRow = row)"
-      >
-        <template #name-cell="{ row }">
-          <FileExplorerTableRowFile :row="row" />
-        </template>
+      <template #name-cell="{ row }">
+        <FileExplorerTableRowFile :row="row" />
+      </template>
 
-        <!-- Page lorsque l'explorateur est vide  -->
-        <template #empty>
-          <div
-            v-if="!loading && !hasError && fileTree.length === 0"
-            class="flex items-center justify-center"
-          >
-            <UEmpty
-              class="min-w-[500px]"
-              variant="soft"
-              icon="material-symbols:sad-tab-outline-rounded"
-              title="No files"
-              description="It looks like you haven't added any files/folders. Create one to get started."
-              size="xl"
-            />
-          </div>
-
-          <ExplorerError
-            v-if="hasError"
-            :ErrorStatus="errorStatus"
-            :message="errorMessage"
+      <!-- Page lorsque l'explorateur est vide  -->
+      <template #empty>
+        <div
+          v-if="!loading && !hasError && fileTree.length === 0"
+          class="flex items-center justify-center"
+        >
+          <UEmpty
+            class="min-w-[500px]"
+            variant="soft"
+            icon="material-symbols:sad-tab-outline-rounded"
+            title="No files"
+            description="It looks like you haven't added any files/folders. Create one to get started."
+            size="xl"
           />
-        </template>
-        <!-- Page pour le chargement de l'explorateur -->
-        <template #loading>
-          <ExplorerLoader v-if="loading_debounced" />
-        </template>
-      </UTable>
-    </div>
+        </div>
+
+        <ExplorerError
+          v-if="hasError"
+          :ErrorStatus="errorStatus"
+          :message="errorMessage"
+        />
+      </template>
+      <!-- Page pour le chargement de l'explorateur -->
+      <template #loading>
+        <ExplorerLoader v-if="loading_debounced" />
+      </template>
+    </UTable>
   </ExplorerContextMenu>
 </template>
