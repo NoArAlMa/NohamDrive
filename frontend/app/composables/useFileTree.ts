@@ -1,3 +1,5 @@
+import { watchDebounced } from "@vueuse/core";
+
 export const useFileTree = () => {
   const FSStore = useFSStore();
   const {
@@ -14,22 +16,8 @@ export const useFileTree = () => {
     },
     {
       immediate: true,
+      watch: [() => FSStore.currentPath],
     }
-  );
-
-  // On regarde le changement de valeur de currentPath pour refresh les dossiers
-  watch(
-    () => FSStore.currentPath,
-    async () => {
-      const startTime = Date.now();
-      const timeout = setTimeout(() => {
-        data.value = undefined; // Réinitialise si le chargement prend plus de 300ms
-      }, 300);
-
-      await refresh();
-      clearTimeout(timeout);
-    },
-    { immediate: true }
   );
 
   const fileTree = computed(() => {
