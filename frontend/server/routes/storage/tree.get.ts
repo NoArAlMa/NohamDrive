@@ -6,15 +6,12 @@ export default defineEventHandler(async (event) => {
   const API_URL = useRuntimeConfig().public.apiBaseUrl;
 
   try {
-    const data = await $fetch<ApiFileTreeResponse[]>(
-      `${API_URL}/storage/tree?path=${encodeURIComponent(path)}`,
-      {
-        method: "GET",
-        query: {
-          path: path,
-        },
-      }
-    );
+    const data = await $fetch<ApiFileTreeResponse>(`${API_URL}/storage/tree`, {
+      method: "GET",
+      query: {
+        path: path,
+      },
+    });
     return data;
   } catch (error: any) {
     if (error?.response?.status) {

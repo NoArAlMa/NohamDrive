@@ -84,12 +84,11 @@ export const useFsActions = () => {
           },
         }
       );
-
+      
       // TODO : Ouvrir le drawer
     } catch (error: any) {
       const message =
-        error.data?.statusMessage ||
-        "Impossible de renommer le fichier/dossier.";
+        error.data?.statusMessage || "Impossible de récupérer les stats.";
       toast.add({ title: "Erreur", description: message, color: "error" });
       throw error;
     }

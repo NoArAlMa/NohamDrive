@@ -1,4 +1,4 @@
-import { watchDebounced } from "@vueuse/core";
+import type { ApiFileTreeData } from "~~/shared/types/file_tree";
 
 export const useFileTree = () => {
   const FSStore = useFSStore();
@@ -7,7 +7,7 @@ export const useFileTree = () => {
     pending: loading,
     refresh,
     error,
-  } = useAsyncData<ApiFileTreeResponse>(
+  } = useAsyncData<GenericAPIResponse<ApiFileTreeData>>(
     "file-tree",
     async () => {
       return $fetch("/storage/tree", {
@@ -21,7 +21,7 @@ export const useFileTree = () => {
   );
 
   const fileTree = computed(() => {
-    return data.value?.data.items ?? [];
+    return data.value?.data?.items ?? [];
   });
 
   // Variable concernant les erreurs pour mieux les afficher en UI
