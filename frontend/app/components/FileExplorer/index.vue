@@ -30,12 +30,19 @@ const loading_debounced = refDebounced(loading, 100);
 
 const rowSelection = ref<Record<string, boolean>>({});
 
-function onSelect(row: TableRow<ApiFileItem>) {
-  row.toggleSelected(!row.getIsSelected());
-}
+const selectedCount = computed(
+  () => Object.values(rowSelection.value).filter(Boolean).length
+);
 
-watch(rowSelection, async (newd) => {
-  console.log(newd);
+const selectedRows = computed(() =>
+  fileTree.value.filter((_, index) => rowSelection.value[index])
+);
+const emit = defineEmits<{
+  (e: "update:selectedCount", count: number): void;
+}>();
+
+watch(selectedCount, (count) => emit("update:selectedCount", count), {
+  immediate: true,
 });
 </script>
 
@@ -59,7 +66,7 @@ watch(rowSelection, async (newd) => {
           overscan: 8,
         }"
         @hover=""
-        class="w-full h-full"
+        class="w-full h-full overflow-x-hidden"
         @contextmenu="(e, row) => (contextRow = row)"
       >
         <template #name-cell="{ row }">

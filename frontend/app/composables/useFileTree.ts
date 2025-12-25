@@ -31,6 +31,8 @@ export const useFileTree = () => {
     () => error.value?.statusMessage ?? "Une erreur inconnue est survenue"
   );
 
+  const totalElements = computed(() => data.value?.data?.total_items);
+
   // Fonction pour retry de récupérer les fichiers
   const retryFetching = () => {
     refresh();
@@ -43,5 +45,6 @@ export const useFileTree = () => {
     hasError,
     errorMessage,
     errorStatus,
+    totalElements,
   };
 };
