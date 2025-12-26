@@ -31,10 +31,11 @@ export const useFileTree = () => {
     () => error.value?.statusMessage ?? "Une erreur inconnue est survenue"
   );
 
-  const totalElements = computed(() => data.value?.data?.total_items);
+  const totalElements = computed(() => data.value?.data?.total_items ?? 0);
 
   // Fonction pour retry de récupérer les fichiers
   const retryFetching = () => {
+    if (loading.value) return;
     refresh();
   };
 

@@ -6,8 +6,14 @@ import ExplorerContextMenu from "./ExplorerContextMenu.vue";
 import ExplorerError from "./ExplorerError.vue";
 import ExplorerLoader from "./ExplorerLoader.vue";
 
-const { fileTree, hasError, errorMessage, errorStatus, loading } =
-  useFileTree();
+const {
+  fileTree,
+  hasError,
+  errorMessage,
+  errorStatus,
+  loading,
+  retryFetching,
+} = useFileTree();
 
 const table = useTemplateRef("table");
 
@@ -90,6 +96,7 @@ watch(selectedCount, (count) => emit("update:selectedCount", count), {
             v-if="hasError"
             :ErrorStatus="errorStatus"
             :message="errorMessage"
+            :on-retry="retryFetching"
           />
         </template>
         <!-- Page pour le chargement de l'explorateur -->

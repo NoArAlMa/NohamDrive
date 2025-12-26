@@ -1,10 +1,11 @@
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
   ErrorStatus: number | undefined;
   message: string;
+  onRetry: () => void;
 }>();
 
-const { retryFetching } = useFileTree();
+
 </script>
 
 <template>
@@ -24,7 +25,7 @@ const { retryFetching } = useFileTree();
                 variant: 'subtle',
                 size: 'md',
                 loadingAuto: true,
-                onClick: retryFetching,
+                onClick: props.onRetry,
               },
             ]
           : []
