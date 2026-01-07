@@ -50,6 +50,8 @@ const emit = defineEmits<{
 watch(selectedCount, (count) => emit("update:selectedCount", count), {
   immediate: true,
 });
+
+const { drawerOpen, currentItemProperties, closeDrawer } = usePropertyDrawer();
 </script>
 
 <template>
@@ -106,4 +108,37 @@ watch(selectedCount, (count) => emit("update:selectedCount", count), {
       </UTable>
     </div>
   </ExplorerContextMenu>
+
+  <USlideover v-model:open="drawerOpen" side="right">
+    <template #content>
+      <div class="p-4">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold">Propriétés</h3>
+          <UButton
+            color="neutral"
+            variant="ghost"
+            icon="i-heroicons-x-mark-20-solid"
+            @click="closeDrawer"
+          />
+        </div>
+        <div v-if="currentItemProperties" class="space-y-4">
+          <p><strong>Nom:</strong> {{ currentItemProperties.nom }}</p>
+          <p>
+            <strong>Type:</strong>
+            {{ currentItemProperties.taille_ko == 0 ? "Dossier" : "Fichier" }}
+          </p>
+          <p>
+            <strong>Taille:</strong>
+            {{ currentItemProperties.taille_octets }} octets
+          </p>
+          <p>
+            <strong>Dernière modification:</strong>
+            {{
+              new Date(currentItemProperties.date_modification).toLocaleString()
+            }}
+          </p>
+        </div>
+      </div>
+    </template>
+  </USlideover>
 </template>

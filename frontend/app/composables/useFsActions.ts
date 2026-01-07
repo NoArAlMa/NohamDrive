@@ -7,11 +7,13 @@ import type { ApiFileItem } from "~~/shared/types/file_tree";
 export const useFsActions = () => {
   const FSStore = useFSStore();
   const toast = useToast();
+  const { openDrawerWithProperties } = usePropertyDrawer();
   const open = (item: ApiFileItem) => {
     if (item.is_dir) {
       FSStore.navigate(item.name);
     }
   };
+
   const rename = async (
     old_name: string,
     newName: string,
@@ -75,16 +77,15 @@ export const useFsActions = () => {
       : joinPath(FSStore.currentPath, item.name);
 
     try {
-      const req = await $fetch<GenericAPIResponse<FileMetadata>>(
-        "/storage/stats",
-        {
-          method: "GET",
-          query: {
-            object_path: full_path,
-          },
-        }
-      );
-      
+      const req = await $fetch("/storage/stats", {
+        method: "GET",
+        query: {
+          object_path: full_path,
+        },
+      });
+
+      openDrawerWithProperties(req.data!);
+
       // TODO : Ouvrir le drawer
     } catch (error: any) {
       const message =
