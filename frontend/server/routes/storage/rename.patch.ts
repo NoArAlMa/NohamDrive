@@ -1,14 +1,16 @@
-import { ApiFileTreeResponse } from "~~/shared/types/file_tree";
+import { GenericAPIResponse } from "~~/shared/types/API";
+import { RenameFilePayload } from "~~/shared/types/file_request";
 
 export default defineEventHandler(async (event) => {
-  const query = getQuery(event);
-  const path = (query.path as string) || "/";
+  const payload = await readBody(event);
+
   const API_URL = useRuntimeConfig().public.apiBaseUrl;
   try {
-    const data = await $fetch<ApiFileTreeResponse[]>(
-      `${API_URL}/storage/tree?path=${encodeURIComponent(path)}`,
+    const data = (await $fetch)<GenericAPIResponse<RenameFilePayload>>(
+      `${API_URL}/storage/rename`,
       {
-        method: "GET",
+        method: "PATCH",
+        body: payload,
       }
     );
     return data;

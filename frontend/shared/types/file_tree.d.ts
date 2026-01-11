@@ -8,6 +8,7 @@ export interface ApiFileItem {
 export interface ApiFileTreeData {
   path: string;
   items: ApiFileItem[];
+  total_items: number;
 }
 
 export interface ApiFileTreeResponse {

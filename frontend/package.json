@@ -20,8 +20,10 @@
     "vue-router": "^4.6.3"
   },
   "devDependencies": {
+    "@iconify-json/heroicons": "^1.2.3",
     "@iconify-json/vscode-icons": "^1.2.37",
     "@types/node": "^25.0.1",
-    "@vueuse/nuxt": "^14.1.0"
+    "@vueuse/nuxt": "^14.1.0",
+    "baseline-browser-mapping": "^2.9.14"
   }
 }

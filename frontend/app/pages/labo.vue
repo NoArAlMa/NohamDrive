@@ -1,5 +1,5 @@
 <script lang="ts" setup></script>
 
 <template>
-  <h1>LABO</h1>
+  <UApp class="h-screen w-screen"> </UApp>
 </template>

@@ -15,6 +15,12 @@ export default defineNuxtConfig({
     },
   },
 
+  routeRules: {
+    "/backend-api/**": {
+      proxy: { to: process.env.NUXT_PUBLIC_API_BASE_URL + "/**" },
+    },
+  },
+
   vite: {
     assetsInclude: ["**/*.svg"],
   },
