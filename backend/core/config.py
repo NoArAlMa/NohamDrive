@@ -6,6 +6,8 @@ from termcolor import colored
 # Classe qui va nous permettre d'accéder à notre .env
 
 
+# Classe qui va nous permettre d'accéder à notre .env
+
 class Settings(BaseSettings):
     # Database
 

@@ -61,15 +61,15 @@ Pour que tout se passe bien, voici les règles du jeu.
 
 ```bash
 cd frontend
-pnpm install
-pnpm dev
+npm install
+npm run dev
 ```
 
 ### Backend
 
 ```bash
-python venv venv ./venv #un truc dans le genre quoi
-./Scripts/activate
+python venv -m ./venv #un truc dans le genre quoi
+./venv/Scripts/activate
 pip install -r requirements.txt
 uvicorn main:app --reload
 ```
