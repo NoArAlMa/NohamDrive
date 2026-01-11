@@ -13,11 +13,11 @@ function handleClick(path: string) {
 
 <template>
   <div class="bg-gray/50">
-    <UBreadcrumb :items="items">
+    <UBreadcrumb :items="items" separator-icon="mdi:slash-forward">
       <template #item="{ item }">
         <ULink
           size="lg"
-          class="px-0 hover:cursor-pointer"
+          class="p-1 rounded-md hover:cursor-pointer hover:bg-gray-600/50"
           @click="handleClick(item.path)"
         >
           {{ item.label }}
