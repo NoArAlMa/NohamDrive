@@ -1,7 +1,5 @@
 <script lang="ts" setup></script>
 
 <template>
-  <UApp>
-    <WelcomeNoham />
-  </UApp>
+  <UApp class="h-screen w-screen"> </UApp>
 </template>
