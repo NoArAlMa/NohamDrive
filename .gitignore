@@ -83,3 +83,8 @@ docker-compose.override.yml
 ./.ruff_cache
 /frontend/app/pages/labo.vue
 frontend/app/pages/labo.vue
+docker-compose.yml
+/frontend/Dockerfile
+/backend/Dockerfile.*
+/backend/Dockerfile
+/frontend/Dockerfile.*
