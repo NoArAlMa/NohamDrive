@@ -1,6 +1,8 @@
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
-  devtools: { enabled: true },
+  devtools: {
+    enabled: process.env.NODE_ENV === "development",
+  },
 
   modules: ["@nuxt/ui", "@pinia/nuxt", "@vueuse/nuxt"],
 
@@ -16,12 +18,32 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
-    "/backend-api/**": {
-      proxy: { to: process.env.NUXT_PUBLIC_API_BASE_URL + "/**" },
+    "/routes/**": {
+      proxy: {
+        to: `${process.env.NUXT_PUBLIC_API_BASE_URL}/**`,
+      },
     },
   },
 
+  $production: {
+    ssr: true,
+
+    nitro: {
+      compressPublicAssets: true,
+      minify: true,
+    },
+  },
+
+  $development: {
+    ssr: true,
+  },
+
   vite: {
-    assetsInclude: ["**/*.svg"],
+    css: {
+      devSourcemap: true,
+    },
+    build: {
+      sourcemap: process.env.NODE_ENV === "development",
+    },
   },
 });
