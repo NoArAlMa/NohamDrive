@@ -10,7 +10,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      
       - name: Deploy backend via SSH
         uses: appleboy/ssh-action@v1
         with:
@@ -41,11 +40,11 @@ jobs:
 
             # Build et redémarrage du conteneur backend
             echo -e "${YELLOW}🐳 Construction de l'image Docker pour le backend...${NC}"
-            docker-compose -f docker-compose.backend.yml build || { echo -e "${RED}❌ Erreur lors du build Docker${NC}"; exit 1; }
+            docker compose -f docker-compose.backend.yml build || { echo -e "${RED}❌ Erreur lors du build Docker${NC}"; exit 1; }
 
             echo -e "${YELLOW}🔄 Redémarrage du conteneur backend...${NC}"
-            docker-compose -f docker-compose.backend.yml down || { echo -e "${RED}❌ Erreur lors de l'arrêt du conteneur${NC}"; exit 1; }
-            docker-compose -f docker-compose.backend.yml up -d --remove-orphans || { echo -e "${RED}❌ Erreur lors du démarrage du conteneur${NC}"; exit 1; }
+            docker compose -f docker-compose.backend.yml down || { echo -e "${RED}❌ Erreur lors de l'arrêt du conteneur${NC}"; exit 1; }
+            docker compose -f docker-compose.backend.yml up -d --remove-orphans || { echo -e "${RED}❌ Erreur lors du démarrage du conteneur${NC}"; exit 1; }
 
             # Nettoyage
             echo -e "${YELLOW}🧹 Nettoyage des images Docker inutilisées...${NC}"
