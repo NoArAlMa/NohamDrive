@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const selectedCount = ref(0);
+const FileCount = ref(0);
 const isDragging = ref(false); // Affiche l'overlay de drag
 const dragCounter = ref(0); // Compteur pour gérer les entrées/sorties de la zone de drop
 
@@ -72,10 +72,10 @@ async function onDrop(e: DragEvent) {
       </Transition>
 
       <ClientOnly>
-        <FileExplorer v-model:selectedCount="selectedCount" />
+        <FileExplorer v-model:selectedCount="FileCount" />
       </ClientOnly>
     </div>
 
-    <FileExplorerFooter :selected-count="selectedCount" />
+    <FileExplorerFooter :selected-count="FileCount" />
   </section>
 </template>

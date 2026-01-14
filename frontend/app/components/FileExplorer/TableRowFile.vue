@@ -66,13 +66,13 @@ function startEditing() {
   }
 
   // On attend que l'input soit rendu, puis on le focus et on sélectionne tout son contenu.
-  nextTick(() => {
-    setTimeout(() => {
-      const input = inputRef?.value;
-      input?.focus;
-      input?.select;
-    }, 50);
-  });
+  // nextTick(() => {
+  //   setTimeout(() => {
+  //     const input = inputRef?.value;
+  //     input?.focus;
+  //     input?.select;
+  //   }, 50);
+  // });
 }
 
 // Appelée quand on appuie sur Entrée ou que l'input perd le focus.
@@ -92,15 +92,7 @@ async function submitEditing() {
   }
 
   try {
-    const response = await action.rename(
-      props.row.original.name,
-      newName,
-      props.row.original
-    );
-    // Mise à jour locale du nom dans la row
-    if (response?.success) {
-      props.row.original.name = newName;
-    }
+    await action.rename(props.row.original.name, newName, props.row.original);
   } catch (e) {
     error.value = "Erreur lors du renommage";
     console.error(e);
@@ -116,11 +108,11 @@ const cancelEditing = useDebounceFn(() => {
 
 function onRowClick() {
   if (!props.row) return;
-  try {
-    props.row.toggleSelected?.();
-  } catch (e) {
-    console.log("lala");
-  }
+  // try {
+  props.row.toggleSelected?.();
+  // } catch (e) {
+  //   console.log("lala");
+  // }
 }
 </script>
 
@@ -172,7 +164,7 @@ function onRowClick() {
         autofocus
         @keydown.enter.prevent="submitEditing"
         @keydown.esc="cancelEditing"
-        @blur="cancelEditing"
+        @blur.prevent="cancelEditing"
       />
       <span
         v-if="!row.original.is_dir && extension"
