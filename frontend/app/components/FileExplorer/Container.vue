@@ -43,7 +43,7 @@ async function onDrop(e: DragEvent) {
 
 <template>
   <section
-    class="flex flex-col h-full w-full overflow-hidden relative rounded-lg border"
+    class="flex flex-col h-full w-full overflow-hidden relative rounded-xl border"
   >
     <div class="shrink-0 p-2 border-b">
       <FileExplorerBreadcrumb />

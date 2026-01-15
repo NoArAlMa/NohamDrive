@@ -78,7 +78,7 @@ const loading_debounced = refDebounced(loading, 100);
         <template #empty>
           <div v-if="!hasError" class="flex items-center justify-center">
             <UEmpty
-              class="min-w-[500px]"
+              class="min-w-125"
               variant="soft"
               icon="material-symbols:sad-tab-outline-rounded"
               title="No files"

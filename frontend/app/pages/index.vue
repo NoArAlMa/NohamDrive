@@ -2,10 +2,13 @@
 
 <template>
   <UApp class="min-h-screen p-4">
-    <section class="flex justify-center items-center h-screen">
+    <UContainer class="max-w-[80%] w-full h-[80vh]"
+      ><FileExplorerContainer
+    /></UContainer>
+    <!-- <section class="flex justify-center items-center h-screen">
       <div class="max-w-[80%] w-full h-[80vh]">
         <FileExplorerContainer />
       </div>
-    </section>
+    </section> -->
   </UApp>
 </template>
