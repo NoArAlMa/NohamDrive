@@ -10,10 +10,8 @@ const props = defineProps<{ row: TableRow<ApiFileItem> }>();
 // Cela permet de déclencher l'édition depuis n'importe où (ex: menu contextuel).
 const { register, unregister } = useFileRenameRegistry();
 
-
 const action = useFsActions();
 const FSStore = useFSStore();
-
 
 const isEditing = ref(false);
 const isSubmitting = ref(false);
@@ -95,19 +93,19 @@ const cancelEditing = useDebounceFn(() => {
   isEditing.value = false;
 }, 100);
 
-// function onRowClick() {
-//   if (!props.row) return;
+function onRowClick() {
+  if (!props.row) return;
 
-//   props.row.toggleSelected?.();
-// }
+  props.row.toggleSelected?.();
+}
 </script>
 
 <template>
   <div
     class="relative py-4 flex items-center group"
     :aria-hidden="false"
-    @click=""
-    @dblclick="action.open(props.row.original)"
+
+    @dblclick="onRowClick"
   >
     <!-- Icone dossier ou fichier -->
     <UIcon
@@ -146,7 +144,6 @@ const cancelEditing = useDebounceFn(() => {
         class="w-auto"
         :ui="{ base: 'h-6' }"
         :loading="isSubmitting"
-        loading-icon="material-symbols:progress-activity"
         autofocus
         @keydown.enter.prevent="submitEditing"
         @keydown.esc="cancelEditing"

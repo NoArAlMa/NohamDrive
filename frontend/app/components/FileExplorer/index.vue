@@ -60,6 +60,18 @@ const sorting = ref([]);
 
 // Variable "debounced" du loading
 const loading_debounced = refDebounced(loading, 100);
+
+function goBack() {
+  const fs = useFSStore();
+
+  if (fs.currentPath === "/" || fs.currentPath === "") return;
+
+  const parts = fs.currentPath.split("/").filter(Boolean);
+  parts.pop();
+
+  const newPath = "/" + parts.join("/");
+  fs.navigate(newPath || "/");
+}
 </script>
 
 <template>
@@ -100,6 +112,17 @@ const loading_debounced = refDebounced(loading, 100);
               title="No files"
               description="It looks like you haven't added any files/folders. Create one to get started."
               size="xl"
+              :actions="[
+                {
+                  icon: 'material-symbols:keyboard-return-rounded',
+                  label: 'Retour',
+                  color: 'neutral',
+                  variant: 'subtle',
+                  size: 'md',
+                  loadingAuto: true,
+                  onClick: goBack,
+                },
+              ]"
             />
           </div>
 
