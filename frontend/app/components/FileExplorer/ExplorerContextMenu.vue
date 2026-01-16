@@ -12,119 +12,71 @@ const FSStore = useFSStore();
 
 const { start } = useFileRenameRegistry();
 
-// Génère les items du context menu selon le type de fichier
-function getRowItems(row: TableRow<ApiFileItem>): ContextMenuItem[] {
-  if (!row) return [];
+const baseMenu = (item: ApiFileItem): ContextMenuItem[] => [
+  {
+    label: "Télécharger",
+    icon: "material-symbols:download-rounded",
+    onSelect: () => fsActions.download(item),
+  },
+  {
+    label: "Dupliquer",
+    icon: "material-symbols:content-copy-outline-rounded",
+    onSelect: () => fsActions.copy(item),
+  },
+  {
+    label: "Renommer",
+    icon: "material-symbols:edit-outline-rounded",
+    onSelect: () => {
+      if (props.row) {
+        const key = joinPath(FSStore.currentPath, props.row.original.name);
+        start(key);
+      }
+    },
+  },
+  { type: "separator" as const },
+  {
+    label: "Supprimer",
+    icon: "material-symbols:delete-outline-rounded",
+    color: "error" as const,
+    onSelect: () => fsActions.del(item),
+  },
+  {
+    label: "Propriétés",
+    icon: "material-symbols:info-outline-rounded",
+    onSelect: () => fsActions.property(item),
+  },
+];
 
-  const item = row.original;
-
+// Menu complet avec ajout spécifique
+const rowItems = computed((): ContextMenuItem[] => {
+  if (!props.row) return [];
+  const item = props.row.original;
   if (item.is_dir) {
     return [
       {
         label: "Ouvrir dans le terminal",
         icon: "material-symbols:terminal-rounded",
-        onSelect() {},
+        onSelect: () => fsActions.terminal(item),
       },
       { type: "separator" as const },
-
-      {
-        label: "Renommer",
-        icon: "material-symbols:edit-outline-rounded",
-        onSelect() {
-          if (props.row) {
-            const key = joinPath(FSStore.currentPath, props.row.original.name);
-            start(key);
-          }
-        },
-      },
-      {
-        label: "Télécharger",
-        icon: "material-symbols:download-rounded",
-        onSelect() {
-          fsActions.download(item);
-        },
-      },
-      {
-        label: "Dupliquer",
-        icon: "material-symbols:content-copy-outline-rounded",
-        onSelect() {
-          fsActions.copy(item);
-        },
-      },
-
-      { type: "separator" as const },
-      {
-        label: "Supprimer",
-        icon: "material-symbols:delete-outline-rounded",
-        color: "error" as const,
-        onSelect() {
-          fsActions.del(item);
-        },
-      },
-      {
-        label: "Propriétés",
-        icon: "material-symbols:info-outline-rounded",
-        onSelect() {
-          fsActions.property(item);
-        },
-      },
+      ...baseMenu(item),
     ];
   } else {
     return [
       {
         label: "Visualiser",
         icon: "material-symbols:visibility-outline-rounded",
-        onSelect() {},
+        onSelect: () => {},
       },
       { type: "separator" as const },
-      {
-        label: "Télécharger",
-        icon: "material-symbols:download-rounded",
-        onSelect() {
-          fsActions.download(item);
-        },
-      },
-      {
-        label: "Dupliquer",
-        icon: "material-symbols:content-copy-outline-rounded",
-        onSelect() {
-          fsActions.copy(item);
-        },
-      },
-      {
-        label: "Renommer",
-        icon: "material-symbols:edit-outline-rounded",
-        onSelect() {
-          if (props.row) {
-            const key = joinPath(FSStore.currentPath, props.row.original.name);
-            start(key);
-          }
-        },
-      },
-
-      { type: "separator" as const },
-      {
-        label: "Supprimer",
-        icon: "material-symbols:delete-outline-rounded",
-        color: "error" as const,
-        onSelect() {
-          fsActions.del(item);
-        },
-      },
-      {
-        label: "Propriétés",
-        icon: "material-symbols:info-outline-rounded",
-        onSelect() {
-          fsActions.property(item);
-        },
-      },
+      ...baseMenu(item),
     ];
   }
-}
+});
 </script>
 
 <template>
-  <UContextMenu :items="row ? getRowItems(row) : []" :aria-hidden="false">
+  <UContextMenu :items="rowItems" :aria-hidden="false">
     <slot />
   </UContextMenu>
 </template>

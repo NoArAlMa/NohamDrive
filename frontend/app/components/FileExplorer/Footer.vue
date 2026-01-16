@@ -20,7 +20,7 @@ const selectionLabel = computed(() => {
   <!-- TODO : Action en cours -->
 
   <div
-    class="shrink-0 border-t min-h-6 px-3 py-0.5 w-full flex items-center justify-between"
+    class="shrink-0 border-t min-h-6 pl-3 px-2 py-0.5 w-full flex items-center justify-between"
   >
     <div>
       <span>{{ selectionLabel }}</span>

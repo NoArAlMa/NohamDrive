@@ -5,10 +5,10 @@ import type { ApiFileItem } from "~~/shared/types/file_tree";
 import formatDate from "~/utils/date";
 
 type UIComponents = {
-  Checkbox: any;
-  Button: any;
-  DropdownMenu: any;
-  Icon: any;
+  UCheckbox: any;
+  UButton: any;
+  UDropdownMenu: any;
+  UIcon: any;
 };
 
 export function useFileExplorerColumns(ui: UIComponents) {
@@ -18,7 +18,7 @@ export function useFileExplorerColumns(ui: UIComponents) {
     return [
       {
         label: "Ascendant",
-   
+
         icon: "material-symbols:arrow-upward-rounded",
         type: "checkbox",
         checked: isSorted === "asc",
@@ -44,8 +44,8 @@ export function useFileExplorerColumns(ui: UIComponents) {
   function getHeader(column: Column<ApiFileItem>, label: string) {
     const isSorted = column.getIsSorted();
 
-    return h(ui.DropdownMenu, { items: sortingItems(column) }, () =>
-      h(ui.Button, {
+    return h(ui.UDropdownMenu, { items: sortingItems(column) }, () =>
+      h(ui.UButton, {
         label,
         variant: "ghost",
         color: "neutral",
@@ -62,7 +62,7 @@ export function useFileExplorerColumns(ui: UIComponents) {
     {
       id: "select",
       header: ({ table }) =>
-        h(ui.Checkbox, {
+        h(ui.UCheckbox, {
           ui: { base: "rounded-full" },
           modelValue: table.getIsAllPageRowsSelected(),
           indeterminate: table.getIsSomePageRowsSelected(),
@@ -70,7 +70,7 @@ export function useFileExplorerColumns(ui: UIComponents) {
             table.toggleAllPageRowsSelected(value),
         }),
       cell: ({ row }) =>
-        h(ui.Checkbox, {
+        h(ui.UCheckbox, {
           ui: { base: "rounded-full" },
           modelValue: row.getIsSelected(),
           "onUpdate:modelValue": (value: boolean) => row.toggleSelected(value),
@@ -80,7 +80,7 @@ export function useFileExplorerColumns(ui: UIComponents) {
       accessorKey: "name",
       header: ({ column }) =>
         h("div", { class: "flex items-center gap-2" }, [
-          h(ui.Icon, { name: "i-heroicons-document", class: "text-lg" }),
+          h(ui.UIcon, { name: "i-heroicons-document", class: "text-lg" }),
           getHeader(column, "Name"),
         ]),
     },

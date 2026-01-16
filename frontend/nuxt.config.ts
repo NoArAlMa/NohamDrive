@@ -1,10 +1,7 @@
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
-  devtools: {
-    enabled: process.env.NODE_ENV === "development",
-  },
 
-  modules: ["@nuxt/ui", "@pinia/nuxt", "@vueuse/nuxt"],
+  modules: ["@nuxt/ui", "@pinia/nuxt", "@vueuse/nuxt", "@nuxt/hints"],
 
   // Importation des fichiers css principaux
 
@@ -26,16 +23,18 @@ export default defineNuxtConfig({
   },
 
   $production: {
-    ssr: true,
+    ssr: false,
 
     nitro: {
       compressPublicAssets: true,
       minify: true,
     },
+    devtools: { enabled: false },
   },
 
   $development: {
     ssr: true,
+    devtools: { enabled: true },
   },
 
   vite: {
