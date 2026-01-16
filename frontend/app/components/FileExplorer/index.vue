@@ -82,11 +82,9 @@ const loading_debounced = refDebounced(loading, 100);
           enabled: true,
           overscan: 5,
         }"
-        
         @hover=""
         class="w-full h-full overflow-x-hidden"
         @contextmenu="(e, row) => (contextRow = row)"
-        
       >
         <template #name-cell="{ row }">
           <FileExplorerTableRowFile :row="row" />
