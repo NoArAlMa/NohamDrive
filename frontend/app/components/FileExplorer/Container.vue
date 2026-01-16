@@ -47,9 +47,14 @@ async function onDrop(e: DragEvent) {
   <section
     class="flex flex-col h-full w-full overflow-hidden relative rounded-xl"
   >
-    <div class="shrink-0 p-2 border-b flex items-center">
-      <FileExplorerToolbar :items="selectedItems" v-if="FileCount > 0" />
-      <FileExplorerBreadcrumb v-else />
+    <div class="shrink-0 p-2 border-b flex items-center justify-between">
+      <div>
+        <FileExplorerToolbar :items="selectedItems" v-if="FileCount > 0" />
+        <FileExplorerBreadcrumb v-else />
+      </div>
+      <div>
+        <FileExplorerUploadFolder />
+      </div>
     </div>
 
     <div
