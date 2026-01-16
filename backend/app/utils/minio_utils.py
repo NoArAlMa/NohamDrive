@@ -1,6 +1,8 @@
 import re
 from fastapi import HTTPException
-from minio import Minio, S3Error
+from minio import Minio
+
+WINDOWS_SUFFIX_RE = re.compile(r"^(.*?)(?: \((\d+)\))?$")
 
 
 class MinioUtils:
@@ -60,51 +62,62 @@ class MinioUtils:
         parent_path: str = "",
         is_folder: bool = False,
     ) -> str:
-        """
-        Génère un nom disponible façon Windows:
-        file.txt -> file (1).txt
-        folder/ -> folder (1)/
-        """
         parent_path = parent_path.strip("/")
         if parent_path:
             parent_path += "/"
 
+        # --- Séparation nom / extension ---
         if is_folder:
-            name = base_name.rstrip("/")
+            raw_name = base_name.rstrip("/")
             ext = ""
         else:
             if "." in base_name and not base_name.startswith("."):
-                name, ext = base_name.rsplit(".", 1)
+                raw_name, ext = base_name.rsplit(".", 1)
                 ext = "." + ext
             else:
-                name = base_name
+                raw_name = base_name
                 ext = ""
 
-        index = 0
-        while True:
-            suffix = f" ({index})" if index > 0 else ""
-            candidate = f"{parent_path}{name}{suffix}{ext}"
-            if is_folder:
-                candidate += "/"
+        # --- Extraction du vrai nom + suffixe éventuel ---
+        match = WINDOWS_SUFFIX_RE.match(raw_name)
+        if match:
+            base_clean_name = match.group(1)
 
-            exists = False
+        # --- Liste tous les objets concurrents ---
+        prefix = f"{parent_path}{base_clean_name}"
+        existing_indexes = set()
+
+        objs = minio_client.list_objects(bucket_name, prefix=prefix, recursive=False)
+
+        for obj in objs:
+            name = obj.object_name
+
+            if name and not name.startswith(parent_path):
+                continue
+
+            filename = name[len(parent_path) :] if name else ""
+
             if is_folder:
-                objs = list(
-                    minio_client.list_objects(
-                        bucket_name, prefix=candidate, recursive=True
-                    )
-                )
-                exists = len(objs) > 0
+                filename = filename.rstrip("/")
             else:
-                try:
-                    minio_client.stat_object(bucket_name, candidate)
-                    exists = True
-                except S3Error as e:
-                    if e.code == "NoSuchKey":
-                        exists = False
-                    else:
-                        raise
+                if not filename.endswith(ext):
+                    continue
+                filename = filename[: -len(ext)]
 
-            if not exists:
-                return candidate
+            m = WINDOWS_SUFFIX_RE.match(filename)
+            if m and m.group(1) == base_clean_name:
+                idx = int(m.group(2)) if m.group(2) else 0
+                existing_indexes.add(idx)
+
+        # --- Trouve le premier index libre ---
+        index = 0
+        while index in existing_indexes:
             index += 1
+
+        suffix = f" ({index})" if index > 0 else ""
+        candidate = f"{parent_path}{base_clean_name}{suffix}{ext}"
+
+        if is_folder:
+            candidate += "/"
+
+        return candidate
