@@ -3,6 +3,7 @@ from fastapi.responses import StreamingResponse
 from app.services.minio.minio_service import MinioService, get_minio_service
 from app.schemas.file_tree import SimpleFileTreeResponse
 from app.schemas.files import (
+    CompressItems,
     CreateFolder,
     RenameItem,
     MoveItem,
@@ -249,4 +250,31 @@ async def copy_endpoint(
 
     return BaseResponse(
         success=True, message=message, data=data, status_code=status.HTTP_200_OK
+    )
+
+
+@router.post(
+    "/compress", response_model=BaseResponse, status_code=status.HTTP_201_CREATED
+)
+async def compress_files_endpoint(
+    request: CompressItems,
+    minio_service: MinioService = Depends(get_minio_service),
+    user_id: int = 1,  # TODO : À remplacer par l'ID réel (via auth)
+) -> BaseResponse:
+    """
+    Compresses des fichiers dans le bucket utilisateur.
+
+    Args:
+        file : Un fichier à uploader
+        user_id : ID de l'utilisateur (injecté par l'auth)
+
+    Returns:
+        Le fichier à télécharger
+    """
+
+    message, metadata = await minio_service.object_service.compress_objects(
+        "user-1", request.objects, request.destination_folder
+    )
+    return BaseResponse(
+        data=metadata, message=message, status_code=status.HTTP_201_CREATED
     )
