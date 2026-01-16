@@ -1,10 +1,7 @@
 <script lang="ts" setup>
 import type { TableRow } from "@nuxt/ui";
-import { resolveComponent } from "vue";
 import type { ApiFileItem } from "~~/shared/types/file_tree";
-import ExplorerContextMenu from "./ExplorerContextMenu.vue";
-import ExplorerError from "./ExplorerError.vue";
-import ExplorerLoader from "./ExplorerLoader.vue";
+import { UCheckbox, UButton, UDropdownMenu, UIcon } from "#components";
 
 const {
   fileTree,
@@ -16,17 +13,47 @@ const {
 } = useFileTree();
 
 const table = useTemplateRef("table");
+const rowSelection = ref<Record<string, boolean>>({});
+
+const emit = defineEmits<{
+  (e: "update:selectedCount", count: number): void;
+  (e: "update:selectedItems", items: ApiFileItem[]): void;
+}>();
+
+const selectedCount = computed({
+  get: () => Object.values(rowSelection.value).filter(Boolean).length,
+  set: (value) => emit("update:selectedCount", value),
+});
+
+const selectedItems = computed<ApiFileItem[]>(() => {
+  if (!table.value) return [];
+
+  return (
+    table.value.tableApi
+      .getSelectedRowModel()
+      ?.rows.map((row) => row.original) ?? []
+  );
+});
+
+watch(selectedItems, (items) => {
+  emit("update:selectedItems", items);
+});
+
+watch(selectedCount, (count) => emit("update:selectedCount", count), {
+  immediate: true,
+});
+
+const ExplorerContextMenu = defineAsyncComponent(
+  () => import("./ExplorerContextMenu.vue")
+);
+const ExplorerError = defineAsyncComponent(() => import("./ExplorerError.vue"));
+const ExplorerLoader = defineAsyncComponent(
+  () => import("./ExplorerLoader.vue")
+);
 
 // Importation des components Nuxt UI pour pouvoir les utiliser en JS
 const contextRow = ref<TableRow<ApiFileItem> | null>(null);
-
-const ui = {
-  Checkbox: resolveComponent("UCheckbox"),
-  Button: resolveComponent("UButton"),
-  DropdownMenu: resolveComponent("UDropdownMenu"),
-  Icon: resolveComponent("UIcon"),
-};
-
+const ui = { UCheckbox, UButton, UDropdownMenu, UIcon };
 // Importation des colonnes et du système de sorting
 const { columns } = useFileExplorerColumns(ui);
 const sorting = ref([]);
@@ -34,24 +61,17 @@ const sorting = ref([]);
 // Variable "debounced" du loading
 const loading_debounced = refDebounced(loading, 100);
 
-const rowSelection = ref<Record<string, boolean>>({});
+function goBack() {
+  const fs = useFSStore();
 
-const selectedCount = computed(
-  () => Object.values(rowSelection.value).filter(Boolean).length
-);
+  if (fs.currentPath === "/" || fs.currentPath === "") return;
 
-const selectedRows = computed(() =>
-  fileTree.value.filter((_, index) => rowSelection.value[index])
-);
-const emit = defineEmits<{
-  (e: "update:selectedCount", count: number): void;
-}>();
+  const parts = fs.currentPath.split("/").filter(Boolean);
+  parts.pop();
 
-watch(selectedCount, (count) => emit("update:selectedCount", count), {
-  immediate: true,
-});
-
-const { drawerOpen, currentItemProperties, closeDrawer } = usePropertyDrawer();
+  const newPath = "/" + parts.join("/");
+  fs.navigate(newPath || "/");
+}
 </script>
 
 <template>
@@ -61,17 +81,18 @@ const { drawerOpen, currentItemProperties, closeDrawer } = usePropertyDrawer();
         ref="table"
         v-model:sorting="sorting"
         v-model:row-selection="rowSelection"
-        :loading="loading"
+        :loading="loading_debounced"
         loading-color="info"
         :data="fileTree"
         :columns="columns"
         :ui="{
           tbody: 'file-explorer-tbody',
+          td: 'py-0',
         }"
         :virtualize="{
           estimateSize: 65,
           enabled: true,
-          overscan: 8,
+          overscan: 5,
         }"
         @hover=""
         class="w-full h-full overflow-x-hidden"
@@ -85,12 +106,23 @@ const { drawerOpen, currentItemProperties, closeDrawer } = usePropertyDrawer();
         <template #empty>
           <div v-if="!hasError" class="flex items-center justify-center">
             <UEmpty
-              class="min-w-[500px]"
+              class="min-w-125"
               variant="soft"
               icon="material-symbols:sad-tab-outline-rounded"
               title="No files"
               description="It looks like you haven't added any files/folders. Create one to get started."
               size="xl"
+              :actions="[
+                {
+                  icon: 'material-symbols:keyboard-return-rounded',
+                  label: 'Retour',
+                  color: 'neutral',
+                  variant: 'subtle',
+                  size: 'md',
+                  loadingAuto: true,
+                  onClick: goBack,
+                },
+              ]"
             />
           </div>
 
@@ -108,37 +140,4 @@ const { drawerOpen, currentItemProperties, closeDrawer } = usePropertyDrawer();
       </UTable>
     </div>
   </ExplorerContextMenu>
-
-  <USlideover v-model:open="drawerOpen" side="right">
-    <template #content>
-      <div class="p-4">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-lg font-semibold">Propriétés</h3>
-          <UButton
-            color="neutral"
-            variant="ghost"
-            icon="i-heroicons-x-mark-20-solid"
-            @click="closeDrawer"
-          />
-        </div>
-        <div v-if="currentItemProperties" class="space-y-4">
-          <p><strong>Nom:</strong> {{ currentItemProperties.nom }}</p>
-          <p>
-            <strong>Type:</strong>
-            {{ currentItemProperties.taille_ko == 0 ? "Dossier" : "Fichier" }}
-          </p>
-          <p>
-            <strong>Taille:</strong>
-            {{ currentItemProperties.taille_octets }} octets
-          </p>
-          <p>
-            <strong>Dernière modification:</strong>
-            {{
-              new Date(currentItemProperties.date_modification).toLocaleString()
-            }}
-          </p>
-        </div>
-      </div>
-    </template>
-  </USlideover>
 </template>
