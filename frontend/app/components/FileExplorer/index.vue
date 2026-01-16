@@ -17,11 +17,26 @@ const rowSelection = ref<Record<string, boolean>>({});
 
 const emit = defineEmits<{
   (e: "update:selectedCount", count: number): void;
+  (e: "update:selectedItems", items: ApiFileItem[]): void;
 }>();
 
 const selectedCount = computed({
   get: () => Object.values(rowSelection.value).filter(Boolean).length,
   set: (value) => emit("update:selectedCount", value),
+});
+
+const selectedItems = computed<ApiFileItem[]>(() => {
+  if (!table.value) return [];
+
+  return (
+    table.value.tableApi
+      .getSelectedRowModel()
+      ?.rows.map((row) => row.original) ?? []
+  );
+});
+
+watch(selectedItems, (items) => {
+  emit("update:selectedItems", items);
 });
 
 watch(selectedCount, (count) => emit("update:selectedCount", count), {
@@ -60,15 +75,18 @@ const loading_debounced = refDebounced(loading, 100);
         :columns="columns"
         :ui="{
           tbody: 'file-explorer-tbody',
+          td: 'py-0',
         }"
         :virtualize="{
           estimateSize: 65,
           enabled: true,
           overscan: 5,
         }"
+        
         @hover=""
         class="w-full h-full overflow-x-hidden"
         @contextmenu="(e, row) => (contextRow = row)"
+        
       >
         <template #name-cell="{ row }">
           <FileExplorerTableRowFile :row="row" />

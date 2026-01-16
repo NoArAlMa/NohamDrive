@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { TableRow } from "@nuxt/ui";
 import { useFileRenameRegistry } from "~/composables/file/RenameRegistry";
-import { onClickOutside, useDebounceFn } from "@vueuse/core";
+import { useDebounceFn } from "@vueuse/core";
 
 // Ce composant reçoit une prop "row" qui représente une ligne du tableau (un fichier ou un dossier).
 const props = defineProps<{ row: TableRow<ApiFileItem> }>();
@@ -10,28 +10,17 @@ const props = defineProps<{ row: TableRow<ApiFileItem> }>();
 // Cela permet de déclencher l'édition depuis n'importe où (ex: menu contextuel).
 const { register, unregister } = useFileRenameRegistry();
 
-// On utilise un composable pour les actions sur les fichiers (ex: renommer, ouvrir).
-const action = useFsActions();
 
-// On accède au store global pour gérer l'état de l'explorateur de fichiers.
+const action = useFsActions();
 const FSStore = useFSStore();
 
-// isEditing : Indique si on est en train de renommer le fichier/dossier.
+
 const isEditing = ref(false);
-
-// isSubmitting : Indique si une requête de renommage est en cours (pour éviter les doubles clics).
 const isSubmitting = ref(false);
-
-// baseName : Stocke le nom de base du fichier/dossier (sans extension).
 const baseName = ref("");
-
-// extension : Stocke l'extension du fichier (ex: ".txt", ".pdf").
 const extension = ref("");
-
-// inputRef : Référence vers l'input pour le focus et la sélection automatique.
 const inputRef = ref<HTMLInputElement | null>(null);
 
-// On génère une clé unique pour chaque fichier/dossier, basée sur son chemin complet.
 const key = computed(() =>
   joinPath(FSStore.currentPath, props.row.original.name)
 );
@@ -106,21 +95,18 @@ const cancelEditing = useDebounceFn(() => {
   isEditing.value = false;
 }, 100);
 
-function onRowClick() {
-  if (!props.row) return;
-  // try {
-  props.row.toggleSelected?.();
-  // } catch (e) {
-  //   console.log("lala");
-  // }
-}
+// function onRowClick() {
+//   if (!props.row) return;
+
+//   props.row.toggleSelected?.();
+// }
 </script>
 
 <template>
   <div
-    class="relative h-full flex items-center group"
+    class="relative py-4 flex items-center group"
     :aria-hidden="false"
-    @click="onRowClick"
+    @click=""
     @dblclick="action.open(props.row.original)"
   >
     <!-- Icone dossier ou fichier -->

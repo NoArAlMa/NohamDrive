@@ -1,5 +1,7 @@
 <script setup lang="ts">
 const FileCount = ref(0);
+const selectedItems = ref<ApiFileItem[]>([]);
+
 const isDragging = ref(false); // Affiche l'overlay de drag
 const dragCounter = ref(0); // Compteur pour gérer les entrées/sorties de la zone de drop
 
@@ -43,10 +45,11 @@ async function onDrop(e: DragEvent) {
 
 <template>
   <section
-    class="flex flex-col h-full w-full overflow-hidden relative rounded-xl border"
+    class="flex flex-col h-full w-full overflow-hidden relative rounded-xl"
   >
-    <div class="shrink-0 p-2 border-b">
-      <FileExplorerBreadcrumb />
+    <div class="shrink-0 p-2 border-b flex items-center">
+      <FileExplorerToolbar :items="selectedItems" v-if="FileCount > 0" />
+      <FileExplorerBreadcrumb v-else />
     </div>
 
     <div
@@ -72,7 +75,10 @@ async function onDrop(e: DragEvent) {
       </Transition>
 
       <ClientOnly>
-        <FileExplorer v-model:selectedCount="FileCount" />
+        <FileExplorer
+          v-model:selectedCount="FileCount"
+          v-model:selected-items="selectedItems"
+        />
       </ClientOnly>
     </div>
 
