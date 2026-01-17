@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+const { createFolder } = useFsActions();
+
 function randomWord(length = 8): string {
   const chars = "abcdefghijklmnopqrstuvwxyz"; // lettres possibles
   let word = "";
@@ -7,24 +9,12 @@ function randomWord(length = 8): string {
   }
   return word;
 }
-
-async function createFolder() {
-  const folderName = randomWord(6); // génère un nom aléatoire de 6 lettres
-  await useFetch(`${useRuntimeConfig().public.apiBaseUrl}/storage/folder`, {
-    method: "POST",
-    body: {
-      currentPath: useFSStore().currentPath,
-      folderPath: folderName,
-    },
-  });
-  useFileTree().retryFetching();
-}
 </script>
 
 <template>
   <UButton
     label="Créer dossier"
-    @click="createFolder"
+    @click="createFolder(randomWord())"
     variant="soft"
     color="neutral"
   />
