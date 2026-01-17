@@ -1,4 +1,8 @@
 <script lang="ts" setup>
+defineNuxtComponent({
+  ssr: false,
+});
+
 const { setCurrentPath, generateBreadcrumbItems } = useFSStore();
 
 const items = computed(() => {
@@ -12,30 +16,32 @@ function handleClick(path: string) {
 </script>
 
 <template>
-  <Transition name="slide-fade" appear>
-    <div class="bg-gray/50">
-      <UBreadcrumb
-        :ui="{
-          list: 'flex items-center gap-0.5',
-          link: 'group flex items-center gap-1',
-        }"
-        :items="items"
-      >
-        <template #separator>
-          <span class="text-muted">/</span>
-        </template>
-        <template #item="{ item }">
-          <ULink
-            size="lg"
-            class="mx-0 px-2 py-1 rounded-md hover:cursor-pointer hover:bg-gray-600/25"
-            @click="handleClick(item.path)"
-          >
-            {{ item.label }}
-          </ULink>
-        </template>
-      </UBreadcrumb>
-    </div>
-  </Transition>
+  <ClientOnly>
+    <Transition name="slide-fade" appear>
+      <div class="bg-gray/50">
+        <UBreadcrumb
+          :ui="{
+            list: 'flex items-center gap-0.5',
+            link: 'group flex items-center gap-1',
+          }"
+          :items="items"
+        >
+          <template #separator>
+            <span class="text-muted">/</span>
+          </template>
+          <template #item="{ item }">
+            <ULink
+              size="lg"
+              class="mx-0 px-2 py-1 rounded-md hover:cursor-pointer hover:bg-gray-600/25"
+              @click="handleClick(item.path)"
+            >
+              {{ item.label }}
+            </ULink>
+          </template>
+        </UBreadcrumb>
+      </div>
+    </Transition>
+  </ClientOnly>
 </template>
 
 <style scoped>
@@ -53,6 +59,8 @@ function handleClick(path: string) {
 
 .slide-fade-enter-active,
 .slide-fade-appear-active {
-  transition: opacity 200ms ease-out, transform 200ms ease-out;
+  transition:
+    opacity 200ms ease-out,
+    transform 200ms ease-out;
 }
 </style>
