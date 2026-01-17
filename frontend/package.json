@@ -1,13 +1,63 @@
 {
   "name": "frontend",
+  "productName": "NohamDrive",
   "type": "module",
+  "version": "0.1.0",
+  "author": "Alexandre LARUE",
+  "description": "Mon app Nuxt + Electron",
   "private": true,
+  "main": "dist-electron/main.js",
   "scripts": {
-    "build": "nuxt build",
     "dev": "nuxt dev",
+    "build": "nuxt build",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "electron:build": "tsc -p electron",
+    "electron:dev": "concurrently \"nuxt dev\" \"wait-on http://localhost:3000 && npm run electron:start\"",
+    "electron:start": "npm run electron:build && electron .",
+    "build:elec": "nuxt build && cd .output/server && npm install --omit=dev --prefer-offline",
+    "electron:dist": "npm run build:elec && npm run electron:build && electron-builder"
+  },
+  "build": {
+    "appId": "com.nohamdrive.app",
+    "productName": "NohamDrive",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": ".output/server/node_modules/",
+        "to": "server/node_modules/"
+      },
+      {
+        "from": ".output/server/",
+        "filter": [
+          "!node_modules"
+        ],
+        "to": "server/"
+      },
+      {
+        "from": ".output/public/",
+        "to": "public/"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "icon.ico",
+      "forceCodeSigning": true
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "cscLink": "./electron/nohamdrive.pfx",
+    "cscKeyPassword": "nohamdrive"
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.80",
@@ -24,7 +74,11 @@
     "@iconify-json/heroicons": "^1.2.3",
     "@iconify-json/vscode-icons": "^1.2.37",
     "@types/node": "^25.0.1",
+    "@types/wait-on": "^5.3.4",
     "@vueuse/nuxt": "^14.1.0",
-    "baseline-browser-mapping": "^2.9.14"
+    "baseline-browser-mapping": "^2.9.14",
+    "concurrently": "^9.2.1",
+    "electron": "^40.0.0",
+    "electron-builder": "^26.4.0"
   }
 }

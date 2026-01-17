@@ -45,9 +45,9 @@ async function onDrop(e: DragEvent) {
 
 <template>
   <section
-    class="flex flex-col h-full w-full overflow-hidden relative rounded-xl"
+    class="flex flex-col h-full w-full overflow-hidden relative rounded-xl px-5 py-3 bg-[#0D1520] border border-muted shadow-lg"
   >
-    <div class="shrink-0 p-2 border-b flex items-center justify-between">
+    <div class="shrink-0 p-2 border-b flex items-center justify-between h-12">
       <div>
         <FileExplorerToolbar :items="selectedItems" v-if="FileCount > 0" />
         <FileExplorerBreadcrumb v-else />

@@ -21,7 +21,15 @@ async def lifespan(app: FastAPI):
 
 # Instanciation de l'app FastAPI
 
-app = FastAPI(title="OneDrive Alternative API", version="0.1.0", lifespan=lifespan)
+app = FastAPI(
+    title="NohamDrive API",
+    description="API pour NohamDrive un service de stockage cloud type OneDrive.",
+    version="0.2.0",
+    docs_url="/docs" if settings.DEBUG else None,
+    redoc_url="/redoc" if settings.DEBUG else None,
+    openapi_url="/openapi.json" if settings.DEBUG else None,
+    lifespan=lifespan,
+)
 
 
 # Création d'un CORS pour gérer la sécurité (entrées / sorties)
@@ -33,6 +41,22 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def restrict_docs(request: Request, call_next):
+    if not settings.DEBUG and request.url.path in ["/docs", "/redoc", "/openapi.json"]:
+        return JSONResponse(
+            content={
+                "success": False,
+                "data": None,
+                "message": "Not Found",
+                "timestamp": datetime.now().isoformat(),
+                "status_code": 404,
+            },
+            status_code=404,
+        )
+    return await call_next(request)
 
 
 # On inclut les différentes routes du projet
@@ -78,7 +102,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
         content={
             "success": False,
             "data": None,
-            "message": str(exc),
+            "message": "Erreur interne du serveur",
             "timestamp": datetime.now().isoformat(),
             "status_code": 500,
         },
