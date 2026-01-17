@@ -17,64 +17,66 @@ const DropdownItems = ref<DropdownMenuItem[]>([
   {
     label: "Compresser",
     icon: "material-symbols:compress-rounded",
-    disabled: true,
+    onSelect: () => action.compress(props.items),
   },
 ]);
 </script>
 
 <template>
-  <Transition name="slide-fade" appear>
-    <section
-      class="px-4 py-2 flex justify-between gap-2 w-full h-full shadow-sm rounded-xl"
-    >
-      <div>
-        <UButton
-          leading-icon="material-symbols:share-windows-rounded"
-          label="Partager"
-          color="neutral"
-          variant="ghost"
-          class="px-2 py-1"
-          disabled
-          @click=""
-        />
-
-        <UButton
-          leading-icon="material-symbols:download-rounded"
-          label="Télécharger"
-          color="neutral"
-          variant="ghost"
-          class="px-2 py-1"
-          @click="forEachSelected(action.download)"
-        />
-        <UButton
-          leading-icon="material-symbols:drive-file-move-outline-rounded"
-          label="Déplacer"
-          color="neutral"
-          variant="ghost"
-          disabled
-          class="px-2 py-1"
-        />
-        <UButton
-          leading-icon="material-symbols:delete-outline-rounded"
-          label="Supprimer"
-          color="error"
-          variant="ghost"
-          class="px-2 py-1"
-          @click="forEachSelected(action.del)"
-        />
-
-        <UDropdownMenu :items="DropdownItems" class="ml-3">
+  <ClientOnly>
+    <Transition name="slide-fade" appear>
+      <section
+        class="px-4 py-2 flex justify-between gap-2 w-full h-full shadow-sm rounded-xl"
+      >
+        <div>
           <UButton
-            leading-icon="material-symbols:more-horiz"
-            label="Plus"
+            leading-icon="material-symbols:share-windows-rounded"
+            label="Partager"
             color="neutral"
             variant="ghost"
-            class="px-2 py-1 ml-3"
+            class="px-2 py-1"
+            disabled
+            @click=""
           />
-        </UDropdownMenu>
-      </div>
-    </section>
-  </Transition>
+
+          <UButton
+            leading-icon="material-symbols:download-rounded"
+            label="Télécharger"
+            color="neutral"
+            variant="ghost"
+            class="px-2 py-1"
+            @click="forEachSelected(action.download)"
+          />
+          <UButton
+            leading-icon="material-symbols:drive-file-move-outline-rounded"
+            label="Déplacer"
+            color="neutral"
+            variant="ghost"
+            disabled
+            class="px-2 py-1"
+          />
+          <UButton
+            leading-icon="material-symbols:delete-outline-rounded"
+            label="Supprimer"
+            color="error"
+            variant="ghost"
+            class="px-2 py-1"
+            @click="forEachSelected(action.del)"
+          />
+
+          <UDropdownMenu :items="DropdownItems" class="ml-3">
+            <UButton
+              leading-icon="material-symbols:more-horiz"
+              label="Plus"
+              color="neutral"
+              variant="ghost"
+              class="px-2 py-1 ml-3"
+            />
+          </UDropdownMenu>
+        </div>
+      </section>
+    </Transition>
+  </ClientOnly>
 </template>
 
 <style scoped>
@@ -92,6 +94,8 @@ const DropdownItems = ref<DropdownMenuItem[]>([
 
 .slide-fade-enter-active,
 .slide-fade-appear-active {
-  transition: opacity 200ms ease-out, transform 200ms ease-out;
+  transition:
+    opacity 200ms ease-out,
+    transform 200ms ease-out;
 }
 </style>

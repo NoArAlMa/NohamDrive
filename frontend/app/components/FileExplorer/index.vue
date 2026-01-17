@@ -72,6 +72,14 @@ function goBack() {
   const newPath = "/" + parts.join("/");
   fs.navigate(newPath || "/");
 }
+
+watch(
+  () => fileTree,
+  () => {
+    rowSelection.value = {};
+  },
+  { deep: true }
+);
 </script>
 
 <template>

@@ -78,7 +78,6 @@ async function onDrop(e: DragEvent) {
           <p class="text-2xl font-semibold">Drop your file here</p>
         </div>
       </Transition>
-
       <ClientOnly>
         <FileExplorer
           v-model:selectedCount="FileCount"

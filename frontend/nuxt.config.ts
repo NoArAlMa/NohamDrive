@@ -21,6 +21,11 @@ export default defineNuxtConfig({
       },
     },
   },
+  // Configuration de ColorMode
+  colorMode: {
+    preference: "dark",
+    disableTransition: false,
+  },
 
   $production: {
     ssr: false,

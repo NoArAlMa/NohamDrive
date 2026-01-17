@@ -200,5 +200,72 @@ export const useFsActions = () => {
     toast.add({ title: "Upload réussi", color: "success" });
   };
 
-  return { open, rename, del, property, terminal, download, copy, upload };
+  const compress = async (
+    items: ApiFileItem[],
+    destination_folder: string = FSStore.currentPath,
+    output_base_name: string = "compressed_folder"
+  ): Promise<void> => {
+    const object_names = items.map((item) =>
+      item.is_dir
+        ? `${joinPath(FSStore.currentPath, item.name)}/`
+        : joinPath(FSStore.currentPath, item.name)
+    );
+
+    try {
+      const req = await $fetch<GenericAPIResponse<null>>("/storage/compress", {
+        method: "POST",
+        body: {
+          objects: object_names,
+          destination_folder,
+          output_base_name,
+        },
+      });
+
+      useFileTree().retryFetching();
+      toast.add({ title: "Compression terminée", color: "success" });
+    } catch (error: any) {
+      const message =
+        error.data?.statusMessage || "Impossible de compresser les fichiers.";
+      toast.add({ title: "Erreur", description: message, color: "error" });
+      throw error;
+    }
+  };
+
+  const createFolder = async (
+    folderName: string,
+    currentPath: string = FSStore.currentPath
+  ): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const req = await $fetch<GenericAPIResponse<string>>("/storage/folder", {
+        method: "POST",
+        body: {
+          currentPath,
+          folderPath: folderName,
+        },
+      });
+      useFileTree().retryFetching();
+      toast.add({ title: "Dossier créé", color: "success" });
+      return { success: true };
+    } catch (error: any) {
+      const message =
+        error.data?.message ??
+        error.data?.detail ??
+        `Impossible de créer le dossier "${folderName}".`;
+
+      return { success: false, message };
+    }
+  };
+
+  return {
+    open,
+    rename,
+    del,
+    property,
+    terminal,
+    download,
+    copy,
+    upload,
+    compress,
+    createFolder,
+  };
 };
