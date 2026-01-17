@@ -234,7 +234,7 @@ export const useFsActions = () => {
   const createFolder = async (
     folderName: string,
     currentPath: string = FSStore.currentPath
-  ): Promise<void> => {
+  ): Promise<{ success: boolean; message?: string }> => {
     try {
       const req = await $fetch<GenericAPIResponse<string>>("/storage/folder", {
         method: "POST",
@@ -243,15 +243,16 @@ export const useFsActions = () => {
           folderPath: folderName,
         },
       });
-
       useFileTree().retryFetching();
       toast.add({ title: "Dossier créé", color: "success" });
+      return { success: true };
     } catch (error: any) {
       const message =
-        error.data?.statusMessage ??
+        error.data?.message ??
+        error.data?.detail ??
         `Impossible de créer le dossier "${folderName}".`;
-      toast.add({ title: "Erreur", description: message, color: "error" });
-      throw error;
+
+      return { success: false, message };
     }
   };
 
