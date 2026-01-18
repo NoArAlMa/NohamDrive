@@ -5,10 +5,10 @@ definePageMeta({
 </script>
 
 <template>
-  <div class="min-h-screen bg-[var(--color-bg)] p-6 space-y-8">
+  <div class="min-h-screen bg-[--color-bg] p-6 space-y-8">
     <!-- Title -->
     <section>
-      <h1 class="text-3xl font-bold text-[var(--color-text)]">
+      <h1 class="text-3xl font-bold text-[--color-text]">
         Color & UI Test Panel
       </h1>
       <p class="text-muted">
