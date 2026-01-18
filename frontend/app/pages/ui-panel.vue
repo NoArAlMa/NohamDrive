@@ -1,3 +1,9 @@
+<script lang="ts">
+definePageMeta({
+  middleware: "prod-middleware",
+});
+</script>
+
 <template>
   <div class="min-h-screen bg-[var(--color-bg)] p-6 space-y-8">
     <!-- Title -->
