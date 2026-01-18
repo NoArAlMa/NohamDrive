@@ -1,6 +1,9 @@
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
 
+  // Ignore le dossier electron
+  ignore: ["electron"],
+
   modules: ["@nuxt/ui", "@pinia/nuxt", "@vueuse/nuxt", "@nuxt/hints"],
 
   // Importation des fichiers css principaux
@@ -34,6 +37,7 @@ export default defineNuxtConfig({
       compressPublicAssets: true,
       minify: true,
     },
+
     devtools: { enabled: false },
   },
 
