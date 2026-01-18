@@ -11,7 +11,7 @@ const props = defineProps<{
 <template>
   <div class="flex items-center justify-center">
     <UEmpty
-      class="min-w-[400px]"
+      class="min-w-100"
       variant="soft"
       icon="material-symbols:error-outline-rounded"
       :description="message"

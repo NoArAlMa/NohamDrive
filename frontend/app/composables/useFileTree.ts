@@ -17,6 +17,7 @@ export const useFileTree = () => {
     {
       immediate: true,
       watch: [() => FSStore.currentPath],
+      lazy: true,
     }
   );
 

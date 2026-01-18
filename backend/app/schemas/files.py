@@ -34,5 +34,10 @@ class MoveItem(BaseModel):
     destination_folder: str
 
 
+class CompressItems(BaseModel):
+    objects: list[str]
+    destination_folder: str
+
+
 class FileUploadResponse(BaseResponse[FileMetadata]):
     message: str = "File uploaded successfully"

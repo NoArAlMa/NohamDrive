@@ -107,47 +107,33 @@ export const useFsActions = () => {
     const encoded_path = full_path.split("/").map(encodeURIComponent).join("/");
 
     try {
-      const API_URL = useRuntimeConfig().public.apiBaseUrl;
-      const url = `${API_URL}/storage/download/${encoded_path}`;
-
-      const response = await fetch(url, {
-        method: "GET",
-      });
+      const response = await fetch(`/storage/download/${encoded_path}`);
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || "Le téléchargement a échoué");
+        const text = await response.text();
+        throw new Error(text || "Le téléchargement a échoué");
       }
 
-      // Utilise le nom de fichier suggéré par le backend
       const contentDisposition = response.headers.get("Content-Disposition");
-      let filename = "fichier"; // Valeur par défaut
-
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/i);
-        if (filenameMatch && filenameMatch[1]) {
-          filename = filenameMatch[1];
-        }
-      } else {
-        // Si pas de Content-Disposition, génère un nom approprié
-        if (item.is_dir) {
-          filename = `${item.name}.zip`; // Ex: "docs.zip"
-        } else {
-          filename = full_path.split("/").pop() || "fichier";
-        }
-      }
+      let filename =
+        contentDisposition?.match(/filename="?([^"]+)"?/i)?.[1] ??
+        (item.is_dir ? `${item.name}.zip` : item.name);
 
       const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob);
+
       const a = document.createElement("a");
-      a.href = downloadUrl;
+      a.href = url;
       a.download = filename;
       a.click();
-      window.URL.revokeObjectURL(downloadUrl);
+
+      URL.revokeObjectURL(url);
     } catch (error: any) {
-      const message = error.message || "Le téléchargement a échoué";
-      toast.add({ title: "Erreur", description: message, color: "error" });
-      throw error;
+      toast.add({
+        title: "Erreur",
+        description: error.message || "Le téléchargement a échoué",
+        color: "error",
+      });
     }
   };
 
@@ -214,5 +200,72 @@ export const useFsActions = () => {
     toast.add({ title: "Upload réussi", color: "success" });
   };
 
-  return { open, rename, del, property, terminal, download, copy, upload };
+  const compress = async (
+    items: ApiFileItem[],
+    destination_folder: string = FSStore.currentPath,
+    output_base_name: string = "compressed_folder"
+  ): Promise<void> => {
+    const object_names = items.map((item) =>
+      item.is_dir
+        ? `${joinPath(FSStore.currentPath, item.name)}/`
+        : joinPath(FSStore.currentPath, item.name)
+    );
+
+    try {
+      const req = await $fetch<GenericAPIResponse<null>>("/storage/compress", {
+        method: "POST",
+        body: {
+          objects: object_names,
+          destination_folder,
+          output_base_name,
+        },
+      });
+
+      useFileTree().retryFetching();
+      toast.add({ title: "Compression terminée", color: "success" });
+    } catch (error: any) {
+      const message =
+        error.data?.statusMessage || "Impossible de compresser les fichiers.";
+      toast.add({ title: "Erreur", description: message, color: "error" });
+      throw error;
+    }
+  };
+
+  const createFolder = async (
+    folderName: string,
+    currentPath: string = FSStore.currentPath
+  ): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const req = await $fetch<GenericAPIResponse<string>>("/storage/folder", {
+        method: "POST",
+        body: {
+          currentPath,
+          folderPath: folderName,
+        },
+      });
+      useFileTree().retryFetching();
+      toast.add({ title: "Dossier créé", color: "success" });
+      return { success: true };
+    } catch (error: any) {
+      const message =
+        error.data?.message ??
+        error.data?.detail ??
+        `Impossible de créer le dossier "${folderName}".`;
+
+      return { success: false, message };
+    }
+  };
+
+  return {
+    open,
+    rename,
+    del,
+    property,
+    terminal,
+    download,
+    copy,
+    upload,
+    compress,
+    createFolder,
+  };
 };
