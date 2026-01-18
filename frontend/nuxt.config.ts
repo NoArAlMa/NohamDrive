@@ -17,13 +17,6 @@ export default defineNuxtConfig({
     },
   },
 
-  routeRules: {
-    "/routes/**": {
-      proxy: {
-        to: `${process.env.NUXT_PUBLIC_API_BASE_URL}/**`,
-      },
-    },
-  },
   // Configuration de ColorMode
   colorMode: {
     preference: "dark",
@@ -32,12 +25,10 @@ export default defineNuxtConfig({
 
   $production: {
     ssr: false,
-
     nitro: {
       compressPublicAssets: true,
       minify: true,
     },
-
     devtools: { enabled: false },
   },
 
