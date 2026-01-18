@@ -31,7 +31,6 @@ function handleClick(path: string) {
           </template>
           <template #item="{ item }">
             <ULink
-              size="lg"
               class="mx-0 px-2 py-1 rounded-md hover:cursor-pointer hover:bg-gray-600/25"
               @click="handleClick(item.path)"
             >

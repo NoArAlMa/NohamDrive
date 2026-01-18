@@ -54,7 +54,7 @@ export function useFileExplorerColumns(ui: UIComponents) {
             ? "i-lucide-arrow-up"
             : "i-lucide-arrow-down"
           : "i-lucide-arrow-up-down",
-      })
+      }),
     );
   }
 
@@ -64,16 +64,19 @@ export function useFileExplorerColumns(ui: UIComponents) {
       header: ({ table }) =>
         h(ui.UCheckbox, {
           ui: { base: "rounded-full" },
+
           modelValue: table.getIsAllPageRowsSelected(),
           indeterminate: table.getIsSomePageRowsSelected(),
           "onUpdate:modelValue": (value: boolean) =>
             table.toggleAllPageRowsSelected(value),
+          icon: "material-symbols:check-rounded",
         }),
       cell: ({ row }) =>
         h(ui.UCheckbox, {
           ui: { base: "rounded-full" },
           modelValue: row.getIsSelected(),
           "onUpdate:modelValue": (value: boolean) => row.toggleSelected(value),
+          icon: "material-symbols:check-rounded",
         }),
     },
     {
