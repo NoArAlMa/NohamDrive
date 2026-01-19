@@ -50,7 +50,6 @@ __pycache__/
 instance/
 *.ini
 *.cfg
-
 *.yaml
 
 # Fichiers de cache
