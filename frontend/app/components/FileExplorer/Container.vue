@@ -63,6 +63,9 @@ async function onDrop(e: DragEvent) {
       @dragover="onDragOver"
       @dragleave="onDragLeave"
       @drop="onDrop"
+      role="region"
+      aria-label="File upload dropzone"
+      tabindex="0"
     >
       <!-- Overlay -->
       <Transition name="drop-fade">
@@ -70,12 +73,11 @@ async function onDrop(e: DragEvent) {
           v-if="isDragging"
           class="absolute inset-0 z-50 flex flex-col gap-3 items-center justify-center backdrop-blur-sm rounded-md border-2 border-white border-dashed bg-black/10 pointer-events-none"
         >
-          <!-- Icône -->
           <UIcon
             name="material-symbols:file-copy-outline-rounded"
             class="size-10"
           />
-          <p class="text-2xl font-semibold">Drop your file here</p>
+          <p class="text-2xl font-semibold">Drop your file(s) here</p>
         </div>
       </Transition>
       <ClientOnly>
@@ -89,3 +91,18 @@ async function onDrop(e: DragEvent) {
     <FileExplorerFooter :selected-count="FileCount" />
   </section>
 </template>
+
+<style scoped>
+.drop-fade-enter-active,
+.drop-fade-leave-active {
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.drop-fade-enter-from,
+.drop-fade-leave-to {
+  opacity: 0;
+  transform: scale(0.98);
+}
+</style>
