@@ -17,7 +17,7 @@ export const useFsActions = () => {
   const rename = async (
     old_name: string,
     newName: string,
-    item: ApiFileItem
+    item: ApiFileItem,
   ): Promise<GenericAPIResponse<RenameFilePayload>> => {
     const full_path = item.is_dir
       ? `${joinPath(FSStore.currentPath, old_name)}/`
@@ -32,7 +32,7 @@ export const useFsActions = () => {
             path: full_path,
             new_name: newName,
           },
-        }
+        },
       );
 
       useFileTree().retryFetching();
@@ -100,14 +100,15 @@ export const useFsActions = () => {
   };
 
   const download = async (item: ApiFileItem) => {
-    const full_path = item.is_dir
+    const fullPath = item.is_dir
       ? `${joinPath(FSStore.currentPath, item.name)}/`
       : joinPath(FSStore.currentPath, item.name);
 
-    const encoded_path = full_path.split("/").map(encodeURIComponent).join("/");
+    // IMPORTANT : enlever les slashs en tête
+    const cleanPath = fullPath.replace(/^\/+/, "");
 
     try {
-      const response = await fetch(`/storage/download/${encoded_path}`);
+      const response = await fetch(`/storage/download/${cleanPath}`);
 
       if (!response.ok) {
         const text = await response.text();
@@ -138,7 +139,7 @@ export const useFsActions = () => {
   };
 
   const copy = async (
-    item: ApiFileItem
+    item: ApiFileItem,
   ): Promise<GenericAPIResponse<CopyFilePayload>> => {
     const full_path = item.is_dir
       ? `${joinPath(FSStore.currentPath, item.name)}/`
@@ -153,7 +154,7 @@ export const useFsActions = () => {
             source_path: full_path,
             destination_folder: FSStore.currentPath,
           },
-        }
+        },
       );
 
       useFileTree().retryFetching();
@@ -203,12 +204,12 @@ export const useFsActions = () => {
   const compress = async (
     items: ApiFileItem[],
     destination_folder: string = FSStore.currentPath,
-    output_base_name: string = "compressed_folder"
+    output_base_name: string = "compressed_folder",
   ): Promise<void> => {
     const object_names = items.map((item) =>
       item.is_dir
         ? `${joinPath(FSStore.currentPath, item.name)}/`
-        : joinPath(FSStore.currentPath, item.name)
+        : joinPath(FSStore.currentPath, item.name),
     );
 
     try {
@@ -233,7 +234,7 @@ export const useFsActions = () => {
 
   const createFolder = async (
     folderName: string,
-    currentPath: string = FSStore.currentPath
+    currentPath: string = FSStore.currentPath,
   ): Promise<{ success: boolean; message?: string }> => {
     try {
       const req = await $fetch<GenericAPIResponse<string>>("/storage/folder", {

@@ -10,8 +10,10 @@ export default defineEventHandler(async (event) => {
       statusMessage: "Chemin manquant",
     });
   }
+  // path peut être string OU string[]
+  const normalizedPath = Array.isArray(path) ? path.join("/") : path;
 
-  const target = `${config.public.apiBaseUrl}/storage/download/${path}`;
+  const target = `${config.public.apiBaseUrl}/storage/download/${normalizedPath}`;
 
   return proxyRequest(event, target);
 });
