@@ -1,5 +1,6 @@
 from datetime import datetime
 from tempfile import SpooledTemporaryFile
+import threading
 import zipfile
 from fastapi import HTTPException, status
 from minio import Minio, S3Error
@@ -10,6 +11,8 @@ from minio.deleteobjects import DeleteObject
 import io
 from minio.commonconfig import CopySource
 from typing import cast, BinaryIO
+import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = setup_logger(__name__)
 
@@ -505,6 +508,8 @@ class ObjectService:
         object_names: list[str],
         destination_folder: str,
         output_base_name: str = "compressed_folder",
+        max_workers: int = 4,
+        max_zip_size_mb: int = 1024,
     ):
         """
         Compresse plusieurs objets MinIO dans une archive ZIP et l'enregistre dans le bucket.
@@ -524,15 +529,14 @@ class ObjectService:
             destination_folder = MinioUtils.normalize_path(
                 destination_folder, is_folder=True
             )
-            valid_objects = set()  # Utilisation de set pour éviter les doublons
+            valid_objects = set()
 
-            # --- Collecte des objets valides ---
+            # Collecte des objets valides
             for obj_name in object_names:
                 obj_name = MinioUtils.normalize_path(
                     obj_name, is_folder=obj_name.endswith("/")
                 )
                 if obj_name.endswith("/"):
-                    # C'est un dossier → on liste tout ce qu'il contient
                     objs = self.minio.list_objects(
                         bucket_name, prefix=obj_name, recursive=True
                     )
@@ -555,55 +559,80 @@ class ObjectService:
                 is_folder=False,
             )
 
-            # --- Déterminer le préfixe commun ---
             source_prefix = (
                 object_names[0]
                 if len(object_names) == 1 and object_names[0].endswith("/")
+                else os.path.commonpath(object_names)
+                if len(object_names) > 1
                 else ""
             )
 
-            # --- Création du ZIP en streaming ---
             temp_zip = SpooledTemporaryFile(max_size=100 * 1024 * 1024)
+            zip_lock = threading.Lock()
+            total_size = 0
+            max_zip_size = max_zip_size_mb * 1024 * 1024
+
+            def add_to_zip(obj_name: str):
+                nonlocal total_size
+                try:
+                    response = self.minio.get_object(bucket_name, obj_name)
+                    arcname = (
+                        obj_name[len(source_prefix) :].lstrip("/")
+                        if source_prefix
+                        else os.path.basename(obj_name)
+                    )
+
+                    # Création des dossiers parents
+                    if "/" in arcname:
+                        dirs = arcname.split("/")[:-1]
+                        current_dir = ""
+                        for d in dirs:
+                            current_dir += d + "/"
+                            with zip_lock:
+                                if current_dir not in zipf.NameToInfo:
+                                    zipf.writestr(current_dir, "")
+
+                    # Ajout du fichier
+                    if arcname:
+                        with zip_lock:
+                            with zipf.open(arcname, "w") as zip_entry:
+                                for chunk in response.stream(32 * 1024):
+                                    zip_entry.write(chunk)
+                                    total_size += len(chunk)
+                                    if total_size > max_zip_size:
+                                        logger.warning(
+                                            f"Taille maximale du ZIP ({max_zip_size_mb} Mo) atteinte."
+                                        )
+                                        return False
+
+                    response.close()
+                    response.release_conn()
+                    return True
+
+                except S3Error as e:
+                    logger.error(f"Erreur MinIO pour {obj_name}: {str(e)}")
+                    return False
+                except Exception as e:
+                    logger.error(f"Erreur inattendue pour {obj_name}: {str(e)}")
+                    return False
+
             with zipfile.ZipFile(
                 temp_zip,
                 mode="w",
                 compression=zipfile.ZIP_DEFLATED,
                 compresslevel=6,
             ) as zipf:
-                for obj_name in valid_objects:
-                    try:
-                        response = self.minio.get_object(bucket_name, obj_name)
+                # Exécution parallèle avec verrou
+                with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                    futures = {
+                        executor.submit(add_to_zip, obj): obj for obj in valid_objects
+                    }
+                    success_count = 0
+                    for future in as_completed(futures):
+                        if future.result():
+                            success_count += 1
 
-                        # --- Chemin relatif dans le ZIP ---
-                        if source_prefix:
-                            arcname = obj_name[len(source_prefix) :]
-                        else:
-                            arcname = obj_name
-
-                        # --- Ajout des dossiers parents ---
-                        if "/" in arcname:
-                            dirs = arcname.split("/")[:-1]
-                            current_dir = ""
-                            for d in dirs:
-                                current_dir += d + "/"
-                                if current_dir not in zipf.NameToInfo:
-                                    zipf.writestr(current_dir, "")
-
-                        # --- Ajout du fichier ---
-                        if arcname:
-                            with zipf.open(arcname, "w") as zip_entry:
-                                for chunk in response.stream(32 * 1024):
-                                    zip_entry.write(chunk)
-
-                    except S3Error as e:
-                        logger.error(
-                            f"Erreur lors de la compression de {obj_name}: {str(e)}"
-                        )
-                        continue
-                    finally:
-                        response.close()
-                        response.release_conn()
-
+            # Upload du ZIP
             temp_zip.seek(0)
             self.minio.put_object(
                 bucket_name,
@@ -616,13 +645,14 @@ class ObjectService:
             temp_zip.close()
 
             logger.info(
-                f"Compression de {len(valid_objects)} objets vers {output_object_name} réussie."
+                f"Compression de {success_count}/{len(valid_objects)} objets vers {output_object_name} réussie."
             )
             return (
-                f"Compression de {len(valid_objects)} fichiers vers '{output_object_name}' réussie.",
+                f"Compression de {success_count} fichiers vers '{output_object_name}' réussie.",
                 {
                     "objects": list(valid_objects),
                     "output_object_name": output_object_name,
+                    "skipped": len(valid_objects) - success_count,
                 },
             )
 
