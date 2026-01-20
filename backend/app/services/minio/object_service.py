@@ -521,18 +521,24 @@ class ObjectService:
             HTTPException: En cas d'erreur lors de la lecture ou de l'écriture dans MinIO.
         """
         try:
-       
-            destination_folder = MinioUtils.normalize_path(destination_folder, is_folder=True)
+            destination_folder = MinioUtils.normalize_path(
+                destination_folder, is_folder=True
+            )
             valid_objects = set()  # Utilisation de set pour éviter les doublons
 
             # --- Collecte des objets valides ---
             for obj_name in object_names:
-                obj_name = MinioUtils.normalize_path(obj_name, is_folder=obj_name.endswith("/"))
+                obj_name = MinioUtils.normalize_path(
+                    obj_name, is_folder=obj_name.endswith("/")
+                )
                 if obj_name.endswith("/"):
                     # C'est un dossier → on liste tout ce qu'il contient
-                    objs = self.minio.list_objects(bucket_name, prefix=obj_name, recursive=True)
+                    objs = self.minio.list_objects(
+                        bucket_name, prefix=obj_name, recursive=True
+                    )
                     valid_objects.update(
-                        o.object_name for o in objs
+                        o.object_name
+                        for o in objs
                         if o.object_name and not o.object_name.endswith("/")
                     )
                 else:
@@ -541,7 +547,6 @@ class ObjectService:
             if not valid_objects:
                 raise HTTPException(400, "Aucun fichier valide à compresser.")
 
-     
             output_object_name = MinioUtils.generate_available_name(
                 minio_client=self.minio,
                 bucket_name=bucket_name,
@@ -552,7 +557,8 @@ class ObjectService:
 
             # --- Déterminer le préfixe commun ---
             source_prefix = (
-                object_names[0] if len(object_names) == 1 and object_names[0].endswith("/")
+                object_names[0]
+                if len(object_names) == 1 and object_names[0].endswith("/")
                 else ""
             )
 
@@ -570,7 +576,7 @@ class ObjectService:
 
                         # --- Chemin relatif dans le ZIP ---
                         if source_prefix:
-                            arcname = obj_name[len(source_prefix):]
+                            arcname = obj_name[len(source_prefix) :]
                         else:
                             arcname = obj_name
 
@@ -590,13 +596,14 @@ class ObjectService:
                                     zip_entry.write(chunk)
 
                     except S3Error as e:
-                        logger.error(f"Erreur lors de la compression de {obj_name}: {str(e)}")
+                        logger.error(
+                            f"Erreur lors de la compression de {obj_name}: {str(e)}"
+                        )
                         continue
                     finally:
                         response.close()
                         response.release_conn()
 
-       
             temp_zip.seek(0)
             self.minio.put_object(
                 bucket_name,
@@ -614,7 +621,6 @@ class ObjectService:
             return (
                 f"Compression de {len(valid_objects)} fichiers vers '{output_object_name}' réussie.",
                 {
-                    "bucket_name": bucket_name,
                     "objects": list(valid_objects),
                     "output_object_name": output_object_name,
                 },
