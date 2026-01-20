@@ -1,17 +1,13 @@
 <script lang="ts" setup>
 import type { DropdownMenuItem } from "@nuxt/ui";
+import { resolve } from "node:dns";
 
 const props = defineProps<{
   items: ApiFileItem[];
 }>();
 
 const action = useFsActions();
-
-function forEachSelected(action: (item: ApiFileItem) => void | Promise<void>) {
-  for (const item of props.items) {
-    action(item);
-  }
-}
+const { runBatch } = useBatchAction();
 
 const DropdownItems = ref<DropdownMenuItem[]>([
   {
@@ -45,7 +41,13 @@ const DropdownItems = ref<DropdownMenuItem[]>([
             color="neutral"
             variant="ghost"
             class="px-2 py-1"
-            @click="forEachSelected(action.download)"
+            @click="
+              runBatch(props.items, action.download, {
+                loading: 'Téléchargement en cours...',
+                success: 'Téléchargement terminé !',
+                error: 'Le téléchargement à échoué',
+              })
+            "
           />
           <UButton
             leading-icon="material-symbols:drive-file-move-outline-rounded"
@@ -61,7 +63,13 @@ const DropdownItems = ref<DropdownMenuItem[]>([
             color="error"
             variant="ghost"
             class="px-2 py-1"
-            @click="forEachSelected(action.del)"
+            @click="
+              runBatch(props.items, action.del, {
+                loading: 'Suppression en cours…',
+                success: 'Éléments supprimés !',
+                error: 'Erreur lors de la suppression',
+              })
+            "
           />
 
           <UDropdownMenu :items="DropdownItems" class="ml-3">
