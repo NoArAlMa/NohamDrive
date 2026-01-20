@@ -70,6 +70,7 @@ async function confirmCreateFolder() {
             label="Créer"
             color="primary"
             variant="subtle"
+            loading-auto
             class="hover:cursor-pointer"
             :disabled="!newFolderName.trim()"
             @click="confirmCreateFolder"

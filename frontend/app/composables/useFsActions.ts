@@ -1,4 +1,7 @@
+import type { Toast } from "@nuxt/ui/runtime/composables/useToast.js";
 import type {
+  CompressFilePayload,
+  CompressFileResponse,
   CopyFilePayload,
   RenameFilePayload,
 } from "~~/shared/types/file_request";
@@ -17,7 +20,7 @@ export const useFsActions = () => {
   const rename = async (
     old_name: string,
     newName: string,
-    item: ApiFileItem
+    item: ApiFileItem,
   ): Promise<GenericAPIResponse<RenameFilePayload>> => {
     const full_path = item.is_dir
       ? `${joinPath(FSStore.currentPath, old_name)}/`
@@ -32,41 +35,201 @@ export const useFsActions = () => {
             path: full_path,
             new_name: newName,
           },
-        }
+        },
       );
 
       useFileTree().retryFetching();
-      toast.add({ title: "Renommé avec succès", color: "success" });
       return req;
     } catch (error: any) {
       const message =
         error.data?.statusMessage ||
         "Impossible de renommer le fichier/dossier.";
-      toast.add({ title: "Erreur", description: message, color: "error" });
+      toast.add({
+        title: "Erreur",
+        icon: "material-symbols:error-outline-rounded",
+        description: message,
+        color: "error",
+      });
       throw error;
     }
   };
 
-  const del = async (item: ApiFileItem): Promise<void> => {
+  const del = async (
+    item: ApiFileItem,
+    options?: {
+      silent?: boolean;
+    },
+  ): Promise<void> => {
     const full_path = item.is_dir
       ? `${joinPath(FSStore.currentPath, item.name)}/`
       : joinPath(FSStore.currentPath, item.name);
 
+    let loadingToast: Toast | undefined;
+
+    if (!options?.silent) {
+      loadingToast = toast.add({
+        title: "Suppression en cours…",
+        color: "neutral",
+        duration: 0,
+        close: false,
+        ui: { icon: "animate-spin" },
+        icon: "material-symbols:progress-activity",
+      });
+    }
     try {
-      const req = await $fetch<GenericAPIResponse<null>>("/storage/object", {
+      await $fetch("/storage/object", {
         method: "DELETE",
-        query: {
-          folder_path: full_path,
-        },
+        query: { folder_path: full_path },
       });
 
       useFileTree().retryFetching();
-      toast.add({ title: "On l'a supprimé", color: "success" });
+      if (loadingToast) toast.remove(loadingToast.id);
+      if (!options?.silent) {
+        toast.add({
+          title: "Élément supprimé !",
+          color: "success",
+          icon: "material-symbols:check-rounded",
+        });
+      }
     } catch (error: any) {
-      const message =
-        error.data?.statusMessage ||
-        "Impossible de renommer le fichier/dossier.";
-      toast.add({ title: "Erreur", description: message, color: "error" });
+      if (!options?.silent) {
+        toast.add({
+          title: "Erreur",
+          description:
+            error.data?.statusMessage ??
+            "Impossible de supprimer le fichier/dossier.",
+          color: "error",
+          icon: "material-symbols:error-outline-rounded",
+        });
+      }
+      throw error;
+    }
+  };
+
+  const download = async (
+    item: ApiFileItem,
+    options?: {
+      silent?: boolean;
+    },
+  ): Promise<void> => {
+    const fullPath = item.is_dir
+      ? `${joinPath(FSStore.currentPath, item.name)}/`
+      : joinPath(FSStore.currentPath, item.name);
+
+    const cleanPath = fullPath.replace(/^\/+/, "");
+
+    let loadingToast: Toast | undefined;
+
+    if (!options?.silent) {
+      loadingToast = toast.add({
+        title: "Préparation du téléchargement…",
+        color: "neutral",
+        duration: 0,
+        close: false,
+        ui: { icon: "animate-spin" },
+        icon: "material-symbols:progress-activity",
+      });
+    }
+
+    try {
+      const response = await fetch(`/storage/download/${cleanPath}`);
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "Le téléchargement a échoué");
+      }
+
+      const contentDisposition = response.headers.get("Content-Disposition");
+      const filename =
+        contentDisposition?.match(/filename="?([^"]+)"?/i)?.[1] ??
+        (item.is_dir ? `${item.name}.zip` : item.name);
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+
+      // Téléchargement
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+
+      URL.revokeObjectURL(url);
+
+      // Feedback UNIQUEMENT en mode non-batch
+      if (loadingToast) toast.remove(loadingToast.id);
+
+      if (!options?.silent) {
+        toast.add({
+          title: "Téléchargement lancé",
+          color: "success",
+          icon: "material-symbols:download-rounded",
+        });
+      }
+    } catch (error: any) {
+      if (!options?.silent) {
+        toast.add({
+          title: "Erreur",
+          icon: "material-symbols:error-outline-rounded",
+          description: error.message || "Le téléchargement a échoué",
+          color: "error",
+        });
+      }
+      throw error;
+    }
+  };
+
+  const upload = async (
+    file: File,
+    options?: {
+      silent?: boolean;
+    },
+  ): Promise<void> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("path", FSStore.currentPath);
+
+    let loadingToast: Toast | undefined;
+
+    if (!options?.silent) {
+      loadingToast = toast.add({
+        title: "Upload en cours…",
+        description: file.name,
+        color: "neutral",
+        duration: 0,
+        close: false,
+        ui: { icon: "animate-spin" },
+        icon: "material-symbols:progress-activity",
+      });
+    }
+
+    try {
+      await $fetch<GenericAPIResponse<null>>("/storage/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      useFileTree().retryFetching();
+
+      if (loadingToast) toast.remove(loadingToast.id);
+
+      if (!options?.silent) {
+        toast.add({
+          title: "Fichier uploadé",
+          description: file.name,
+          color: "success",
+          icon: "material-symbols:check-rounded",
+        });
+      }
+    } catch (error: any) {
+      if (!options?.silent) {
+        toast.add({
+          title: "Erreur lors de l'upload",
+          icon: "material-symbols:error-outline-rounded",
+          description:
+            error.data?.statusMessage ?? `Impossible d'uploader ${file.name}.`,
+          color: "error",
+        });
+      }
       throw error;
     }
   };
@@ -99,51 +262,23 @@ export const useFsActions = () => {
     /* ... */
   };
 
-  const download = async (item: ApiFileItem) => {
-    const full_path = item.is_dir
-      ? `${joinPath(FSStore.currentPath, item.name)}/`
-      : joinPath(FSStore.currentPath, item.name);
-
-    const encoded_path = full_path.split("/").map(encodeURIComponent).join("/");
-
-    try {
-      const response = await fetch(`/storage/download/${encoded_path}`);
-
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(text || "Le téléchargement a échoué");
-      }
-
-      const contentDisposition = response.headers.get("Content-Disposition");
-      let filename =
-        contentDisposition?.match(/filename="?([^"]+)"?/i)?.[1] ??
-        (item.is_dir ? `${item.name}.zip` : item.name);
-
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      a.click();
-
-      URL.revokeObjectURL(url);
-    } catch (error: any) {
-      toast.add({
-        title: "Erreur",
-        description: error.message || "Le téléchargement a échoué",
-        color: "error",
-      });
-    }
-  };
-
   const copy = async (
-    item: ApiFileItem
+    item: ApiFileItem,
   ): Promise<GenericAPIResponse<CopyFilePayload>> => {
     const full_path = item.is_dir
       ? `${joinPath(FSStore.currentPath, item.name)}/`
       : joinPath(FSStore.currentPath, item.name);
 
+    const LoadingToastCopy = toast.add({
+      title: "Copie en cours...",
+      color: "neutral",
+      duration: 0,
+      close: false,
+      ui: {
+        icon: "animate-spin",
+      },
+      icon: "material-symbols:progress-activity",
+    });
     try {
       const req = await $fetch<GenericAPIResponse<CopyFilePayload>>(
         "/storage/copy",
@@ -153,87 +288,90 @@ export const useFsActions = () => {
             source_path: full_path,
             destination_folder: FSStore.currentPath,
           },
-        }
+        },
       );
+      toast.remove(LoadingToastCopy.id);
+      toast.add({
+        title: "Fichier copié !",
+        color: "success",
+        icon: "material-symbols:check-rounded",
+      });
 
       useFileTree().retryFetching();
-      toast.add({ title: "Copié avec succès", color: "success" });
+
       return req;
     } catch (error: any) {
       const message =
         error.data?.statusMessage || "Impossible de copier le fichier/dossier.";
-      toast.add({ title: "Erreur", description: message, color: "error" });
+      toast.add({
+        title: "Erreur",
+        icon: "material-symbols:error-outline-rounded",
+        description: message,
+        color: "error",
+      });
       throw error;
     }
-  };
-
-  const upload = async (files: File[]) => {
-    if (!files || files.length === 0) return;
-
-    const uploadPromises = files.map(async (file) => {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("path", FSStore.currentPath);
-
-      return $fetch<GenericAPIResponse<null>>("/storage/upload", {
-        method: "POST",
-        body: formData,
-        headers: {},
-      })
-        .then((res) => {
-          console.log(`✅ Upload réussi pour ${file.name}`);
-          return res;
-        })
-        .catch((error) => {
-          const message =
-            error.data?.statusMessage || `Impossible d'uploader ${file.name}.`;
-          console.error(`❌ Erreur pour ${file.name}:`, message);
-          toast.add({ title: "Erreur", description: message, color: "error" });
-          throw error;
-        });
-    });
-
-    // Attendre que tous les uploads soient terminés
-    await Promise.all(uploadPromises);
-    // Actualisation de l'explorateur
-    useFileTree().retryFetching();
-    toast.add({ title: "Upload réussi", color: "success" });
   };
 
   const compress = async (
     items: ApiFileItem[],
     destination_folder: string = FSStore.currentPath,
-    output_base_name: string = "compressed_folder"
+    output_base_name: string = "compressed_folder",
   ): Promise<void> => {
     const object_names = items.map((item) =>
       item.is_dir
         ? `${joinPath(FSStore.currentPath, item.name)}/`
-        : joinPath(FSStore.currentPath, item.name)
+        : joinPath(FSStore.currentPath, item.name),
     );
+    let loadingToast: Toast | undefined;
 
+    loadingToast = toast.add({
+      title: "Compression en cours...",
+      color: "neutral",
+      duration: 0,
+      close: false,
+      ui: {
+        icon: "animate-spin",
+      },
+      icon: "material-symbols:progress-activity",
+    });
     try {
-      const req = await $fetch<GenericAPIResponse<null>>("/storage/compress", {
-        method: "POST",
-        body: {
-          objects: object_names,
-          destination_folder,
-          output_base_name,
+      const req = await $fetch<GenericAPIResponse<CompressFileResponse>>(
+        "/storage/compress",
+        {
+          method: "POST",
+          body: {
+            objects: object_names,
+            destination_folder,
+            output_base_name,
+          },
         },
-      });
-
+      );
       useFileTree().retryFetching();
-      toast.add({ title: "Compression terminée", color: "success" });
+
+      if (loadingToast) toast.remove(loadingToast.id);
+      toast.add({
+        title: "Compression terminée",
+        color: "success",
+        icon: "material-symbols:check-rounded",
+        description: `Résultat dans ${req.data?.output_object_name}`,
+      });
     } catch (error: any) {
       const message =
         error.data?.statusMessage || "Impossible de compresser les fichiers.";
-      toast.add({ title: "Erreur", description: message, color: "error" });
+      toast.add({
+        title: "Erreur lors de la compression",
+        icon: "material-symbols:error-outline-rounded",
+        description: message,
+        color: "error",
+      });
       throw error;
     }
   };
 
   const createFolder = async (
     folderName: string,
-    currentPath: string = FSStore.currentPath
+    currentPath: string = FSStore.currentPath,
   ): Promise<{ success: boolean; message?: string }> => {
     try {
       const req = await $fetch<GenericAPIResponse<string>>("/storage/folder", {
@@ -244,7 +382,11 @@ export const useFsActions = () => {
         },
       });
       useFileTree().retryFetching();
-      toast.add({ title: "Dossier créé", color: "success" });
+      toast.add({
+        title: "Dossier créer",
+        color: "success",
+        icon: "material-symbols:check-rounded",
+      });
       return { success: true };
     } catch (error: any) {
       const message =
