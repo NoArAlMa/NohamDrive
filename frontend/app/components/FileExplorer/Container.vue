@@ -69,9 +69,6 @@ async function onDrop(e: DragEvent) {
       @dragover="onDragOver"
       @dragleave="onDragLeave"
       @drop="onDrop"
-      role="region"
-      aria-label="File upload dropzone"
-      tabindex="0"
     >
       <!-- Overlay -->
       <Transition name="drop-fade">
