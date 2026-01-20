@@ -6,6 +6,7 @@ const isDragging = ref(false); // Affiche l'overlay de drag
 const dragCounter = ref(0); // Compteur pour gérer les entrées/sorties de la zone de drop
 
 const { upload } = useFsActions();
+const { runBatch } = useBatchAction();
 
 // Fonction pour gérer l'entrée dans la zone de drop
 function onDragEnter(e: DragEvent) {
@@ -34,11 +35,16 @@ async function onDrop(e: DragEvent) {
   dragCounter.value = 0;
   isDragging.value = false;
 
-  // Récupère tous les fichiers déposés
   const files = Array.from(e.dataTransfer?.files || []);
-  if (files.length > 0) {
-    console.log(files);
-    await upload(files);
+  if (!files.length) return;
+  if (files.length > 1) {
+    await runBatch(files, upload, {
+      loading: "Upload en cours…",
+      success: "Upload terminé",
+      error: "Une erreur est survenue pendant l’upload.",
+    });
+  } else if (files[0]) {
+    await upload(files[0]);
   }
 }
 </script>

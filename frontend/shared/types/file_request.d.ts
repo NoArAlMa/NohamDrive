@@ -17,6 +17,10 @@ export interface CompressFilePayload {
   destination_folder: string;
   output_base_name?: string;
 }
+export interface CompressFileResponse {
+  objects: string[];
+  output_object_name: string;
+}
 
 export interface CreateFolderPayload {
   currentPath: string;
