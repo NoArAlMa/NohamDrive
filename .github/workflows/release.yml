@@ -30,6 +30,12 @@ jobs:
       - name: Build Nuxt app
         run: npm run build
 
+      - name: Setup Windows code signing certificate
+        run: |
+          $pfxPath = "$Env:GITHUB_WORKSPACE/frontend/electron/nohamdrive.pfx"
+          [System.IO.File]::WriteAllBytes($pfxPath, [System.Convert]::FromBase64String("${{ secrets.WIN_CSC_BASE64 }}"))
+        shell: pwsh
+
       - name: Build and publish Electron app
         run: npx electron-builder --win --publish always
         env:
