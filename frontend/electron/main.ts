@@ -7,6 +7,13 @@ import log from "electron-log";
 import updater from "electron-updater";
 const { autoUpdater } = updater;
 
+autoUpdater.setFeedURL({
+  provider: "github",
+  owner: "NoArAlMa",
+  repo: "NohamDrive",
+  private: false,
+});
+
 autoUpdater.logger = log as any;
 (log as any).transports.file.level = "info";
 
