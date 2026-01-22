@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import type { DropdownMenuItem } from "@nuxt/ui";
-import { resolve } from "node:dns";
 
 const props = defineProps<{
   items: ApiFileItem[];
