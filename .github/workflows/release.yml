@@ -30,6 +30,9 @@ jobs:
       - name: Build Nuxt app
         run: npm run build
 
+      - name: Compile Electron TS
+        run: npx tsc -p electron
+
       - name: Setup Windows code signing certificate
         run: |
           $pfxPath = "$Env:GITHUB_WORKSPACE/frontend/electron/nohamdrive.pfx"
