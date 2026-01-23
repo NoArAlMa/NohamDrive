@@ -24,6 +24,15 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
+      - name: Ensure version matches tag
+        run: |
+          TAG=${GITHUB_REF_NAME#v}
+          PKG=$(node -p "require('./package.json').version")
+          if [ "$TAG" != "$PKG" ]; then
+            echo "❌ package.json version ($PKG) != tag ($TAG)"
+            exit 1
+          fi
+
       - name: Install dependencies
         run: npm ci
 
