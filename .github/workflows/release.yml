@@ -27,6 +27,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate .env from secrets
+        run: |
+          echo "API_URL=${{ secrets.API_URL }}" > .env
+          echo "NODE_ENV=production" >> .env
       - name: Build Nuxt app
         run: npm run build
 
@@ -38,7 +42,7 @@ jobs:
           $pfxPath = "$Env:GITHUB_WORKSPACE/frontend/electron/nohamdrive.pfx"
           [System.IO.File]::WriteAllBytes($pfxPath, [System.Convert]::FromBase64String("${{ secrets.WIN_CSC_BASE64 }}"))
         shell: pwsh
-      
+
       - name: Build and publish Electron app
         run: npx electron-builder --win --publish always
         env:
