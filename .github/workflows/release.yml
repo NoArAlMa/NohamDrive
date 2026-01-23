@@ -29,7 +29,7 @@ jobs:
 
       - name: Generate .env from secrets
         run: |
-          echo "API_URL=${{ secrets.API_URL }}" > .env
+          echo "NUXT_PUBLIC_API_BASE_URL=${{ secrets.API_URL }}" > .env
           echo "NODE_ENV=production" >> .env
       - name: Build Nuxt app
         run: npm run build
