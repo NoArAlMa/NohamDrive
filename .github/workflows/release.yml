@@ -1,0 +1,59 @@
+name: Build & Release NohamDrive
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build:
+    name: Build Windows App
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Ensure version matches tag
+        run: |
+          TAG=${GITHUB_REF_NAME#v}
+          PKG=$(node -p "require('./package.json').version")
+          if [ "$TAG" != "$PKG" ]; then
+            echo "❌ package.json version ($PKG) != tag ($TAG)"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate .env from secrets
+        run: |
+          echo "NUXT_PUBLIC_API_BASE_URL=${{ secrets.API_URL }}" > .env
+          echo "NODE_ENV=production" >> .env
+      - name: Build Nuxt app
+        run: npm run build
+
+      - name: Compile Electron TS
+        run: npx tsc -p electron
+
+      - name: Setup Windows code signing certificate
+        run: |
+          $pfxPath = "$Env:GITHUB_WORKSPACE/frontend/electron/nohamdrive.pfx"
+          [System.IO.File]::WriteAllBytes($pfxPath, [System.Convert]::FromBase64String("${{ secrets.WIN_CSC_BASE64 }}"))
+        shell: pwsh
+
+      - name: Build and publish Electron app
+        run: npx electron-builder --win --publish always
+        env:
+          GH_TOKEN: ${{ secrets.TOKEN_RELEASE }}
+          RELEASE_TYPE: "release"
