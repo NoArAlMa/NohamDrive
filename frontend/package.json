@@ -2,7 +2,7 @@
   "name": "frontend",
   "productName": "NohamDrive",
   "type": "module",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "author": "Alexandre LARUE",
   "description": "Mon app Nuxt + Electron",
   "private": true,
