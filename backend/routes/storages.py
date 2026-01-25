@@ -1,6 +1,3 @@
-<<<<<<< Updated upstream
-from fastapi import APIRouter, HTTPException, UploadFile, Depends, status, Query
-=======
 from fastapi import (
     APIRouter,
     HTTPException,
@@ -10,7 +7,6 @@ from fastapi import (
     status,
     Query,
 )
->>>>>>> Stashed changes
 from fastapi.responses import StreamingResponse
 from app.services.minio.minio_service import MinioService, get_minio_service
 from app.schemas.file_tree import SimpleFileTreeResponse
@@ -23,17 +19,12 @@ from app.schemas.files import (
 )
 from app.utils.response import BaseResponse
 
-<<<<<<< Updated upstream
-=======
 from app.services.sse_service import sse_manager
 from app.schemas.websocket import SSEMessage
->>>>>>> Stashed changes
 
 router = APIRouter(prefix="/storage", tags=["Storage"])
 
 
-<<<<<<< Updated upstream
-=======
 @router.get("/explorer-info")
 async def sse_endpoint(
     request: Request, user_id: int = 1
@@ -44,7 +35,6 @@ async def sse_endpoint(
     )
 
 
->>>>>>> Stashed changes
 @router.post(
     "/upload", response_model=BaseResponse, status_code=status.HTTP_201_CREATED
 )
@@ -71,8 +61,6 @@ async def upload_file_endpoint(
     message, metadata = await minio_service.download_service.upload_file(
         user_id, file, path
     )
-<<<<<<< Updated upstream
-=======
     sse_message = SSEMessage(
         event="upload",
         user_id=user_id,
@@ -80,7 +68,6 @@ async def upload_file_endpoint(
         message=f"Fichier {file.filename} uploadé.",
     )
     await sse_manager.notify_user(user_id, sse_message.model_dump())
->>>>>>> Stashed changes
     return BaseResponse(
         data=metadata, message=message, status_code=status.HTTP_201_CREATED
     )
@@ -170,8 +157,6 @@ async def create_folder_endpoint(
         current_path=payload.currentPath,
         folder_path=payload.folderPath,
     )
-<<<<<<< Updated upstream
-=======
     sse_message = SSEMessage(
         event="folder_created",
         user_id=user_id,
@@ -179,7 +164,6 @@ async def create_folder_endpoint(
         message=f"Fichier {payload.folderPath} créer",
     )
     await sse_manager.notify_user(user_id, sse_message.model_dump())
->>>>>>> Stashed changes
     return BaseResponse(
         success=True,
         data=folder_path,
@@ -202,8 +186,6 @@ async def delete_object_endpoint(
         user_id, folder_path
     )
 
-<<<<<<< Updated upstream
-=======
     sse_message = SSEMessage(
         event="delete",
         user_id=user_id,
@@ -211,7 +193,6 @@ async def delete_object_endpoint(
         message=f"Fichier {folder_path} supprimé.",
     )
     await sse_manager.notify_user(user_id, sse_message.model_dump())
->>>>>>> Stashed changes
     return BaseResponse(
         success=True,
         data=data,
@@ -255,8 +236,6 @@ async def rename_endpoint(
         new_name=payload.new_name,
     )
 
-<<<<<<< Updated upstream
-=======
     sse_message = SSEMessage(
         event="rename",
         user_id=user_id,
@@ -264,7 +243,6 @@ async def rename_endpoint(
         message=f"Fichier {payload.new_name} renommé.",
     )
     await sse_manager.notify_user(user_id, sse_message.model_dump())
->>>>>>> Stashed changes
     return BaseResponse(
         success=True, data=data, message=message, status_code=status.HTTP_200_OK
     )
@@ -301,8 +279,6 @@ async def move_endpoint(
         source_path=payload.source_path,
         destination_folder=payload.destination_folder,
     )
-<<<<<<< Updated upstream
-=======
 
     sse_message = SSEMessage(
         event="move",
@@ -311,7 +287,6 @@ async def move_endpoint(
         message="Fichier déplacé.",
     )
     await sse_manager.notify_user(user_id, sse_message.model_dump())
->>>>>>> Stashed changes
     return BaseResponse(
         success=True,
         data=data,
@@ -328,9 +303,6 @@ async def copy_endpoint(
     message, data = await minio_service.object_service.copy(
         user_id, payload.source_path, payload.destination_folder
     )
-<<<<<<< Updated upstream
-
-=======
     # TODO : Rajouter le nom du dossier (pas assez d'info)
     sse_message = SSEMessage(
         event="copy",
@@ -339,7 +311,6 @@ async def copy_endpoint(
         message="Fichier copié.",
     )
     await sse_manager.notify_user(user_id, sse_message.model_dump())
->>>>>>> Stashed changes
     return BaseResponse(
         success=True, message=message, data=data, status_code=status.HTTP_200_OK
     )
