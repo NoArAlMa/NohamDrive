@@ -1,4 +1,12 @@
-from fastapi import APIRouter, HTTPException, UploadFile, Depends, status, Query
+from fastapi import (
+    APIRouter,
+    HTTPException,
+    UploadFile,
+    Depends,
+    WebSocketDisconnect,
+    status,
+    Query,
+)
 from fastapi.responses import StreamingResponse
 from app.services.minio.minio_service import MinioService, get_minio_service
 from app.schemas.file_tree import SimpleFileTreeResponse
@@ -10,9 +18,23 @@ from app.schemas.files import (
     CopyItem,
 )
 from app.utils.response import BaseResponse
-
+from fastapi import WebSocket
+from app.services.websocket_service import websocket_manager
+from app.schemas.websocket import WSMessage
 
 router = APIRouter(prefix="/storage", tags=["Storage"])
+
+
+@router.websocket("/explorer-info")
+async def websocket_endpoint(websocket: WebSocket):
+    if not websocket_manager:
+        raise RuntimeError("WebSocketManager non initialisé.")
+    await websocket_manager.connect(websocket)
+    try:
+        while True:
+            await websocket_manager.receive_pong(websocket)
+    except WebSocketDisconnect:
+        await websocket_manager.disconnect(websocket)
 
 
 @router.post(
@@ -41,6 +63,14 @@ async def upload_file_endpoint(
     message, metadata = await minio_service.download_service.upload_file(
         user_id, file, path
     )
+    ws_message = WSMessage(
+        event="upload",
+        user_id=user_id,
+        path=path,
+        filename=file.filename,
+        message=f"Fichier {file.filename} uploadé.",
+    )
+    await websocket_manager.notify_clients(ws_message.model_dump())
     return BaseResponse(
         data=metadata, message=message, status_code=status.HTTP_201_CREATED
     )
@@ -130,6 +160,14 @@ async def create_folder_endpoint(
         current_path=request.currentPath,
         folder_path=request.folderPath,
     )
+    ws_message = WSMessage(
+        event="folder_created",
+        user_id=user_id,
+        path=request.currentPath,
+        filename=request.folderPath,
+        message=f"Fichier {request.folderPath} créer",
+    )
+    await websocket_manager.notify_clients(ws_message.model_dump())
     return BaseResponse(
         success=True,
         data=folder_path,
@@ -152,6 +190,13 @@ async def delete_object_endpoint(
         user_id, folder_path
     )
 
+    ws_message = WSMessage(
+        event="delete",
+        user_id=user_id,
+        path=folder_path,
+        message=f"Fichier {folder_path} supprimé.",
+    )
+    await websocket_manager.notify_clients(ws_message.model_dump())
     return BaseResponse(
         success=True,
         data=data,
@@ -195,6 +240,14 @@ async def rename_endpoint(
         new_name=payload.new_name,
     )
 
+    ws_message = WSMessage(
+        event="rename",
+        user_id=user_id,
+        path=payload.path,
+        new_name=payload.new_name,
+        message=f"Fichier {payload.new_name} renommé.",
+    )
+    await websocket_manager.notify_clients(ws_message.model_dump())
     return BaseResponse(
         success=True, data=data, message=message, status_code=status.HTTP_200_OK
     )
@@ -231,6 +284,15 @@ async def move_endpoint(
         source_path=payload.source_path,
         destination_folder=payload.destination_folder,
     )
+
+    ws_message = WSMessage(
+        event="move",
+        user_id=user_id,
+        old_path=payload.source_path,
+        path=payload.destination_folder,
+        message="Fichier déplacé.",
+    )
+    await websocket_manager.notify_clients(ws_message.model_dump())
     return BaseResponse(
         success=True,
         data=data,
@@ -247,7 +309,15 @@ async def copy_endpoint(
     message, data = await minio_service.object_service.copy(
         user_id, payload.source_path, payload.destination_folder
     )
-
+    # TODO : Rajouter le nom du dossier (pas assez d'info)
+    ws_message = WSMessage(
+        event="copy",
+        user_id=user_id,
+        path=payload.source_path,
+        new_path=payload.destination_folder,
+        message="Fichier copié.",
+    )
+    await websocket_manager.notify_clients(ws_message.model_dump())
     return BaseResponse(
         success=True, message=message, data=data, status_code=status.HTTP_200_OK
     )
