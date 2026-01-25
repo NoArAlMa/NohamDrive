@@ -18,3 +18,7 @@ class SimpleFileTreeResponse(BaseModel):
 
     path: str  # Chemin actuel (ex: "mon-dossier/")
     items: List[SimpleFileItem]  # Liste des objets
+    total_pages: int
+    total_items: int
+    per_page: int
+    page: int
