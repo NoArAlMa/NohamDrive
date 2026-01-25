@@ -1,9 +1,9 @@
 from fastapi import (
     APIRouter,
     HTTPException,
+    Request,
     UploadFile,
     Depends,
-    WebSocketDisconnect,
     status,
     Query,
 )
@@ -18,23 +18,21 @@ from app.schemas.files import (
     CopyItem,
 )
 from app.utils.response import BaseResponse
-from fastapi import WebSocket
-from app.services.websocket_service import websocket_manager
-from app.schemas.websocket import WSMessage
+
+from app.services.sse_service import sse_manager
+from app.schemas.websocket import SSEMessage
 
 router = APIRouter(prefix="/storage", tags=["Storage"])
 
 
-@router.websocket("/explorer-info")
-async def websocket_endpoint(websocket: WebSocket):
-    if not websocket_manager:
-        raise RuntimeError("WebSocketManager non initialisé.")
-    await websocket_manager.connect(websocket)
-    try:
-        while True:
-            await websocket_manager.receive_pong(websocket)
-    except WebSocketDisconnect:
-        await websocket_manager.disconnect(websocket)
+@router.get("/explorer-info")
+async def sse_endpoint(
+    request: Request, user_id: int = 1
+):  # TODO: Récupérer user_id via auth
+    return StreamingResponse(
+        sse_manager.add_client(user_id),
+        media_type="text/event-stream",
+    )
 
 
 @router.post(
@@ -63,14 +61,13 @@ async def upload_file_endpoint(
     message, metadata = await minio_service.download_service.upload_file(
         user_id, file, path
     )
-    ws_message = WSMessage(
+    sse_message = SSEMessage(
         event="upload",
         user_id=user_id,
-        path=path,
-        filename=file.filename,
+        data=metadata,
         message=f"Fichier {file.filename} uploadé.",
     )
-    await websocket_manager.notify_clients(ws_message.model_dump())
+    await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(
         data=metadata, message=message, status_code=status.HTTP_201_CREATED
     )
@@ -133,7 +130,7 @@ async def download_file_endpoint(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_folder_endpoint(
-    request: CreateFolder,
+    payload: CreateFolder,
     user_id: int = 1,  # ID de l'utilisateur (via auth),
     minio_service: MinioService = Depends(get_minio_service),
 ) -> BaseResponse[str]:
@@ -157,17 +154,16 @@ async def create_folder_endpoint(
 
     folder_path = await minio_service.object_service.create_folder(
         user_id=user_id,
-        current_path=request.currentPath,
-        folder_path=request.folderPath,
+        current_path=payload.currentPath,
+        folder_path=payload.folderPath,
     )
-    ws_message = WSMessage(
+    sse_message = SSEMessage(
         event="folder_created",
         user_id=user_id,
-        path=request.currentPath,
-        filename=request.folderPath,
-        message=f"Fichier {request.folderPath} créer",
+        data=payload,
+        message=f"Fichier {payload.folderPath} créer",
     )
-    await websocket_manager.notify_clients(ws_message.model_dump())
+    await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(
         success=True,
         data=folder_path,
@@ -190,13 +186,13 @@ async def delete_object_endpoint(
         user_id, folder_path
     )
 
-    ws_message = WSMessage(
+    sse_message = SSEMessage(
         event="delete",
         user_id=user_id,
-        path=folder_path,
+        data=folder_path,
         message=f"Fichier {folder_path} supprimé.",
     )
-    await websocket_manager.notify_clients(ws_message.model_dump())
+    await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(
         success=True,
         data=data,
@@ -240,14 +236,13 @@ async def rename_endpoint(
         new_name=payload.new_name,
     )
 
-    ws_message = WSMessage(
+    sse_message = SSEMessage(
         event="rename",
         user_id=user_id,
-        path=payload.path,
-        new_name=payload.new_name,
+        data=payload,
         message=f"Fichier {payload.new_name} renommé.",
     )
-    await websocket_manager.notify_clients(ws_message.model_dump())
+    await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(
         success=True, data=data, message=message, status_code=status.HTTP_200_OK
     )
@@ -285,14 +280,13 @@ async def move_endpoint(
         destination_folder=payload.destination_folder,
     )
 
-    ws_message = WSMessage(
+    sse_message = SSEMessage(
         event="move",
         user_id=user_id,
-        old_path=payload.source_path,
-        path=payload.destination_folder,
+        data=payload,
         message="Fichier déplacé.",
     )
-    await websocket_manager.notify_clients(ws_message.model_dump())
+    await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(
         success=True,
         data=data,
@@ -310,14 +304,13 @@ async def copy_endpoint(
         user_id, payload.source_path, payload.destination_folder
     )
     # TODO : Rajouter le nom du dossier (pas assez d'info)
-    ws_message = WSMessage(
+    sse_message = SSEMessage(
         event="copy",
         user_id=user_id,
-        path=payload.source_path,
-        new_path=payload.destination_folder,
+        data=payload,
         message="Fichier copié.",
     )
-    await websocket_manager.notify_clients(ws_message.model_dump())
+    await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(
         success=True, message=message, data=data, status_code=status.HTTP_200_OK
     )
