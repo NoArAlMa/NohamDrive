@@ -1,4 +1,3 @@
-import pytest
 from types import SimpleNamespace
 from app.utils.minio_utils import MinioUtils
 
