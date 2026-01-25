@@ -6,6 +6,7 @@ const isDragging = ref(false); // Affiche l'overlay de drag
 const dragCounter = ref(0); // Compteur pour gérer les entrées/sorties de la zone de drop
 
 const { upload } = useFsActions();
+const { runBatch } = useBatchAction();
 
 // Fonction pour gérer l'entrée dans la zone de drop
 function onDragEnter(e: DragEvent) {
@@ -34,11 +35,16 @@ async function onDrop(e: DragEvent) {
   dragCounter.value = 0;
   isDragging.value = false;
 
-  // Récupère tous les fichiers déposés
   const files = Array.from(e.dataTransfer?.files || []);
-  if (files.length > 0) {
-    console.log(files);
-    await upload(files);
+  if (!files.length) return;
+  if (files.length > 1) {
+    await runBatch(files, upload, {
+      loading: "Upload en cours…",
+      success: "Upload terminé",
+      error: "Une erreur est survenue pendant l’upload.",
+    });
+  } else if (files[0]) {
+    await upload(files[0]);
   }
 }
 </script>
@@ -70,12 +76,11 @@ async function onDrop(e: DragEvent) {
           v-if="isDragging"
           class="absolute inset-0 z-50 flex flex-col gap-3 items-center justify-center backdrop-blur-sm rounded-md border-2 border-white border-dashed bg-black/10 pointer-events-none"
         >
-          <!-- Icône -->
           <UIcon
             name="material-symbols:file-copy-outline-rounded"
             class="size-10"
           />
-          <p class="text-2xl font-semibold">Drop your file here</p>
+          <p class="text-2xl font-semibold">Drop your file(s) here</p>
         </div>
       </Transition>
       <ClientOnly>
@@ -89,3 +94,18 @@ async function onDrop(e: DragEvent) {
     <FileExplorerFooter :selected-count="FileCount" />
   </section>
 </template>
+
+<style scoped>
+.drop-fade-enter-active,
+.drop-fade-leave-active {
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.drop-fade-enter-from,
+.drop-fade-leave-to {
+  opacity: 0;
+  transform: scale(0.98);
+}
+</style>
