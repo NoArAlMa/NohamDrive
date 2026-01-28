@@ -20,7 +20,7 @@ from app.schemas.files import (
 from app.utils.response import BaseResponse
 
 from app.services.sse_service import sse_manager
-from app.schemas.websocket import SSEMessage
+from app.schemas.sse import SSEMessage
 
 router = APIRouter(prefix="/storage", tags=["Storage"])
 
@@ -31,7 +31,7 @@ async def sse_endpoint(
 ):  # TODO: Récupérer user_id via auth
     return StreamingResponse(
         sse_manager.add_client(user_id),
-        media_type="text/event-stream",
+        media_type="text/event-stream; charset=utf-8",
     )
 
 
@@ -65,7 +65,7 @@ async def upload_file_endpoint(
         event="upload",
         user_id=user_id,
         data=metadata,
-        message=f"Fichier {file.filename} uploadé.",
+        message=message,
     )
     await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(
@@ -151,7 +151,7 @@ async def create_folder_endpoint(
 
 
     """
-
+    # TODO : Return en tuple
     folder_path = await minio_service.object_service.create_folder(
         user_id=user_id,
         current_path=payload.currentPath,
@@ -160,7 +160,7 @@ async def create_folder_endpoint(
     sse_message = SSEMessage(
         event="folder_created",
         user_id=user_id,
-        data=payload,
+        data=payload.model_dump(),
         message=f"Fichier {payload.folderPath} créer",
     )
     await sse_manager.notify_user(user_id, sse_message.model_dump())
@@ -189,8 +189,8 @@ async def delete_object_endpoint(
     sse_message = SSEMessage(
         event="delete",
         user_id=user_id,
-        data=folder_path,
-        message=f"Fichier {folder_path} supprimé.",
+        data=data,
+        message=message,
     )
     await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(
@@ -239,9 +239,10 @@ async def rename_endpoint(
     sse_message = SSEMessage(
         event="rename",
         user_id=user_id,
-        data=payload,
-        message=f"Fichier {payload.new_name} renommé.",
+        data=data,
+        message=message,
     )
+
     await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(
         success=True, data=data, message=message, status_code=status.HTTP_200_OK
@@ -283,8 +284,8 @@ async def move_endpoint(
     sse_message = SSEMessage(
         event="move",
         user_id=user_id,
-        data=payload,
-        message="Fichier déplacé.",
+        data=data,
+        message=message,
     )
     await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(
@@ -307,8 +308,8 @@ async def copy_endpoint(
     sse_message = SSEMessage(
         event="copy",
         user_id=user_id,
-        data=payload,
-        message="Fichier copié.",
+        data=data,
+        message=message,
     )
     await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(
