@@ -1,5 +1,3 @@
-// useTerminal.ts
-import { ref, nextTick } from "vue";
 import type { Block, TerminalCommand } from "~~/shared/types/terminal_types";
 import { commandRegistry } from "./commands";
 
@@ -13,16 +11,12 @@ export function useTerminal(inputRef?: any) {
   } | null {
     const parts = input.trim().split(" ");
 
-    if (parts.length === 0) {
-      return null;
-    }
+    if (parts.length === 0) return null;
 
     const name = parts[0];
     const args = parts.slice(1);
 
-    if (!name || !(name in commandRegistry)) {
-      return null;
-    }
+    if (!name || !(name in commandRegistry)) return null;
 
     const command = commandRegistry[name as keyof typeof commandRegistry];
 
@@ -45,7 +39,14 @@ export function useTerminal(inputRef?: any) {
       return;
     }
 
-    const result = await parsed.command.run(parsed.args);
+    const fileTreeStore = useFileTree();
+    const { currentPath } = useFSStore();
+    const context = {
+      fileTree: fileTreeStore.fileTree.value,
+      currentPath: currentPath,
+    };
+
+    const result = await parsed.command.run(parsed.args, context);
 
     if (result.type === "clear") {
       blocks.value = [];

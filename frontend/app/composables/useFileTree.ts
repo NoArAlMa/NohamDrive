@@ -1,5 +1,3 @@
-import type { ApiFileTreeData } from "~~/shared/types/file_tree";
-
 export const useFileTree = () => {
   const FSStore = useFSStore();
   const {
@@ -18,10 +16,10 @@ export const useFileTree = () => {
       immediate: true,
       watch: [() => FSStore.currentPath],
       lazy: true,
-    }
+    },
   );
 
-  const fileTree = computed(() => {
+  const fileTree = computed<ApiFileItem[]>(() => {
     return data.value?.data?.items ?? [];
   });
 
@@ -29,7 +27,7 @@ export const useFileTree = () => {
   const hasError = computed(() => !!error.value);
   const errorStatus = computed(() => error.value?.statusCode);
   const errorMessage = computed(
-    () => error.value?.statusMessage ?? "Une erreur inconnue est survenue"
+    () => error.value?.statusMessage ?? "Une erreur inconnue est survenue",
   );
 
   const totalElements = computed(() => data.value?.data?.total_items ?? 0);

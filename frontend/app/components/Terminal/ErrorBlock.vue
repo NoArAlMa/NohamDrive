@@ -6,6 +6,8 @@ const props = defineProps<{
 
 <template>
   <div>
-    <pre class="text-sm">{{ props.content }}</pre>
+    <span class="text-red-600 whitespace-nowrap">
+      {{ props.content }}
+    </span>
   </div>
 </template>

@@ -12,14 +12,15 @@ function focusInput() {
 <template>
   <div class="terminal" @click="focusInput">
     <div v-for="(block, index) in blocks" :key="index" class="block">
-      <!-- Output block -->
-      <pre v-if="block.type === 'output'" class="output">{{
-        block.content
-      }}</pre>
+      <TerminalOutputBlock
+        v-if="block.type === 'output'"
+        :content="block.content"
+      />
 
-      <pre v-if="block.type === 'error'" class="text-red-600 whitespace-nowrap">
-      {{ block.content }}
-      </pre>
+      <TerminalErrorBlock
+        v-if="block.type === 'error'"
+        :content="block.content"
+      />
 
       <!-- Command echo -->
       <div v-else-if="block.type === 'command'" class="command">
@@ -62,11 +63,6 @@ function focusInput() {
 
 .command {
   color: #c9d1d9;
-}
-
-.output {
-  white-space: pre-wrap;
-  color: #8b949e;
 }
 
 .input-line {
