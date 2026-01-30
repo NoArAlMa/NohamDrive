@@ -4,7 +4,7 @@ import { commandRegistry } from "./index";
 export const helpCommand: TerminalCommand = {
   name: "help",
   description: "Show help for commands",
-  run: (args) => {
+  run: (args: string[]) => {
     if (args.length === 0) {
       const lines = Object.values(commandRegistry).map(
         (cmd) => `- ${cmd.name} : ${cmd.description}`,

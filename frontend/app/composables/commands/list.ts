@@ -11,7 +11,8 @@ import type {
 
 export const listCommand: TerminalCommand = {
   name: "list",
-  description: "List current files in dir",
+  description:
+    "List files and directories in the current directory, or in a specified path: list [path]",
   run: async (args: string[], ctx?: TerminalContext) => {
     if (!ctx) {
       return {
