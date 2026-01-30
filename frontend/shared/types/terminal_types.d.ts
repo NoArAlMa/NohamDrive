@@ -1,13 +1,17 @@
 import type { ApiFileItem } from "./file_tree";
 
-export type Block =
-  | { type: "command"; content: string }
-  | { type: "output"; content: string }
-  | { type: "error"; content: string };
+export type TerminalBlock = {
+  type: "command" | "output";
+  content: string;
+  level?: "default" | "info" | "success" | "warning" | "error" | "muted";
+};
 
 export type CommandResult =
-  | { type: "output"; content: string }
-  | { type: "error"; content: string }
+  | {
+      type: "output";
+      content: string | any;
+      level?: "default" | "info" | "success" | "warning" | "error" | "muted";
+    }
   | { type: "clear" };
 
 export interface TerminalContext {

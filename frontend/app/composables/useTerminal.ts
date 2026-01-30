@@ -1,26 +1,29 @@
-import type { Block, TerminalCommand } from "~~/shared/types/terminal_types";
+import type {
+  TerminalBlock,
+  TerminalCommand,
+} from "~~/shared/types/terminal_types";
 import { commandRegistry } from "./commands";
 
 export function useTerminal(inputRef?: any) {
-  const blocks = ref<Block[]>([]);
+  const blocks = ref<TerminalBlock[]>([]);
   const currentInput = ref("");
 
   function parseCommand(input: string): {
-    command: TerminalCommand;
+    name: string;
+    command?: TerminalCommand;
     args: string[];
-  } | null {
+  } {
     const parts = input.trim().split(" ");
 
-    if (parts.length === 0) return null;
-
-    const name = parts[0];
+    const name = parts[0] ?? "";
     const args = parts.slice(1);
 
-    if (!name || !(name in commandRegistry)) return null;
+    const command =
+      name && name in commandRegistry
+        ? commandRegistry[name as keyof typeof commandRegistry]
+        : undefined;
 
-    const command = commandRegistry[name as keyof typeof commandRegistry];
-
-    return { command, args };
+    return { name, command, args };
   }
 
   async function submit() {
@@ -30,10 +33,12 @@ export function useTerminal(inputRef?: any) {
     blocks.value.push({ type: "command", content: value });
 
     const parsed = parseCommand(value);
-    if (!parsed) {
+
+    if (!parsed.command) {
       blocks.value.push({
-        type: "error",
-        content: `Command not found: ${value}`,
+        type: "output",
+        level: "error",
+        content: `${parsed.name}: command not found`,
       });
       reset();
       return;

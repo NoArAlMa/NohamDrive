@@ -12,25 +12,17 @@ function focusInput() {
 <template>
   <div class="terminal" @click="focusInput">
     <div v-for="(block, index) in blocks" :key="index" class="block">
-      <TerminalOutputBlock
-        v-if="block.type === 'output'"
-        :content="block.content"
-      />
-
-      <TerminalErrorBlock
-        v-if="block.type === 'error'"
-        :content="block.content"
-      />
+      <TerminalOutputBlock v-if="block.type === 'output'" :block="block" />
 
       <!-- Command echo -->
-      <div v-else-if="block.type === 'command'" class="command">
+      <div v-else="block.type === 'command'" class="command">
         <span class="prompt">ND:{{ currentPath }} $</span>{{ block.content }}
       </div>
     </div>
 
     <!-- Active input (always last) -->
     <div class="input-line">
-      <span class="prompt">ND:{{ currentPath }} $</span>
+      <strong class="mr-1 text-blue-500">ND:{{ currentPath }} $</strong>
       <input
         ref="input"
         v-model="currentInput"
@@ -54,11 +46,6 @@ function focusInput() {
 
 .block {
   margin-bottom: 6px;
-}
-
-.prompt {
-  color: #58a6ff;
-  margin-right: 4px;
 }
 
 .command {

@@ -7,11 +7,20 @@ export const listCommand: TerminalCommand = {
   name: "list",
   description: "List current files in dir",
   run: (args: string[], ctx?: TerminalContext) => {
-    const files = Object.values(ctx?.fileTree!).map((file) => `- ${file.name}`);
-    console.info(files);
+    if (args.length === 0) {
+      const files = Object.values(ctx?.fileTree ?? {}).map(
+        (file) => `${file.is_dir ? "[DIR] " : ""}${file.name}`,
+      );
+
+      return {
+        type: "output",
+        content: `${files.join("\n")}`,
+      };
+    }
     return {
       type: "output",
-      content: `${files.join("\n")}`,
+      level: "error",
+      content: "Usage: list (no arguments expected)",
     };
   },
 };

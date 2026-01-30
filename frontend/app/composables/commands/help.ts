@@ -5,7 +5,6 @@ export const helpCommand: TerminalCommand = {
   name: "help",
   description: "Show help for commands",
   run: (args) => {
-    // help
     if (args.length === 0) {
       const lines = Object.values(commandRegistry).map(
         (cmd) => `- ${cmd.name} : ${cmd.description}`,
@@ -19,7 +18,8 @@ export const helpCommand: TerminalCommand = {
     const target = args[0];
     if (!target) {
       return {
-        type: "error",
+        type: "output",
+        level: "error",
         content: `No help available for command: ${target}`,
       };
     }
