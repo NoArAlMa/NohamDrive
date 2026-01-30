@@ -2,67 +2,58 @@
 const { currentPath } = useFSStore();
 const { blocks, currentInput, submit } = useTerminal();
 
-const input = ref<HTMLInputElement>();
+const input = ref<HTMLInputElement | null>(null);
 
 function focusInput() {
   input.value?.focus();
 }
+
+const bottom = ref<HTMLElement | null>(null);
+
+watch(
+  blocks,
+  async () => {
+    await nextTick();
+    bottom.value?.scrollIntoView({ behavior: "smooth" });
+  },
+  { deep: true },
+);
 </script>
 
 <template>
-  <div class="terminal" @click="focusInput">
-    <div v-for="(block, index) in blocks" :key="index" class="block">
+  <div
+    class="h-full overflow-y-auto bg-[#0d1117] p-4 font-mono text-sm text-gray-300"
+    @click="focusInput"
+  >
+    <!-- History -->
+    <div
+      v-for="(block, index) in blocks"
+      :key="index"
+      class="mb-1 whitespace-pre-wrap"
+    >
+      <!-- Output -->
       <TerminalOutputBlock v-if="block.type === 'output'" :block="block" />
 
       <!-- Command echo -->
-      <div v-else="block.type === 'command'" class="command">
-        <span class="prompt">ND:{{ currentPath }} $</span>{{ block.content }}
+      <div v-else class="flex items-center gap-1">
+        <span class="text-blue-400">ND:{{ currentPath }} $ </span>
+        <span>{{ block.content }}</span>
       </div>
     </div>
 
-    <!-- Active input (always last) -->
-    <div class="input-line">
-      <strong class="mr-1 text-blue-500">ND:{{ currentPath }} $</strong>
+    <div ref="bottom" />
+
+    <!-- Active input -->
+    <div class="flex items-center gap-1">
+      <span class="text-blue-400"> ND:{{ currentPath }} $ </span>
       <input
         ref="input"
         v-model="currentInput"
         @keydown.enter.prevent="submit"
-        class="input"
+        class="flex-1 bg-transparent outline-none caret-blue-400"
         autocomplete="off"
+        spellcheck="false"
       />
     </div>
   </div>
 </template>
-
-<style scoped>
-.terminal {
-  background: #0d1117;
-  color: #c9d1d9;
-  font-family: monospace;
-  padding: 16px;
-  height: 100%;
-  overflow-y: auto;
-}
-
-.block {
-  margin-bottom: 6px;
-}
-
-.command {
-  color: #c9d1d9;
-}
-
-.input-line {
-  display: flex;
-  align-items: center;
-}
-
-.input {
-  background: transparent;
-  border: none;
-  outline: none;
-  color: inherit;
-  font-family: inherit;
-  flex: 1;
-}
-</style>

@@ -15,8 +15,10 @@ const levelClassMap = {
 
 <template>
   <div>
-    <pre class="text-sm" :class="levelClassMap[block.level ?? 'default']"
-      >{{ props.block.content }}
-    </pre>
+    <pre
+      class="text-sm whitespace-pre-wrap"
+      :class="levelClassMap[block.level ?? 'default']"
+      v-text="props.block.content"
+    />
   </div>
 </template>

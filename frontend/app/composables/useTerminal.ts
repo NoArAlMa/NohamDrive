@@ -4,6 +4,21 @@ import type {
 } from "~~/shared/types/terminal_types";
 import { commandRegistry } from "./commands";
 
+function parseArgs(input: string): string[] {
+  const regex = /"([^"]*)"|'([^']*)'|(\S+)/g;
+  const args: string[] = [];
+  let match;
+
+  while ((match = regex.exec(input)) !== null) {
+    const arg = match[1] ?? match[2] ?? match[3];
+    if (typeof arg === "string") {
+      args.push(arg);
+    }
+  }
+
+  return args;
+}
+
 export function useTerminal(inputRef?: any) {
   const blocks = ref<TerminalBlock[]>([]);
   const currentInput = ref("");
@@ -13,7 +28,7 @@ export function useTerminal(inputRef?: any) {
     command?: TerminalCommand;
     args: string[];
   } {
-    const parts = input.trim().split(" ");
+    const parts = parseArgs(input);
 
     const name = parts[0] ?? "";
     const args = parts.slice(1);
