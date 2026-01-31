@@ -1,3 +1,4 @@
+import type { FileExistsResponse } from "~~/shared/types/file_request";
 import type {
   TerminalCommand,
   TerminalContext,
@@ -33,15 +34,58 @@ export const changeDirectoryCommand: TerminalCommand = {
 
     if (args.length === 1 && args[0]) {
       const { navigate } = useFSStore();
-      const path = args[0];
-      navigate(path);
-      return null;
+      const resolved_path = resolvePath(args[0], ctx.currentPath!);
+
+      if (resolved_path === ctx.currentPath!) {
+        return { type: "nope" };
+      }
+
+      try {
+        const resolved = await $fetch<GenericAPIResponse<FileExistsResponse>>(
+          "/storage/resolve",
+          {
+            params: { path: resolved_path },
+          },
+        );
+
+        if (resolved.data!.type !== "directory") {
+          return {
+            type: "output",
+            level: "error",
+            content: "cd: not a directory",
+          };
+        }
+
+        navigate(resolved_path);
+        return { type: "nope" };
+      } catch (e: any) {
+        if (e.statusCode === 404) {
+          return {
+            type: "output",
+            level: "error",
+            content: "cd: no such file or directory",
+          };
+        }
+
+        if (e.statusCode === 400) {
+          return {
+            type: "output",
+            level: "error",
+            content: "cd: invalid path",
+          };
+        }
+      }
+      return {
+        type: "output",
+        level: "error",
+        content: "cd: unexpected error",
+      };
     }
 
     return {
       type: "output",
       level: "error",
-      content: "Invalid arguments for cd command.",
+      content: "cd: unexpected error",
     };
   },
 };

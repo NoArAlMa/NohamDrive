@@ -342,3 +342,13 @@ async def compress_files_endpoint(
     return BaseResponse(
         data=metadata, message=message, status_code=status.HTTP_201_CREATED
     )
+
+
+@router.get("/resolve", response_model=BaseResponse)
+async def resolve_path(
+    path: str = Query(default="/", description="Chemin du dossier"),
+    minio_service: MinioService = Depends(get_minio_service),
+    user_id: int = 1,
+):
+    data = await minio_service.object_service.resolve_objet(user_id=user_id, path=path)
+    return BaseResponse(data=data, message="message", status_code=status.HTTP_200_OK)

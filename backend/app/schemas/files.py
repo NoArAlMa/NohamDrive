@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 from app.utils.response import BaseResponse
 
 
@@ -37,6 +37,13 @@ class MoveItem(BaseModel):
 class CompressItems(BaseModel):
     objects: list[str]
     destination_folder: str
+
+
+class ResolvePathResponse(BaseModel):
+    path: str
+    exists: bool
+    type: Literal["file", "directory"]
+    size: Optional[int] = None
 
 
 class FileUploadResponse(BaseResponse[FileMetadata]):

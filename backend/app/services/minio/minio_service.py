@@ -1,3 +1,4 @@
+import datetime
 from fastapi import HTTPException, Query, Request
 from minio import Minio
 from minio.error import S3Error
@@ -7,8 +8,8 @@ from app.services.minio.bucket_service import BucketService
 from app.services.minio.object_service import ObjectService
 from app.services.minio.download_service import DownloadService
 
+from app.utils.minio_utils import MinioUtils
 from core.logging import setup_logger
-from datetime import datetime
 
 
 # Initialisation du logger
@@ -35,13 +36,28 @@ class MinioService:
             if normalized_path:
                 normalized_path += "/"
 
+            if ".." in normalized_path.split("/"):
+                raise HTTPException(status_code=400, detail="Invalid path")
+
+            path_type = await MinioUtils.resolve_path_type(
+                minio_client=self.minio,
+                bucket_name=bucket_name,
+                path=normalized_path,
+            )
+
+            if path_type == "not_found":
+                raise HTTPException(status_code=404, detail="Path not found")
+
+            if path_type == "file":
+                raise HTTPException(status_code=400, detail="Not a directory")
+
             objects = self.minio.list_objects(
                 bucket_name,
                 prefix=normalized_path,
                 recursive=False,
             )
 
-            items = []
+            items: list[SimpleFileItem] = []
 
             for obj in objects:
                 # Ignore le dossier courant
@@ -57,11 +73,11 @@ class MinioService:
                         name=name,
                         size=None if obj.is_dir else obj.size,
                         is_dir=obj.is_dir,
-                        last_modified=obj.last_modified or datetime.min,
+                        last_modified=obj.last_modified or datetime.datetime.now(),
                     )
                 )
 
-            items.sort(key=lambda x: (not x.is_dir, x.name.lower()))
+            items.sort(key=lambda x: (not x.is_dir, (x.name or "").lower()))
 
             total_items = len(items)
             total_pages = (total_items + per_page - 1) // per_page

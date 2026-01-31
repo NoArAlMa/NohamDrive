@@ -62,7 +62,6 @@ export const listCommand: TerminalCommand = {
         if (!Items?.length) {
           return {
             type: "output",
-            level: "default",
             content: "Folder is empty",
           };
         }
@@ -81,7 +80,7 @@ export const listCommand: TerminalCommand = {
         return {
           type: "output",
           level: "error",
-          content: message,
+          content: `Error : ${message}`,
         };
       }
     }

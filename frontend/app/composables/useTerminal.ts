@@ -53,8 +53,6 @@ export function useTerminal(inputRef?: any) {
       currentPath: currentPath,
     };
 
-    blocks.value.push({ type: "command", content: value, cwd: currentPath });
-
     const parsed = parseCommand(value);
 
     if (!parsed.command) {
@@ -69,9 +67,11 @@ export function useTerminal(inputRef?: any) {
 
     const result = await parsed.command.run(parsed.args, context);
 
+    blocks.value.push({ type: "command", content: value, cwd: currentPath });
+
     if (result && result.type === "clear") {
       blocks.value = [];
-    } else if (result) {
+    } else if (result.type === "output") {
       blocks.value.push(result);
     }
 

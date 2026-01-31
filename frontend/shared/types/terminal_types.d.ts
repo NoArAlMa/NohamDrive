@@ -19,7 +19,7 @@ export type CommandResult =
       level?: "default" | "info" | "success" | "warning" | "error" | "muted";
     }
   | { type: "clear" }
-  | null;
+  | { type: "nope" };
 
 export interface TerminalContext {
   fileTree?: ApiFileItem[];
