@@ -3,7 +3,7 @@ import type { TerminalBlock } from "~~/shared/types/terminal_types";
 
 const props = defineProps<{ block: TerminalBlock }>();
 
-const levelClassMap = {
+const levelClassMap: Record<string, string> = {
   default: "text-gray-300",
   info: "text-blue-400",
   success: "text-green-400",
@@ -17,7 +17,7 @@ const levelClassMap = {
   <div>
     <pre
       class="text-sm whitespace-pre-wrap"
-      :class="levelClassMap[block.level ?? 'default']"
+      :class="levelClassMap[(props.block as any).level ?? 'default']"
       v-text="props.block.content"
     />
   </div>

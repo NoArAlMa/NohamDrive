@@ -11,6 +11,16 @@ function focusInput() {
 
 const bottom = ref<HTMLElement | null>(null);
 
+const commandLoading = ref(false);
+
+async function submitCommand() {
+  commandLoading.value = true;
+
+  await submit();
+
+  commandLoading.value = false;
+}
+
 watch(
   blocks,
   async () => {
@@ -23,7 +33,7 @@ watch(
 
 <template>
   <div
-    class="h-full overflow-y-auto bg-[#0d1117] p-4 font-mono text-sm text-gray-300"
+    class="h-screen overflow-y-auto bg-[#0d1117] p-4 font-mono text-sm text-gray-300"
     @click="focusInput"
   >
     <!-- History -->
@@ -45,16 +55,22 @@ watch(
     <div ref="bottom" />
 
     <!-- Active input -->
-    <div class="flex items-center gap-1">
+    <section class="flex items-center gap-1">
+      <UIcon
+        name="material-symbols:progress-activity"
+        class="animate-spin mr-2"
+        v-if="commandLoading"
+      />
       <span class="text-blue-400">ND:{{ currentPath }} $ </span>
+
       <input
         ref="input"
         v-model="currentInput"
-        @keydown.enter.prevent="submit"
+        @keydown.enter.prevent="submitCommand"
         class="flex-1 bg-transparent outline-none caret-blue-400"
         autocomplete="off"
         spellcheck="false"
       />
-    </div>
+    </section>
   </div>
 </template>
