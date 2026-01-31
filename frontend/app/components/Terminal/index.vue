@@ -1,5 +1,6 @@
 <script setup lang="ts">
-const { currentPath } = useFSStore();
+const fsStore = useFSStore();
+const { currentPath } = storeToRefs(fsStore);
 const { blocks, currentInput, submit } = useTerminal();
 
 const input = ref<HTMLInputElement | null>(null);
@@ -36,7 +37,7 @@ watch(
 
       <!-- Command echo -->
       <div v-else class="flex items-center gap-1">
-        <span class="text-blue-400">ND:{{ currentPath }} $ </span>
+        <span class="text-blue-400">ND:{{ block.cwd }} $</span>
         <span>{{ block.content }}</span>
       </div>
     </div>
@@ -45,7 +46,7 @@ watch(
 
     <!-- Active input -->
     <div class="flex items-center gap-1">
-      <span class="text-blue-400"> ND:{{ currentPath }} $ </span>
+      <span class="text-blue-400">ND:{{ currentPath }} $ </span>
       <input
         ref="input"
         v-model="currentInput"

@@ -18,9 +18,25 @@ export const useFSStore = defineStore("fs", () => {
   });
 
   // Actions
-  const setCurrentPath = (newPath: string) => {
-    currentPath.value = newPath.replace(/\/+/g, "/");
+  const navigate = (inputPath: string) => {
+    currentPath.value = resolvePath(inputPath, currentPath.value);
   };
+
+  const goUp = () => {
+    navigate("..");
+  };
+
+  const setCurrentPath = (path: string) => {
+    currentPath.value = normalizePath(path);
+  };
+
+  // Getters
+  const currentDirName = computed(() => {
+    const parts = currentPath.value.split("/").filter(Boolean);
+    return parts.length ? parts.at(-1)! : "Root";
+  });
+
+  const isRoot = computed(() => currentPath.value === "/");
 
   const generateBreadcrumbItems = () => {
     const parts = currentPath.value.split("/").filter((part) => part !== "");
@@ -42,33 +58,10 @@ export const useFSStore = defineStore("fs", () => {
     ];
   };
 
-  const goUp = () => {
-    const parts = currentPath.value.split("/").filter(Boolean);
-    if (parts.length > 0) {
-      parts.pop();
-      currentPath.value = parts.length ? `/${parts.join("/")}` : "/";
-    }
-  };
-
-  const navigate = (path: string) => {
-    if (path.startsWith("/")) {
-      setCurrentPath(path);
-    } else {
-      setCurrentPath(`${currentPath.value}/${path}`);
-    }
-  };
-
-  // Getters
-  const currentDirName = computed(() => {
-    const parts = currentPath.value.split("/").filter(Boolean);
-    return parts.length ? parts[parts.length - 1] : "Root";
-  });
-
-  const isRoot = computed(() => currentPath.value === "/");
-
   return {
     currentPath,
     setCurrentPath,
+    resolvePath,
     goUp,
     navigate,
     currentDirName,

@@ -3,6 +3,7 @@ import { clearCommand } from "./clear";
 import { uploadCommand } from "./upload";
 import { listCommand } from "./list";
 import { currentDirectoryCommand } from "./pwd";
+import { changeDirectoryCommand } from "./cd";
 
 export const commandRegistry = {
   help: helpCommand,
@@ -10,4 +11,5 @@ export const commandRegistry = {
   upload: uploadCommand,
   list: listCommand,
   pwd: currentDirectoryCommand,
+  cd: changeDirectoryCommand,
 };

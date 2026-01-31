@@ -1,10 +1,16 @@
 import type { ApiFileItem } from "./file_tree";
 
-export type TerminalBlock = {
-  type: "command" | "output";
-  content: string;
-  level?: "default" | "info" | "success" | "warning" | "error" | "muted";
-};
+export type TerminalBlock =
+  | {
+      type: "command";
+      content: string;
+      cwd: string;
+    }
+  | {
+      type: "output";
+      content: string;
+      level?: "default" | "info" | "success" | "warning" | "error" | "muted";
+    };
 
 export type CommandResult =
   | {
@@ -12,7 +18,8 @@ export type CommandResult =
       content: string | any;
       level?: "default" | "info" | "success" | "warning" | "error" | "muted";
     }
-  | { type: "clear" };
+  | { type: "clear" }
+  | null;
 
 export interface TerminalContext {
   fileTree?: ApiFileItem[];

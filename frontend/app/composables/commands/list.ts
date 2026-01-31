@@ -35,12 +35,25 @@ export const listCommand: TerminalCommand = {
     if (args.length === 1 && args[0]) {
       const path = args[0];
 
+      const correct_path = resolvePath(path, ctx?.currentPath!);
+
+      if (correct_path == ctx.currentPath) {
+        const files = Object.values(ctx?.fileTree!).map(
+          (file) => `${file.is_dir ? "[DIR] " : ""}${file.name}`,
+        );
+
+        return {
+          type: "output",
+          content: `${files.join("\n")}`,
+        };
+      }
+
       try {
         const data = await $fetch<GenericAPIResponse<ApiFileTreeData>>(
           "/storage/tree",
           {
             method: "GET",
-            params: { path: path },
+            params: { path: correct_path },
           },
         );
 

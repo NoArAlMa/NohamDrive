@@ -45,7 +45,15 @@ export function useTerminal(inputRef?: any) {
     const value = currentInput.value.trim();
     if (!value) return;
 
-    blocks.value.push({ type: "command", content: value });
+    const fileTreeStore = useFileTree();
+    const { currentPath } = useFSStore();
+
+    const context = {
+      fileTree: fileTreeStore.fileTree.value,
+      currentPath: currentPath,
+    };
+
+    blocks.value.push({ type: "command", content: value, cwd: currentPath });
 
     const parsed = parseCommand(value);
 
@@ -59,18 +67,11 @@ export function useTerminal(inputRef?: any) {
       return;
     }
 
-    const fileTreeStore = useFileTree();
-    const { currentPath } = useFSStore();
-    const context = {
-      fileTree: fileTreeStore.fileTree.value,
-      currentPath: currentPath,
-    };
-
     const result = await parsed.command.run(parsed.args, context);
 
-    if (result.type === "clear") {
+    if (result && result.type === "clear") {
       blocks.value = [];
-    } else {
+    } else if (result) {
       blocks.value.push(result);
     }
 
