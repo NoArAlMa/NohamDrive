@@ -6,6 +6,7 @@ import { currentDirectoryCommand } from "./pwd";
 import { changeDirectoryCommand } from "./cd";
 import { makeDirectoryCommand } from "./mkdir";
 import { removeCommand } from "./rm";
+import { downloadCommand } from "./download";
 
 export const commandRegistry = {
   help: helpCommand,
@@ -16,4 +17,5 @@ export const commandRegistry = {
   cd: changeDirectoryCommand,
   mkdir: makeDirectoryCommand,
   rm: removeCommand,
+  download: downloadCommand,
 };
