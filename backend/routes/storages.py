@@ -2,6 +2,7 @@ from fastapi import (
     APIRouter,
     HTTPException,
     Request,
+    Request,
     UploadFile,
     Depends,
     status,
@@ -69,6 +70,7 @@ async def upload_file_endpoint(
         message=message,
     )
     await sse_manager.notify_user(user_id, sse_message.model_dump())
+    await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(
         data=metadata, message=message, status_code=status.HTTP_201_CREATED
     )
@@ -132,6 +134,7 @@ async def download_file_endpoint(
 )
 async def create_folder_endpoint(
     payload: CreateFolder,
+    payload: CreateFolder,
     user_id: int = 1,  # ID de l'utilisateur (via auth),
     minio_service: MinioService = Depends(get_minio_service),
 ) -> BaseResponse[str]:
@@ -157,13 +160,17 @@ async def create_folder_endpoint(
         user_id=user_id,
         current_path=payload.currentPath,
         folder_path=payload.folderPath,
+        current_path=payload.currentPath,
+        folder_path=payload.folderPath,
     )
+    sse_message = SSEMessage(
     sse_message = SSEMessage(
         event="folder_created",
         user_id=user_id,
         data=payload.model_dump(),
         message=f"Fichier {payload.folderPath} créer",
     )
+    await sse_manager.notify_user(user_id, sse_message.model_dump())
     await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(
         success=True,
@@ -187,6 +194,7 @@ async def delete_object_endpoint(
         user_id, folder_path
     )
 
+    sse_message = SSEMessage(
     sse_message = SSEMessage(
         event="delete",
         user_id=user_id,
@@ -239,6 +247,7 @@ async def rename_endpoint(
     )
 
     sse_message = SSEMessage(
+    sse_message = SSEMessage(
         event="rename",
         user_id=user_id,
         data=data,
@@ -284,11 +293,13 @@ async def move_endpoint(
     )
 
     sse_message = SSEMessage(
+    sse_message = SSEMessage(
         event="move",
         user_id=user_id,
         data=data,
         message=message,
     )
+    await sse_manager.notify_user(user_id, sse_message.model_dump())
     await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(
         success=True,
@@ -308,11 +319,13 @@ async def copy_endpoint(
     )
     # TODO : Rajouter le nom du dossier (pas assez d'info)
     sse_message = SSEMessage(
+    sse_message = SSEMessage(
         event="copy",
         user_id=user_id,
         data=data,
         message=message,
     )
+    await sse_manager.notify_user(user_id, sse_message.model_dump())
     await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(
         success=True, message=message, data=data, status_code=status.HTTP_200_OK
