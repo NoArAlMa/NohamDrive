@@ -48,14 +48,20 @@ export function useTerminal(inputRef?: any) {
     const fileTreeStore = useFileTree();
     const { currentPath } = useFSStore();
 
+    // On attend que FileTree soit chargé
+    if (fileTreeStore.fileTree.length === 0) {
+      await until(() => fileTreeStore.fileTree.length > 0).toBe(true);
+    }
+
     const context = {
-      fileTree: fileTreeStore.fileTree.value,
+      fileTree: fileTreeStore.fileTree,
       currentPath: currentPath,
     };
 
     const parsed = parseCommand(value);
 
     if (!parsed.command) {
+      blocks.value.push({ type: "command", content: value, cwd: currentPath });
       blocks.value.push({
         type: "output",
         level: "error",
@@ -69,10 +75,22 @@ export function useTerminal(inputRef?: any) {
 
     blocks.value.push({ type: "command", content: value, cwd: currentPath });
 
-    if (result && result.type === "clear") {
-      blocks.value = [];
-    } else if (result.type === "output") {
-      blocks.value.push(result);
+    if (Array.isArray(result)) {
+      result.forEach((item) => {
+        if (item.type !== "nope") {
+          if (item.type === "clear") {
+            blocks.value = [];
+          } else {
+            blocks.value.push(item);
+          }
+        }
+      });
+    } else if (result) {
+      if (result.type === "clear") {
+        blocks.value = [];
+      } else if (result.type !== "nope") {
+        blocks.value.push(result);
+      }
     }
 
     reset();

@@ -61,6 +61,9 @@ export function useFileExplorerColumns(ui: UIComponents) {
   const columns = shallowRef<TableColumn<ApiFileItem>[]>([
     {
       id: "select",
+      minSize: 30,
+      maxSize: 60,
+      size: 40,
       header: ({ table }) =>
         h(ui.UCheckbox, {
           ui: { base: "rounded-full" },
@@ -81,6 +84,9 @@ export function useFileExplorerColumns(ui: UIComponents) {
     },
     {
       accessorKey: "name",
+      size: 300,
+      minSize: 200,
+      maxSize: 500,
       header: ({ column }) =>
         h("div", { class: "flex items-center gap-2" }, [
           h(ui.UIcon, { name: "i-heroicons-document", class: "text-lg" }),
@@ -89,6 +95,9 @@ export function useFileExplorerColumns(ui: UIComponents) {
     },
     {
       accessorKey: "last_modified",
+      minSize: 100,
+      maxSize: 250,
+      size: 150,
       header: ({ column }) => getHeader(column, "Date"),
       cell: ({ row }) => formatDate(row.getValue("last_modified")),
     },

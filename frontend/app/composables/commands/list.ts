@@ -37,17 +37,6 @@ export const listCommand: TerminalCommand = {
 
       const correct_path = resolvePath(path, ctx?.currentPath!);
 
-      if (correct_path == ctx.currentPath) {
-        const files = Object.values(ctx?.fileTree!).map(
-          (file) => `${file.is_dir ? "[DIR] " : ""}${file.name}`,
-        );
-
-        return {
-          type: "output",
-          content: `${files.join("\n")}`,
-        };
-      }
-
       try {
         const data = await $fetch<GenericAPIResponse<ApiFileTreeData>>(
           "/storage/tree",
@@ -80,7 +69,7 @@ export const listCommand: TerminalCommand = {
         return {
           type: "output",
           level: "error",
-          content: `Error : ${message}`,
+          content: `list : ${message}`,
         };
       }
     }
@@ -88,7 +77,7 @@ export const listCommand: TerminalCommand = {
     return {
       type: "output",
       level: "error",
-      content: "Invalid arguments for list command.",
+      content: "list : Too many arguments for list command.",
     };
   },
 };

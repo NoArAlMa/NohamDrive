@@ -20,7 +20,7 @@ export const helpCommand: TerminalCommand = {
       return {
         type: "output",
         level: "error",
-        content: `No help available for command: ${target}`,
+        content: `help : No help available for command: ${target}`,
       };
     }
 

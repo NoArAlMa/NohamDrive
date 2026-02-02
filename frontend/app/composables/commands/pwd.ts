@@ -8,7 +8,7 @@ export const currentDirectoryCommand: TerminalCommand = {
       return {
         type: "output",
         level: "error",
-        content: "Usage : command pwd doesn't take arguments",
+        content: "pwd : Usage - command pwd doesn't take arguments",
       };
     }
 

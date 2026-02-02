@@ -4,6 +4,8 @@ import { uploadCommand } from "./upload";
 import { listCommand } from "./list";
 import { currentDirectoryCommand } from "./pwd";
 import { changeDirectoryCommand } from "./cd";
+import { makeDirectoryCommand } from "./mkdir";
+import { removeCommand } from "./rm";
 
 export const commandRegistry = {
   help: helpCommand,
@@ -12,4 +14,6 @@ export const commandRegistry = {
   list: listCommand,
   pwd: currentDirectoryCommand,
   cd: changeDirectoryCommand,
+  mkdir: makeDirectoryCommand,
+  rm: removeCommand,
 };

@@ -1,25 +1,38 @@
 import type { ApiFileItem } from "./file_tree";
 
-export type TerminalBlock =
-  | {
-      type: "command";
-      content: string;
-      cwd: string;
-    }
-  | {
-      type: "output";
-      content: string;
-      level?: "default" | "info" | "success" | "warning" | "error" | "muted";
-    };
+export interface OutputBlock {
+  type: "output";
+  content: string;
+  level?: "default" | "info" | "success" | "warning" | "error" | "muted";
+}
 
-export type CommandResult =
-  | {
-      type: "output";
-      content: string | any;
-      level?: "default" | "info" | "success" | "warning" | "error" | "muted";
-    }
+export interface CommandBlock {
+  type: "command";
+  content: string;
+  cwd: string;
+}
+
+export interface ProgressBlock {
+  type: "progress";
+  id: string;
+  subject: string;
+  loaded: number;
+  total: number;
+  status: "pending" | "uploading" | "success" | "error";
+}
+
+export type TerminalBlock =
+  | CommandBlock
+  | OutputBlock
+  | ProgressBlock
   | { type: "clear" }
   | { type: "nope" };
+
+export type CommandResult =
+  | OutputBlock
+  | { type: "clear" }
+  | { type: "nope" }
+  | ProgressBlock;
 
 export interface TerminalContext {
   fileTree?: ApiFileItem[];
@@ -33,5 +46,9 @@ export interface TerminalCommand {
   run: (
     args: string[],
     context?: TerminalContext,
-  ) => CommandResult | Promise<CommandResult>;
+  ) =>
+    | CommandResult
+    | Promise<CommandResult>
+    | CommandResult[]
+    | Promise<CommandResult[]>;
 }

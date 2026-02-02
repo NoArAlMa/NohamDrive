@@ -14,10 +14,10 @@ const bottom = ref<HTMLElement | null>(null);
 const commandLoading = ref(false);
 
 async function submitCommand() {
+  if (commandLoading.value) return;
+
   commandLoading.value = true;
-
   await submit();
-
   commandLoading.value = false;
 }
 
@@ -44,9 +44,13 @@ watch(
     >
       <!-- Output -->
       <TerminalOutputBlock v-if="block.type === 'output'" :block="block" />
-
+      <!-- Progress -->
+      <TerminalProgressBlock
+        v-else-if="block.type === 'progress'"
+        :block="block"
+      />
       <!-- Command echo -->
-      <div v-else class="flex items-center gap-1">
+      <div v-else-if="block.type === 'command'" class="flex items-center gap-1">
         <span class="text-blue-400">ND:{{ block.cwd }} $</span>
         <span>{{ block.content }}</span>
       </div>

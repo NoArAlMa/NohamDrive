@@ -61,10 +61,11 @@ async def upload_file_endpoint(
     message, metadata = await minio_service.download_service.upload_file(
         user_id, file, path
     )
+
     sse_message = SSEMessage(
         event="upload",
         user_id=user_id,
-        data=metadata,
+        data=metadata.model_dump(),
         message=message,
     )
     await sse_manager.notify_user(user_id, sse_message.model_dump())
