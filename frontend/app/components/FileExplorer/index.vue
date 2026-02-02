@@ -3,14 +3,10 @@ import type { TableRow } from "@nuxt/ui";
 import type { ApiFileItem } from "~~/shared/types/file_tree";
 import { UCheckbox, UButton, UDropdownMenu, UIcon } from "#components";
 
-const {
-  fileTree,
-  hasError,
-  errorMessage,
-  errorStatus,
-  loading,
-  retryFetching,
-} = useFileTree();
+const fileTreeStore = useFileTree();
+
+const { fileTree, loading, hasError, errorMessage, errorStatus } =
+  storeToRefs(fileTreeStore);
 
 const table = useTemplateRef("table");
 const rowSelection = ref<Record<string, boolean>>({});
@@ -44,11 +40,11 @@ watch(selectedCount, (count) => emit("update:selectedCount", count), {
 });
 
 const ExplorerContextMenu = defineAsyncComponent(
-  () => import("./ExplorerContextMenu.vue")
+  () => import("./ExplorerContextMenu.vue"),
 );
 const ExplorerError = defineAsyncComponent(() => import("./ExplorerError.vue"));
 const ExplorerLoader = defineAsyncComponent(
-  () => import("./ExplorerLoader.vue")
+  () => import("./ExplorerLoader.vue"),
 );
 
 // Importation des components Nuxt UI pour pouvoir les utiliser en JS
@@ -74,12 +70,14 @@ function goBack() {
 }
 
 watch(
-  () => fileTree,
+  () => fileTree.value,
   () => {
     rowSelection.value = {};
   },
-  { deep: true }
+  { deep: true },
 );
+
+console.log("FileExplorer - fileTree:", fileTree);
 </script>
 
 <template>
@@ -97,13 +95,9 @@ watch(
           tbody: 'file-explorer-tbody',
           td: 'py-0',
         }"
-        :virtualize="{
-          estimateSize: 65,
-          enabled: true,
-          overscan: 5,
-        }"
+        :virtualize="false"
         @hover=""
-        class="w-full h-full overflow-x-hidden"
+        class="w-full h-full overflow-x-hidden table-fixed"
         @contextmenu="(e, row) => (contextRow = row)"
       >
         <template #name-cell="{ row }">
@@ -138,7 +132,7 @@ watch(
             v-if="hasError"
             :ErrorStatus="errorStatus"
             :message="errorMessage"
-            :on-retry="retryFetching"
+            :on-retry="useFileTree().retryFetching"
           />
         </template>
         <!-- Page pour le chargement de l'explorateur -->

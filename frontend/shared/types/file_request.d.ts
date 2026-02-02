@@ -26,3 +26,10 @@ export interface CreateFolderPayload {
   currentPath: string;
   folderPath: string;
 }
+
+export interface FileExistsResponse {
+  path: string;
+  exists: boolean;
+  type: "file" | "directory";
+  size?: number | null;
+}
