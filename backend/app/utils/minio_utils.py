@@ -1,6 +1,7 @@
 import re
+from typing import Literal
 from fastapi import HTTPException
-from minio import Minio
+from minio import Minio, S3Error
 
 WINDOWS_SUFFIX_RE = re.compile(r"^(.*?)(?: \((\d+)\))?$")
 
@@ -66,6 +67,35 @@ class MinioUtils:
         base = re.sub(r"[^a-zA-Z0-9_.-]", "_", base)
         ext = f".{ext}" if ext else ""
         return base + ext
+
+    @staticmethod
+    async def resolve_path_type(
+        minio_client: Minio,
+        bucket_name: str,
+        path: str,
+    ) -> Literal["dir", "file", "not_found"]:
+        normalized = path.strip("/")
+
+        if not normalized:
+            return "dir"
+
+        try:
+            minio_client.stat_object(bucket_name, normalized)
+            return "file"
+        except S3Error:
+            pass
+
+        prefix = normalized + "/"
+        objects = minio_client.list_objects(
+            bucket_name,
+            prefix=prefix,
+            recursive=False,
+        )
+
+        for _ in objects:
+            return "dir"
+
+        return "not_found"
 
     @staticmethod
     def generate_available_name(

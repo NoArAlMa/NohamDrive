@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 const props = defineProps<{ selectedCount: number }>();
-const { totalElements } = useFileTree();
+const filetree = useFileTree();
+const { totalElements } = storeToRefs(filetree);
 
 const selectionLabel = computed(() => {
   if (props.selectedCount === 0) {
@@ -15,9 +16,7 @@ const selectionLabel = computed(() => {
 
 <template>
   <!-- MAYBE : Basculement de vue -->
-  <!-- Sélection & nb éléments -->
   <!-- FINISH : Terminal -->
-  <!-- TODO : Action en cours -->
 
   <div
     class="shrink-0 border-t min-h-6 pl-3 px-2 py-0.5 w-full flex items-center justify-between"
