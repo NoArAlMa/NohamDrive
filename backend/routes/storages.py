@@ -69,7 +69,6 @@ async def upload_file_endpoint(
         message=message,
     )
     await sse_manager.notify_user(user_id, sse_message.model_dump())
-    await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(
         data=metadata, message=message, status_code=status.HTTP_201_CREATED
     )
