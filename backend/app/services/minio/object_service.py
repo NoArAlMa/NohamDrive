@@ -6,6 +6,7 @@ from fastapi import HTTPException, status
 from minio import Minio, S3Error
 from app.services.minio.bucket_service import BucketService
 from app.utils.minio_utils import MinioUtils
+from app.schemas.files import ResolvePathResponse
 from core.logging import setup_logger
 from minio.deleteobjects import DeleteObject
 import io
@@ -732,3 +733,50 @@ class ObjectService:
             if e.code == "NoSuchKey":
                 raise HTTPException(status_code=404, detail="Objet non trouvé")
             raise HTTPException(status_code=500, detail=f"Erreur MinIO: {str(e)}")
+
+    async def resolve_objet(self, user_id: int, path: str):
+        try:
+            normalized_path = MinioUtils.normalize_path(
+                path, path.endswith("/")
+            ).lstrip("/")
+
+            bucket = await self.bucket_service.get_user_bucket(user_id)
+
+            if normalized_path == "":
+                return ResolvePathResponse(
+                    path="/",
+                    exists=True,
+                    type="directory",
+                )
+
+            dir_prefix = normalized_path.rstrip("/") + "/"
+            objects = list(
+                self.minio.list_objects(
+                    bucket,
+                    prefix=dir_prefix,
+                    recursive=False,
+                )
+            )
+
+            if objects:
+                return ResolvePathResponse(
+                    path="/" + normalized_path,
+                    exists=True,
+                    type="directory",
+                )
+
+            try:
+                stat = self.minio.stat_object(bucket, normalized_path)
+                return ResolvePathResponse(
+                    path="/" + normalized_path,
+                    exists=True,
+                    type="file",
+                    size=stat.size,
+                )
+            except S3Error:
+                pass
+            raise HTTPException(status_code=404, detail="Path does not exist")
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid path")
+        except S3Error:
+            raise HTTPException(status_code=500, detail="Storage error")

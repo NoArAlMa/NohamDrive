@@ -93,6 +93,7 @@ export const useFsActions = () => {
       }
     } catch (error: any) {
       if (!options?.silent) {
+        if (loadingToast) toast.remove(loadingToast.id);
         toast.add({
           title: "Erreur",
           description:
@@ -135,6 +136,7 @@ export const useFsActions = () => {
       const response = await fetch(`/storage/download/${cleanPath}`);
 
       if (!response.ok) {
+        if (loadingToast) toast.remove(loadingToast.id);
         const text = await response.text();
         throw new Error(text || "Le téléchargement a échoué");
       }
@@ -167,6 +169,7 @@ export const useFsActions = () => {
       }
     } catch (error: any) {
       if (!options?.silent) {
+        if (loadingToast) toast.remove(loadingToast.id);
         toast.add({
           title: "Erreur",
           icon: "material-symbols:error-outline-rounded",
@@ -222,6 +225,7 @@ export const useFsActions = () => {
       }
     } catch (error: any) {
       if (!options?.silent) {
+        if (loadingToast) toast.remove(loadingToast.id);
         toast.add({
           title: "Erreur lors de l'upload",
           icon: "material-symbols:error-outline-rounded",
@@ -269,7 +273,7 @@ export const useFsActions = () => {
       ? `${joinPath(FSStore.currentPath, item.name)}/`
       : joinPath(FSStore.currentPath, item.name);
 
-    const LoadingToastCopy = toast.add({
+    const loadingToast = toast.add({
       title: "Copie en cours...",
       color: "neutral",
       duration: 0,
@@ -290,7 +294,7 @@ export const useFsActions = () => {
           },
         },
       );
-      toast.remove(LoadingToastCopy.id);
+      toast.remove(loadingToast.id);
       toast.add({
         title: "Fichier copié !",
         color: "success",
@@ -303,6 +307,7 @@ export const useFsActions = () => {
     } catch (error: any) {
       const message =
         error.data?.statusMessage || "Impossible de copier le fichier/dossier.";
+      toast.remove(loadingToast.id);
       toast.add({
         title: "Erreur",
         icon: "material-symbols:error-outline-rounded",
@@ -359,6 +364,7 @@ export const useFsActions = () => {
     } catch (error: any) {
       const message =
         error.data?.statusMessage || "Impossible de compresser les fichiers.";
+      if (loadingToast) toast.remove(loadingToast.id);
       toast.add({
         title: "Erreur lors de la compression",
         icon: "material-symbols:error-outline-rounded",

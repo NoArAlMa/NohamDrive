@@ -1,4 +1,12 @@
-from fastapi import APIRouter, HTTPException, UploadFile, Depends, status, Query
+from fastapi import (
+    APIRouter,
+    HTTPException,
+    Request,
+    UploadFile,
+    Depends,
+    status,
+    Query,
+)
 from fastapi.responses import StreamingResponse
 from app.services.minio.minio_service import MinioService, get_minio_service
 from app.schemas.file_tree import SimpleFileTreeResponse
@@ -11,8 +19,20 @@ from app.schemas.files import (
 )
 from app.utils.response import BaseResponse
 
+from app.services.sse_service import sse_manager
+from app.schemas.sse import SSEMessage
 
 router = APIRouter(prefix="/storage", tags=["Storage"])
+
+
+@router.get("/explorer-info")
+async def sse_endpoint(
+    request: Request, user_id: int = 1
+):  # TODO: Récupérer user_id via auth
+    return StreamingResponse(
+        sse_manager.add_client(user_id),
+        media_type="text/event-stream; charset=utf-8",
+    )
 
 
 @router.post(
@@ -41,6 +61,14 @@ async def upload_file_endpoint(
     message, metadata = await minio_service.download_service.upload_file(
         user_id, file, path
     )
+
+    sse_message = SSEMessage(
+        event="upload",
+        user_id=user_id,
+        data=metadata.model_dump(),
+        message=message,
+    )
+    await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(
         data=metadata, message=message, status_code=status.HTTP_201_CREATED
     )
@@ -103,7 +131,7 @@ async def download_file_endpoint(
     status_code=status.HTTP_201_CREATED,
 )
 async def create_folder_endpoint(
-    request: CreateFolder,
+    payload: CreateFolder,
     user_id: int = 1,  # ID de l'utilisateur (via auth),
     minio_service: MinioService = Depends(get_minio_service),
 ) -> BaseResponse[str]:
@@ -124,12 +152,21 @@ async def create_folder_endpoint(
 
 
     """
-
+    # TODO : Return en tuple
     folder_path = await minio_service.object_service.create_folder(
         user_id=user_id,
-        current_path=request.currentPath,
-        folder_path=request.folderPath,
+        current_path=payload.currentPath,
+        folder_path=payload.folderPath,
     )
+
+    sse_message = SSEMessage(
+        event="folder_created",
+        user_id=user_id,
+        data=payload.model_dump(),
+        message=f"Fichier {payload.folderPath} créer",
+    )
+    await sse_manager.notify_user(user_id, sse_message.model_dump())
+
     return BaseResponse(
         success=True,
         data=folder_path,
@@ -151,6 +188,14 @@ async def delete_object_endpoint(
     message, data = await minio_service.object_service.delete_object(
         user_id, folder_path
     )
+
+    sse_message = SSEMessage(
+        event="delete",
+        user_id=user_id,
+        data=data,
+        message=message,
+    )
+    await sse_manager.notify_user(user_id, sse_message.model_dump())
 
     return BaseResponse(
         success=True,
@@ -195,6 +240,14 @@ async def rename_endpoint(
         new_name=payload.new_name,
     )
 
+    sse_message = SSEMessage(
+        event="rename",
+        user_id=user_id,
+        data=data,
+        message=message,
+    )
+
+    await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(
         success=True, data=data, message=message, status_code=status.HTTP_200_OK
     )
@@ -231,6 +284,15 @@ async def move_endpoint(
         source_path=payload.source_path,
         destination_folder=payload.destination_folder,
     )
+
+    sse_message = SSEMessage(
+        event="move",
+        user_id=user_id,
+        data=data,
+        message=message,
+    )
+    await sse_manager.notify_user(user_id, sse_message.model_dump())
+    await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(
         success=True,
         data=data,
@@ -247,7 +309,16 @@ async def copy_endpoint(
     message, data = await minio_service.object_service.copy(
         user_id, payload.source_path, payload.destination_folder
     )
+    # TODO : Rajouter le nom du dossier (pas assez d'info)
 
+    sse_message = SSEMessage(
+        event="copy",
+        user_id=user_id,
+        data=data,
+        message=message,
+    )
+    await sse_manager.notify_user(user_id, sse_message.model_dump())
+    await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(
         success=True, message=message, data=data, status_code=status.HTTP_200_OK
     )
@@ -278,3 +349,13 @@ async def compress_files_endpoint(
     return BaseResponse(
         data=metadata, message=message, status_code=status.HTTP_201_CREATED
     )
+
+
+@router.get("/resolve", response_model=BaseResponse)
+async def resolve_path(
+    path: str = Query(default="/", description="Chemin du dossier"),
+    minio_service: MinioService = Depends(get_minio_service),
+    user_id: int = 1,
+):
+    data = await minio_service.object_service.resolve_objet(user_id=user_id, path=path)
+    return BaseResponse(data=data, message="message", status_code=status.HTTP_200_OK)

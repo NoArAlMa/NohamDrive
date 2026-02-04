@@ -21,7 +21,7 @@ class DownloadService:
 
     async def upload_file(
         self, user_id: int, file: UploadFile, path: str = ""
-    ) -> tuple:
+    ) -> tuple[str, FileMetadata]:
         """
         Upload un fichier dans MinIO dans le dossier spécifié.
         Args:
@@ -71,7 +71,7 @@ class DownloadService:
                     filename=file.filename,
                     size=stat.size,
                     content_type=content_type,
-                    upload_date=datetime.now(),
+                    upload_date=datetime.now().isoformat(),
                     bucket=bucket_name,
                     object_name=object_name,
                 ),

@@ -1,6 +1,6 @@
 # Projet Final NSI - NohamDrive
 
-🚀 **Une solution auto-hébergée de stockage et partage de fichiers** – par Les loups de NoArAlMa. Ahouuuuu.
+🚀 **Une solution auto-hébergée de stockage et partage de fichiers**
 
 ---
 
@@ -11,20 +11,18 @@ Développer une alternative **open-source**, **sécurisée** et **simple** à On
 - **Stockage de fichiers** (upload, téléchargement, partage).
 - **Un terminal intégré pour naviguer** (ls, cd, share[pour partager à un ami])
 - **Gestion des utilisateurs** (comptes, permissions).
-- **Création de team**
-- **Appels vidéo et messages**
-- **Interface desktop** (grâce à Tauri, pour faire plaisir à M. Bridonneau et aux utilisateurs).
+- **Interface desktop** (Electron)
 
 ---
 
 ## 🛠 Stack Technique
 
-| Partie       | Technologies                                    |
-| ------------ | ----------------------------------------------- |
-| **Frontend** | Nuxt 4, TailwindCSS 4, Nuxt UI, Pinia et tout   |
-| **Backend**  | FastAPI, PostgreSQL, SQLModel, blablabla        |
-| **Desktop**  | Tauri (Rust) pour faire plaisir à M. Bridonneau |
-| **DevOps**   | GitHub Actions, VPS Ubuntu                      |
+| Partie       | Technologies                            |
+| ------------ | --------------------------------------- |
+| **Frontend** | Nuxt 4, TailwindCSS 4, Nuxt UI, Pinia   |
+| **Backend**  | FastAPI, PostgreSQL, Minio, Meilisearch |
+| **Desktop**  | Electron                                |
+| **DevOps**   | GitHub Actions, VPS Ubuntu              |
 
 ---
 
@@ -34,13 +32,12 @@ Développer une alternative **open-source**, **sécurisée** et **simple** à On
 | --------------------- | ------------------------------- |
 | **Leader du parti**   | Alexandre LARUE                 |
 | **Frontend (Nuxt)**   | Noham Mocquard, Alexandre LARUE |
-| **Backend (FastAPI)** | Maxime leFraix, Alexandre LARUE |
-| **Backend (SQL)**     | Arthur Michel, Alexandre LARUE  |
+| **Backend (FastAPI)** | Alexandre LARUE                 |
+| **Backend (SQL)**     | Arthur Anonymous                |
 
 ---
 
 ## 📋 Prérequis
 
 - **Frontend** : Node.js (v24+), npm.
-- **Backend** : Python (3.14), PostgreSQL (17+).
-- **Cerveau** : Oui, parce que sans ça, même moi je vous sauverais pas. 🧠
+- **Backend** : Python (3.14).
