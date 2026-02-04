@@ -42,7 +42,7 @@ export const useFsActions = () => {
       return req;
     } catch (error: any) {
       const message =
-        error.data?.statusMessage ||
+        error.data?.data.message ||
         "Impossible de renommer le fichier/dossier.";
       toast.add({
         title: "Erreur",

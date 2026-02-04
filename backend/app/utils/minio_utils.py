@@ -20,24 +20,26 @@ class MinioUtils:
 
     @staticmethod
     def sanitize_name(name: str) -> str:
-        """
-        Nettoie un nom de fichier ou dossier en :
-        - Gardant les accents et les espaces.
-        - Remplaçant les caractères interdits par un underscore.
-        """
+        name = name.strip()
 
-        if len(name) > 30:
-            raise HTTPException(
-                status_code=400, detail="Nom trop long (+30 caractères)"
-            )
+        if not name:
+            raise HTTPException(status_code=400, detail="Nom vide")
 
-        if not name or "/" in name or ".." in name:
+        if name in {".", ".."}:
             raise HTTPException(status_code=400, detail="Nom invalide")
 
-        # Caractères interdits dans les noms de fichiers
-        forbidden_chars = r'[\\/*?:"<>|]'
-        # Remplace les caractères interdits par un underscore
+        forbidden_chars = r'[\\/*?:"<>|#%&=]'
         name = re.sub(forbidden_chars, "_", name)
+
+        name = name.strip(" ._-")
+
+        if not name:
+            raise HTTPException(status_code=400, detail="Nom invalide après nettoyage")
+
+        if len(name) > 255:
+            raise HTTPException(
+                status_code=400, detail="Nom trop long (255 caractères max)"
+            )
 
         return name
 
