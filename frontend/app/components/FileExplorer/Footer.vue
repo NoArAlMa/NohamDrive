@@ -15,11 +15,8 @@ const selectionLabel = computed(() => {
 </script>
 
 <template>
-  <!-- MAYBE : Basculement de vue -->
-  <!-- FINISH : Terminal -->
-
   <div
-    class="shrink-0 border-t min-h-6 pl-3 px-2 py-0.5 w-full flex items-center justify-between"
+    class="shrink-0 border-t border-gray-600/70 min-h-6 pl-3 pt-2 py-0 w-full flex items-center justify-between"
   >
     <div>
       <span>{{ selectionLabel }}</span>
@@ -31,7 +28,8 @@ const selectionLabel = computed(() => {
       variant="ghost"
       label="Ouvrir dans terminal"
       color="neutral"
-      class="py-0.5"
+      class="py-1"
+      @click="navigateTo('/terminal')"
     />
   </div>
 </template>

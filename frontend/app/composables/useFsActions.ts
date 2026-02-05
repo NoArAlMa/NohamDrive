@@ -42,7 +42,7 @@ export const useFsActions = () => {
       return req;
     } catch (error: any) {
       const message =
-        error.data?.statusMessage ||
+        error.data?.data.message ||
         "Impossible de renommer le fichier/dossier.";
       toast.add({
         title: "Erreur",
@@ -173,11 +173,10 @@ export const useFsActions = () => {
         toast.add({
           title: "Erreur",
           icon: "material-symbols:error-outline-rounded",
-          description: error.message || "Le téléchargement a échoué",
+          description: error.message.message || "Le téléchargement a échoué",
           color: "error",
         });
       }
-      throw error;
     }
   };
 
@@ -250,10 +249,6 @@ export const useFsActions = () => {
           object_path: full_path,
         },
       });
-
-      openDrawerWithProperties(req.data!);
-
-      // TODO : Ouvrir le drawer
     } catch (error: any) {
       const message =
         error.data?.statusMessage || "Impossible de récupérer les stats.";
@@ -263,7 +258,8 @@ export const useFsActions = () => {
   };
 
   const terminal = (item: ApiFileItem) => {
-    /* ... */
+    navigateTo("/terminal");
+    FSStore.navigate(item.name);
   };
 
   const copy = async (
