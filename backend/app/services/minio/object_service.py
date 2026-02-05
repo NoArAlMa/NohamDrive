@@ -152,8 +152,9 @@ class ObjectService:
                 bucket_name,
                 full_path,
                 io.BytesIO(b""),
-                0,
+                length=0,
                 content_type="application/x-directory",
+                metadata={"last_modified": str(datetime.now().isoformat())},
             )
             logger.info(f"Dossier [bold]{full_path}[/bold] créé dans {bucket_name}")
             return full_path
@@ -211,16 +212,26 @@ class ObjectService:
 
         try:
             if is_folder:
-                # Copie récursive
+                now = datetime.now().isoformat()
+
                 for obj in objects:
-                    if obj.object_name:
-                        relative_path = obj.object_name[len(old_prefix) :]
-                        new_object_name = new_prefix + relative_path
-                        self.minio.copy_object(
-                            bucket_name,
-                            new_object_name,
-                            CopySource(bucket_name, obj.object_name),
-                        )
+                    if not obj.object_name:
+                        continue
+
+                    relative_path = obj.object_name[len(old_prefix) :]
+                    new_object_name = new_prefix + relative_path
+
+                    self.minio.copy_object(
+                        bucket_name,
+                        new_object_name,
+                        CopySource(bucket_name, obj.object_name),
+                        metadata={"last_modified": now}
+                        if new_object_name.endswith("/")
+                        else None,
+                        metadata_directive="REPLACE"
+                        if new_object_name.endswith("/")
+                        else "COPY",
+                    )
 
                 # Suppression des anciens objets
                 delete_errors = self.minio.remove_objects(

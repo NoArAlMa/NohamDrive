@@ -67,13 +67,28 @@ class MinioService:
                 # Nom affiché (sans le chemin parent)
                 if obj.object_name:
                     name = obj.object_name.removeprefix(normalized_path).rstrip("/")
+                    is_dir = obj.object_name.endswith("/")
+
+                last_modified = obj.last_modified
+
+                if is_dir:
+                    try:
+                        if obj.object_name:
+                            stat = self.minio.stat_object(bucket_name, obj.object_name)
+                            lm = None
+                            if stat.metadata is not None:
+                                lm = stat.metadata.get("x-amz-meta-last_modified")
+                        if lm:
+                            last_modified = datetime.datetime.fromisoformat(lm)
+                    except Exception:
+                        last_modified = None
 
                 items.append(
                     SimpleFileItem(
                         name=name,
-                        size=None if obj.is_dir else obj.size,
-                        is_dir=obj.is_dir,
-                        last_modified=obj.last_modified or datetime.datetime.now(),
+                        size=None if is_dir else obj.size,
+                        is_dir=is_dir,
+                        last_modified=last_modified or datetime.datetime.now(),
                     )
                 )
 

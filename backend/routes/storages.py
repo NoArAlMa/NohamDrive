@@ -158,6 +158,7 @@ async def create_folder_endpoint(
         current_path=payload.currentPath,
         folder_path=payload.folderPath,
     )
+
     sse_message = SSEMessage(
         event="folder_created",
         user_id=user_id,
@@ -165,6 +166,7 @@ async def create_folder_endpoint(
         message=f"Fichier {payload.folderPath} créer",
     )
     await sse_manager.notify_user(user_id, sse_message.model_dump())
+
     return BaseResponse(
         success=True,
         data=folder_path,
@@ -194,7 +196,7 @@ async def delete_object_endpoint(
         message=message,
     )
     await sse_manager.notify_user(user_id, sse_message.model_dump())
-    await sse_manager.notify_user(user_id, sse_message.model_dump())
+
     return BaseResponse(
         success=True,
         data=data,
@@ -290,6 +292,7 @@ async def move_endpoint(
         message=message,
     )
     await sse_manager.notify_user(user_id, sse_message.model_dump())
+    await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(
         success=True,
         data=data,
@@ -307,12 +310,14 @@ async def copy_endpoint(
         user_id, payload.source_path, payload.destination_folder
     )
     # TODO : Rajouter le nom du dossier (pas assez d'info)
+
     sse_message = SSEMessage(
         event="copy",
         user_id=user_id,
         data=data,
         message=message,
     )
+    await sse_manager.notify_user(user_id, sse_message.model_dump())
     await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(
         success=True, message=message, data=data, status_code=status.HTTP_200_OK

@@ -2,9 +2,9 @@
   "name": "frontend",
   "productName": "NohamDrive",
   "type": "module",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "author": "Alexandre LARUE",
-  "description": "Mon app Nuxt + Electron",
+  "description": "NohamDrive, le meilleur Drive, fait par les meilleurs, pour les meilleurs !",
   "private": true,
   "main": "dist-electron/main.js",
   "scripts": {
