@@ -65,7 +65,7 @@ export const listCommand: TerminalCommand = {
       } catch (error: any) {
         const message =
           error.data?.statusMessage ||
-          "Impossible de renommer le fichier/dossier.";
+          "Impossible de lister les fichiers/dossiers.";
         return {
           type: "output",
           level: "error",

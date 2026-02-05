@@ -33,3 +33,8 @@ export interface FileExistsResponse {
   type: "file" | "directory";
   size?: number | null;
 }
+
+export interface MoveFilePayload {
+  source_path: string;
+  destination_folder: string;
+}
