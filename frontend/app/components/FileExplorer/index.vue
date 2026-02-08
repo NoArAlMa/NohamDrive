@@ -76,6 +76,8 @@ watch(
   },
   { deep: true },
 );
+
+console.log("FileExplorer - fileTree:", fileTree);
 </script>
 
 <template>
