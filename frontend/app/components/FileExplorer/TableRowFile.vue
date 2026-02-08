@@ -20,7 +20,7 @@ const extension = ref("");
 const inputRef = ref<HTMLInputElement | null>(null);
 
 const key = computed(() =>
-  joinPath(FSStore.currentPath, props.row.original.name)
+  joinPath(FSStore.currentPath, props.row.original.name),
 );
 const error = ref<string | null>(null);
 
@@ -32,7 +32,7 @@ watch(
     if (oldKey) unregister(oldKey);
     register(newKey, startEditing);
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 onBeforeUnmount(() => {
@@ -102,29 +102,29 @@ function onRowClick() {
 
 <template>
   <div
-    class="relative py-4 flex items-center group"
+    class="relative max-w-64 py-4 flex items-center group"
     :aria-hidden="false"
-
     @dblclick="onRowClick"
   >
     <!-- Icone dossier ou fichier -->
     <UIcon
       v-if="row.original.is_dir"
       name="heroicons-folder"
-      class="text-lg mr-2"
+      class="text-lg mr-2 shrink-0"
     />
     <UIcon
       v-else
       :name="getFileIcon(row.original.name)"
-      class="text-lg mr-2"
+      class="text-lg mr-2 shrink-0"
       :alt="`Icon for ${row.original.name}`"
     />
 
     <!-- Nom du fichier -->
-    <ULink v-if="!isEditing">
+    <ULink v-if="!isEditing" class="min-w-0">
       <span
-        class="hover:underline underline-offset-2 cursor-pointer"
+        class="block truncate hover:underline underline-offset-2 cursor-pointer"
         @click="action.open(props.row.original)"
+        :title="row.getValue('name')"
       >
         {{ row.getValue("name") }}
       </span>
