@@ -7,6 +7,9 @@ import { changeDirectoryCommand } from "./cd";
 import { makeDirectoryCommand } from "./mkdir";
 import { removeCommand } from "./rm";
 import { downloadCommand } from "./download";
+import { moveCommand } from "./move";
+import { renameCommand } from "./rename";
+import { copyCommand } from "./copy";
 
 export const commandRegistry = {
   help: helpCommand,
@@ -18,4 +21,7 @@ export const commandRegistry = {
   mkdir: makeDirectoryCommand,
   rm: removeCommand,
   download: downloadCommand,
+  mv: moveCommand,
+  rename: renameCommand,
+  copy: copyCommand,
 };

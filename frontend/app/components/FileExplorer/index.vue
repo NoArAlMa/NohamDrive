@@ -96,7 +96,7 @@ watch(
         :virtualize="false"
         @hover=""
         class="w-full h-full overflow-x-hidden table-fixed"
-        @contextmenu="(e, row) => (contextRow = row)"
+        @contextmenu="(e, row) => (contextRow = row ?? null)"
       >
         <template #name-cell="{ row }">
           <FileExplorerTableRowFile :row="row" />
