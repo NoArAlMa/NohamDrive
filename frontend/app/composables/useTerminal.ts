@@ -50,7 +50,7 @@ export function useTerminal(inputRef?: any) {
 
     // On attend que FileTree soit chargé
     if (fileTreeStore.fileTree.length === 0) {
-      await until(() => fileTreeStore.fileTree.length > 0).toBe(true);
+      await until(() => fileTreeStore.loading).toBe(false);
     }
 
     const context = {

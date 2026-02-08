@@ -13,12 +13,67 @@ const bottom = ref<HTMLElement | null>(null);
 
 const commandLoading = ref(false);
 
+const history = ref<string[]>([]);
+let historyIndex = ref(-1); // -1 = rien sélectionné dans l'historique
+let draft = "";
+
 async function submitCommand() {
-  if (commandLoading.value) return;
+  const value = currentInput.value.trim();
+  if (!value || commandLoading.value) return;
 
   commandLoading.value = true;
+
+  // Enregistrer dans l'historique si nouveau
+  if (
+    !history.value.length ||
+    history.value[history.value.length - 1] !== value
+  ) {
+    history.value.push(value);
+  }
+
+  historyIndex.value = -1;
+  draft = "";
+
   await submit();
-  commandLoading.value = false;
+
+  currentInput.value = "";
+  commandLoading.value = false; 
+
+  // Scroll automatique
+  await nextTick();
+  bottom.value?.scrollIntoView({ behavior: "smooth" });
+}
+
+// Naviguer dans l'historique
+function navigateUp() {
+  if (!history.value.length) return;
+
+  if (historyIndex.value === -1) {
+    draft = currentInput.value; // sauvegarde le draft actuel
+    historyIndex.value = history.value.length - 1;
+  } else if (historyIndex.value > 0) {
+    historyIndex.value--;
+  }
+
+  const value = history.value[historyIndex.value];
+  if (value !== undefined) {
+    currentInput.value = value;
+  }
+}
+
+function navigateDown() {
+  if (historyIndex.value === -1) return;
+
+  if (historyIndex.value < history.value.length - 1) {
+    historyIndex.value++;
+    const value = history.value[historyIndex.value];
+    if (value !== undefined) {
+      currentInput.value = value;
+    }
+  } else {
+    historyIndex.value = -1;
+    currentInput.value = draft; // remet le draft
+  }
 }
 
 watch(
@@ -74,6 +129,8 @@ watch(
         class="flex-1 bg-transparent outline-none caret-blue-400"
         autocomplete="off"
         spellcheck="false"
+        @keydown.up.prevent="navigateUp"
+        @keydown.down.prevent="navigateDown"
       />
     </section>
   </div>

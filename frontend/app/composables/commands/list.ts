@@ -3,12 +3,6 @@ import type {
   TerminalContext,
 } from "~~/shared/types/terminal_types";
 
-// function isPath(arg: string): boolean {
-//   return (
-//     arg.startsWith("/") || arg.includes("/") || arg === "." || arg === ".."
-//   );
-// }
-
 export const listCommand: TerminalCommand = {
   name: "list",
   description:
@@ -23,19 +17,29 @@ export const listCommand: TerminalCommand = {
     }
 
     if (args.length === 0) {
-      const files = Object.values(ctx?.fileTree!).map(
+      const items = ctx.fileTree ?? [];
+
+      if (items.length === 0) {
+        return {
+          type: "output",
+          level: "muted",
+          content: "Folder is empty",
+        };
+      }
+
+      const files = items.map(
         (file) => `${file.is_dir ? "[DIR] " : ""}${file.name}`,
       );
 
       return {
         type: "output",
-        content: `${files.join("\n")}`,
+        content: files.join("\n"),
       };
     }
+
     if (args.length === 1 && args[0]) {
       const path = args[0];
-
-      const correct_path = resolvePath(path, ctx?.currentPath!);
+      const correct_path = resolvePath(path, ctx.currentPath!);
 
       try {
         const data = await $fetch<GenericAPIResponse<ApiFileTreeData>>(
@@ -46,26 +50,29 @@ export const listCommand: TerminalCommand = {
           },
         );
 
-        const Items = data.data?.items;
+        const items = data.data?.items ?? [];
 
-        if (!Items?.length) {
+        if (items.length === 0) {
           return {
             type: "output",
+            level: "muted",
             content: "Folder is empty",
           };
         }
-        const files = Object.values(data.data?.items!).map(
+
+        const files = items.map(
           (file) => `${file.is_dir ? "[DIR] " : ""}${file.name}`,
         );
 
         return {
           type: "output",
-          content: `${files.join("\n")}`,
+          content: files.join("\n"),
         };
       } catch (error: any) {
         const message =
           error.data?.statusMessage ||
-          "Impossible de renommer le fichier/dossier.";
+          "Impossible de lister les fichiers/dossiers.";
+
         return {
           type: "output",
           level: "error",
