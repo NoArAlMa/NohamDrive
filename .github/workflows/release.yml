@@ -9,8 +9,10 @@ jobs:
   build:
     name: Build Windows App
     runs-on: windows-latest
+
     defaults:
       run:
+        shell: pwsh
         working-directory: frontend
 
     steps:
@@ -20,26 +22,28 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 20
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
       - name: Ensure version matches tag
         run: |
-          TAG=${GITHUB_REF_NAME#v}
-          PKG=$(node -p "require('./package.json').version")
-          if [ "$TAG" != "$PKG" ]; then
-            echo "❌ package.json version ($PKG) != tag ($TAG)"
+          $TAG = $env:GITHUB_REF_NAME -replace '^v', ''
+          $PKG = node -p "require('./package.json').version"
+
+          if ($TAG -ne $PKG) {
+            Write-Error "❌ package.json version ($PKG) != tag ($TAG)"
             exit 1
-          fi
+          }
 
       - name: Install dependencies
         run: npm ci
 
       - name: Generate .env from secrets
         run: |
-          echo "NUXT_PUBLIC_API_BASE_URL=${{ secrets.API_URL }}" > .env
-          echo "NODE_ENV=production" >> .env
+          "NUXT_PUBLIC_API_BASE_URL=${{ secrets.API_URL }}" | Out-File -Encoding utf8 .env
+          "NODE_ENV=production" | Out-File -Encoding utf8 -Append .env
+
       - name: Build Nuxt app
         run: npm run build
 
@@ -48,12 +52,14 @@ jobs:
 
       - name: Setup Windows code signing certificate
         run: |
-          $pfxPath = "$Env:GITHUB_WORKSPACE/frontend/electron/nohamdrive.pfx"
-          [System.IO.File]::WriteAllBytes($pfxPath, [System.Convert]::FromBase64String("${{ secrets.WIN_CSC_BASE64 }}"))
-        shell: pwsh
+          $pfxPath = "$Env:GITHUB_WORKSPACE\frontend\electron\nohamdrive.pfx"
+          [System.IO.File]::WriteAllBytes(
+            $pfxPath,
+            [System.Convert]::FromBase64String("${{ secrets.WIN_CSC_BASE64 }}")
+          )
 
       - name: Build and publish Electron app
         run: npx electron-builder --win --publish always
         env:
           GH_TOKEN: ${{ secrets.TOKEN_RELEASE }}
-          RELEASE_TYPE: "release"
+          RELEASE_TYPE: release
