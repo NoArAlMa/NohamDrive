@@ -137,8 +137,9 @@ export const useFsActions = () => {
 
       if (!response.ok) {
         if (loadingToast) toast.remove(loadingToast.id);
-        const text = await response.text();
-        throw new Error(text || "Le téléchargement a échoué");
+        const text = (await response.json()) as GenericAPIResponse<null>;
+        const errorMessage = text.message;
+        throw new Error(errorMessage || "Le téléchargement a échoué");
       }
 
       const contentDisposition = response.headers.get("Content-Disposition");

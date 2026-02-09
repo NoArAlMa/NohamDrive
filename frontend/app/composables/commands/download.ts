@@ -33,11 +33,12 @@ export const downloadCommand: TerminalCommand = {
         );
 
         if (!response.ok) {
-          const text = await response.text();
+          const text = (await response.json()) as GenericAPIResponse<null>;
+          const errorMessage = text.message;
           return {
             type: "output",
             level: "error",
-            content: `download: ${text || "failed to download"}`,
+            content: `download: ${errorMessage || "failed to download"}`,
           };
         }
 
