@@ -2,7 +2,18 @@
 import type { AuthFormField, FormSubmitEvent } from "@nuxt/ui";
 import * as z from "zod";
 
-const mode = ref<"login" | "register">("login");
+const props = defineProps<{
+  mode: "login" | "register";
+}>();
+
+const mode = computed({
+  get: () => props.mode,
+  set: (value) => emit("update:mode", value),
+});
+
+const emit = defineEmits<{
+  (e: "update:mode", value: "login" | "register"): void;
+}>();
 
 const loginFields: AuthFormField[] = [
   {
@@ -27,6 +38,13 @@ const loginFields: AuthFormField[] = [
 ];
 
 const registerFields: AuthFormField[] = [
+  {
+    name: "username",
+    type: "text",
+    label: "Username",
+    placeholder: "Enter a username",
+    required: true,
+  },
   {
     name: "email",
     type: "email",
@@ -63,6 +81,9 @@ const loginSchema = z.object({
 
 const createSchema = z
   .object({
+    username: z
+      .string("Username required")
+      .min(3, "Must be at least 3 characters"),
     email: z.email("Invalid email"),
     password: z
       .string("Password is required")
@@ -78,9 +99,9 @@ const createSchema = z
 
 function onSubmit(payload: FormSubmitEvent<any>) {
   if (mode.value === "login") {
-    console.log("LOGIN", payload);
+    console.log("LOGIN", payload.data);
   } else {
-    console.log("REGISTER", payload);
+    console.log("REGISTER", payload.data);
   }
 }
 </script>
@@ -116,6 +137,7 @@ function onSubmit(payload: FormSubmitEvent<any>) {
               variant="link"
               color="secondary"
               @click="mode = mode === 'login' ? 'register' : 'login'"
+              class="hover:cursor-pointer"
             />
           </template>
         </UAuthForm>

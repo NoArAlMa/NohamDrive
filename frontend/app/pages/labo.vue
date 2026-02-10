@@ -5,7 +5,5 @@ definePageMeta({
 </script>
 
 <template>
-  <UApp class="h-screen w-screen">
-    <AuthForm />
-  </UApp>
+  <UApp class="h-screen w-screen"> </UApp>
 </template>
