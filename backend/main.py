@@ -11,6 +11,9 @@ from core.minio_client import get_healthy_minio
 from datetime import datetime
 from slowapi.errors import RateLimitExceeded
 from core.limiter import limiter
+from core.logging import setup_logger
+
+logger = setup_logger(__name__)
 
 
 @asynccontextmanager
@@ -22,8 +25,10 @@ async def lifespan(app: FastAPI):
     if app.state.redis:
         limiter._storage_uri = f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}"
         limiter.enabled = True
+        logger.info("Rate limiter ACTIVÉ")
     else:
         limiter.enabled = False
+        logger.warning("Rate limiter DÉSACTIVÉ")
 
     app.state.limiter = limiter
     yield
@@ -43,20 +48,6 @@ app = FastAPI(
     openapi_url="/openapi.json" if settings.DEBUG else None,
     lifespan=lifespan,
 )
-
-
-@app.exception_handler(RateLimitExceeded)
-async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
-    return JSONResponse(
-        status_code=429,
-        content={
-            "success": False,
-            "data": None,
-            "message": "Too many requests",
-            "timestamp": datetime.now().isoformat(),
-            "status_code": 429,
-        },
-    )
 
 
 # Création d'un CORS pour gérer la sécurité (entrées / sorties)
@@ -102,6 +93,20 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
             "message": exc.detail if hasattr(exc, "detail") else "Erreur HTTP",
             "timestamp": datetime.now().isoformat(),
             "status_code": exc.status_code,
+        },
+    )
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={
+            "success": False,
+            "data": None,
+            "message": "Too many requests",
+            "timestamp": datetime.now().isoformat(),
+            "status_code": 429,
         },
     )
 
