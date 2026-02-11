@@ -10,7 +10,6 @@ from core.config import settings
 from core.minio_client import get_healthy_minio
 from datetime import datetime
 from slowapi.errors import RateLimitExceeded
-from slowapi.middleware import SlowAPIMiddleware
 from core.limiter import limiter
 
 
