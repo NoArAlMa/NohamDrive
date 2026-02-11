@@ -2,12 +2,16 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from core.redis import get_healthy_redis
 from routes import storages, auth
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from core.minio_client import get_healthy_minio
 from datetime import datetime
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from core.limiter import limiter
 
 
 @asynccontextmanager
@@ -15,8 +19,18 @@ from datetime import datetime
 async def lifespan(app: FastAPI):
     # Injection du client MinIO
     app.state.minio_client = get_healthy_minio()
+    app.state.redis = get_healthy_redis()
+    if app.state.redis:
+        limiter._storage_uri = f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}"
+        limiter.enabled = True
+    else:
+        limiter.enabled = False
+
+    app.state.limiter = limiter
     yield
     app.state.minio_client = None
+    app.state.redis = None
+    app.state.limiter = None
 
 
 # Instanciation de l'app FastAPI
@@ -31,7 +45,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-
+app.add_exception_handler(
+    RateLimitExceeded,
+    lambda r, e: JSONResponse(status_code=429, content={"detail": "Too many requests"}),
+)
+app.add_middleware(SlowAPIMiddleware)
 # Création d'un CORS pour gérer la sécurité (entrées / sorties)
 
 app.add_middleware(

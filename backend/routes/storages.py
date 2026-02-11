@@ -18,9 +18,9 @@ from app.schemas.files import (
     CopyItem,
 )
 from app.utils.response import BaseResponse
-
 from app.services.sse_service import sse_manager
 from app.schemas.sse import SSEMessage
+from core.limiter import limiter
 
 router = APIRouter(prefix="/storage", tags=["Storage"])
 
@@ -79,7 +79,9 @@ async def upload_file_endpoint(
     "/tree",
     response_model=BaseResponse,
 )
+@limiter.limit("1/minute")
 async def list_path(
+    request: Request,
     path: str = Query(default="/", description="Chemin du dossier"),
     user_id: int = 1,
     page: int = Query(default=1, description="Numéro de page"),
