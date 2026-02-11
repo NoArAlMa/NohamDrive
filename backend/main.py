@@ -45,11 +45,21 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.add_exception_handler(
-    RateLimitExceeded,
-    lambda r, e: JSONResponse(status_code=429, content={"detail": "Too many requests"}),
-)
-app.add_middleware(SlowAPIMiddleware)
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={
+            "success": False,
+            "data": None,
+            "message": "Too many requests",
+            "timestamp": datetime.now().isoformat(),
+            "status_code": 429,
+        },
+    )
+
+
 # Création d'un CORS pour gérer la sécurité (entrées / sorties)
 
 app.add_middleware(
