@@ -38,6 +38,7 @@ async def sse_endpoint(
 @router.post(
     "/upload", response_model=BaseResponse, status_code=status.HTTP_201_CREATED
 )
+@limiter.limit("10/minute")
 async def upload_file_endpoint(
     file: UploadFile,
     minio_service: MinioService = Depends(get_minio_service),
@@ -79,7 +80,7 @@ async def upload_file_endpoint(
     "/tree",
     response_model=BaseResponse,
 )
-@limiter.limit("1/minute")
+@limiter.limit("30/minute")
 async def list_path(
     request: Request,
     path: str = Query(default="/", description="Chemin du dossier"),
@@ -112,6 +113,7 @@ async def list_path(
     "/download/{object_name:path}",
     response_class=StreamingResponse,
 )
+@limiter.limit("15/minute")
 async def download_file_endpoint(
     object_name: str,
     user_id: int = 1,  # TODO: Remplacer par l'ID réel (via auth)
@@ -133,6 +135,7 @@ async def download_file_endpoint(
     response_model=BaseResponse[str],
     status_code=status.HTTP_201_CREATED,
 )
+@limiter.limit("15/minute")
 async def create_folder_endpoint(
     payload: CreateFolder,
     user_id: int = 1,  # ID de l'utilisateur (via auth),
@@ -183,6 +186,7 @@ async def create_folder_endpoint(
     response_model=BaseResponse,
     status_code=status.HTTP_200_OK,
 )
+@limiter.limit("10/minute")
 async def delete_object_endpoint(
     folder_path: str = Query(description="Chemin de l'objet à supprimer"),
     minio_service: MinioService = Depends(get_minio_service),
@@ -213,6 +217,7 @@ async def delete_object_endpoint(
     response_model=BaseResponse,
     status_code=status.HTTP_200_OK,
 )
+@limiter.limit("45/minute")
 async def stats_endpoint(
     user_id: int = 1,
     object_path: str = Query(description="Salut toi"),
@@ -232,6 +237,7 @@ async def stats_endpoint(
     response_model=BaseResponse,
     status_code=status.HTTP_200_OK,
 )
+@limiter.limit("10/minute")
 async def rename_endpoint(
     payload: RenameItem,
     minio_service: MinioService = Depends(get_minio_service),
@@ -261,6 +267,7 @@ async def rename_endpoint(
     response_model=BaseResponse,
     status_code=status.HTTP_200_OK,
 )
+@limiter.limit("10/minute")
 async def move_endpoint(
     payload: MoveItem,
     minio_service: MinioService = Depends(get_minio_service),
@@ -304,6 +311,7 @@ async def move_endpoint(
 
 
 @router.post("/copy", response_model=BaseResponse, status_code=status.HTTP_200_OK)
+@limiter.limit("20/minute")
 async def copy_endpoint(
     payload: CopyItem,
     minio_service: MinioService = Depends(get_minio_service),
@@ -330,6 +338,7 @@ async def copy_endpoint(
 @router.post(
     "/compress", response_model=BaseResponse, status_code=status.HTTP_201_CREATED
 )
+@limiter.limit("5/minute")
 async def compress_files_endpoint(
     request: CompressItems,
     minio_service: MinioService = Depends(get_minio_service),
@@ -355,6 +364,7 @@ async def compress_files_endpoint(
 
 
 @router.get("/resolve", response_model=BaseResponse)
+@limiter.limit("45/minute")
 async def resolve_path(
     path: str = Query(default="/", description="Chemin du dossier"),
     minio_service: MinioService = Depends(get_minio_service),
