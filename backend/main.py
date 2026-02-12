@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from app.services.sse_service import SSEManager
 from core.redis import get_healthy_redis
 from routes import storages, auth
 from contextlib import asynccontextmanager
@@ -21,7 +22,7 @@ logger = setup_logger(__name__)
 async def lifespan(app: FastAPI):
     # Injection du client MinIO
     app.state.minio_client = get_healthy_minio()
-    app.state.redis = get_healthy_redis()
+    app.state.redis = await get_healthy_redis()
     if app.state.redis:
         limiter._storage_uri = f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}"
         limiter.enabled = True
@@ -31,7 +32,21 @@ async def lifespan(app: FastAPI):
         logger.warning("Rate limiter DÉSACTIVÉ")
 
     app.state.limiter = limiter
+
+    sse_manager = SSEManager(app.state.redis)
+
+    if app.state.redis:
+        await sse_manager.start_listener()
+        logger.info("SSE Redis mode ACTIVÉ")
+    else:
+        logger.warning("SSE Redis mode DÉSACTIVÉ (fallback local only)")
+
+    app.state.sse_manager = sse_manager or None
+
     yield
+    if app.state.redis:
+        await sse_manager.shutdown()
+
     app.state.minio_client = None
     app.state.redis = None
     app.state.limiter = None

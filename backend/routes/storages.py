@@ -18,7 +18,7 @@ from app.schemas.files import (
     CopyItem,
 )
 from app.utils.response import BaseResponse
-from app.services.sse_service import sse_manager
+from app.services.sse_service import SSEManager, get_sse_manager
 from app.schemas.sse import SSEMessage
 from core.limiter import limiter
 
@@ -27,7 +27,9 @@ router = APIRouter(prefix="/storage", tags=["Storage"])
 
 @router.get("/explorer-info")
 async def sse_endpoint(
-    request: Request, user_id: int = 1
+    request: Request,
+    user_id: int = 1,
+    sse_manager: SSEManager = Depends(get_sse_manager),
 ):  # TODO: Récupérer user_id via auth
     return StreamingResponse(
         sse_manager.add_client(user_id),
@@ -45,6 +47,7 @@ async def upload_file_endpoint(
     minio_service: MinioService = Depends(get_minio_service),
     user_id: int = 1,  # TODO : À remplacer par l'ID réel (via auth)
     path: str = "",
+    sse_manager: SSEManager = Depends(get_sse_manager),
 ) -> BaseResponse:
     """
     Upload un fichier dans le bucket utilisateur.
@@ -143,6 +146,7 @@ async def create_folder_endpoint(
     payload: CreateFolder,
     user_id: int = 1,  # ID de l'utilisateur (via auth),
     minio_service: MinioService = Depends(get_minio_service),
+    sse_manager: SSEManager = Depends(get_sse_manager),
 ) -> BaseResponse[str]:
     """
     Crée un dossier dans le bucket utilisateur.
@@ -194,6 +198,7 @@ async def delete_object_endpoint(
     request: Request,
     folder_path: str = Query(description="Chemin de l'objet à supprimer"),
     minio_service: MinioService = Depends(get_minio_service),
+    sse_manager: SSEManager = Depends(get_sse_manager),
     user_id: int = 1,
 ):
     message, data = await minio_service.object_service.delete_object(
@@ -246,6 +251,7 @@ async def stats_endpoint(
 async def rename_endpoint(
     request: Request,
     payload: RenameItem,
+    sse_manager: SSEManager = Depends(get_sse_manager),
     minio_service: MinioService = Depends(get_minio_service),
     user_id: int = 1,
 ):
@@ -277,6 +283,7 @@ async def rename_endpoint(
 async def move_endpoint(
     request: Request,
     payload: MoveItem,
+    sse_manager: SSEManager = Depends(get_sse_manager),
     minio_service: MinioService = Depends(get_minio_service),
     user_id: int = 1,  # TODO: Remplacer par l'ID réel (via auth)
 ) -> BaseResponse:
@@ -323,6 +330,7 @@ async def copy_endpoint(
     request: Request,
     payload: CopyItem,
     minio_service: MinioService = Depends(get_minio_service),
+    sse_manager: SSEManager = Depends(get_sse_manager),
     user_id: int = 1,  # TODO: Remplacer par l'ID réel (via auth)
 ):
     message, data = await minio_service.object_service.copy(
@@ -336,7 +344,6 @@ async def copy_endpoint(
         data=data,
         message=message,
     )
-    await sse_manager.notify_user(user_id, sse_message.model_dump())
     await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(
         success=True, message=message, data=data, status_code=status.HTTP_200_OK
