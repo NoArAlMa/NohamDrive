@@ -1,5 +1,5 @@
 import socket
-import redis
+import redis.asyncio as redis
 from redis.exceptions import RedisError, ConnectionError, TimeoutError
 from fastapi import HTTPException, status
 from core.config import settings
@@ -25,47 +25,45 @@ def get_redis_client():
     return redis_client
 
 
-def check_redis_availability():
+async def check_redis_availability() -> redis.Redis | None:
     """
     Vérifie que Redis est disponible avec :
     - Timeout strict
-    - Retry automatique
     - Gestion des exceptions réseau
     """
+    if not redis_client:
+        return None
+
     try:
-        if redis_client:
-            redis_client.ping()
+        pong = await redis_client.execute_command("PING")
+        if pong == "PONG":
             return redis_client
-
-    except (ConnectionError, TimeoutError, socket.timeout):
-        raise
-
-    except RedisError as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erreur Redis : {str(e)}",
-        )
+        logger.info("Redis est disponible et opérationnel.")
+        return redis_client
+    except (ConnectionError, TimeoutError, socket.timeout, RedisError) as e:
+        logger.warning(f"Redis indisponible : {e}")
+        return None
 
 
-def get_healthy_redis():
+async def get_healthy_redis() -> redis.Redis | None:
     """
     Retourne un client Redis sain ou None.
     Lève une exception seulement en prod si Redis est indisponible.
     """
-    try:
-        client = check_redis_availability()
-        logger.info("Redis est disponible et opérationnel.")
+    client = await check_redis_availability()
+
+    if client:
         return client
 
-    except Exception:
-        if not settings.DEBUG:
-            logger.critical("Redis indisponible en production.")
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Service Redis indisponible (timeout max ~15s).",
-            )
-        else:
-            logger.critical(
-                "Redis indisponible : certaines fonctionnalités seront désactivées."
-            )
-            return None
+    # Si Redis indisponible
+    if not settings.DEBUG:
+        logger.critical("Redis indisponible en production.")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Service Redis indisponible (timeout max ~0.5s).",
+        )
+
+    logger.critical(
+        "Redis indisponible : certaines fonctionnalités seront désactivées."
+    )
+    return None
