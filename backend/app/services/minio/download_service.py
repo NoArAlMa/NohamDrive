@@ -112,9 +112,7 @@ class DownloadService:
                 else:
                     raise
 
-            # ==========================================================
-            # 📄 CAS 1 : FICHIER (stream direct)
-            # ==========================================================
+
             if is_file:
 
                 def file_iterator() -> Iterator[bytes]:
@@ -136,9 +134,7 @@ class DownloadService:
                     },
                 )
 
-            # ==========================================================
-            # 📁 CAS 2 : DOSSIER → ZIP STREAMÉ
-            # ==========================================================
+
             prefix = object_name.rstrip("/") + "/"
 
             objects = list(

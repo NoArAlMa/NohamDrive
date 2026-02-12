@@ -2,12 +2,19 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from app.services.sse_service import SSEManager
+from core.redis import get_healthy_redis
 from routes import storages, auth
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from core.minio_client import get_healthy_minio
 from datetime import datetime
+from slowapi.errors import RateLimitExceeded
+from core.limiter import limiter
+from core.logging import setup_logger
+
+logger = setup_logger(__name__)
 
 
 @asynccontextmanager
@@ -15,8 +22,34 @@ from datetime import datetime
 async def lifespan(app: FastAPI):
     # Injection du client MinIO
     app.state.minio_client = get_healthy_minio()
+    app.state.redis = await get_healthy_redis()
+    if app.state.redis:
+        limiter._storage_uri = f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}"
+        limiter.enabled = True
+        logger.info("Rate limiter ACTIVÉ")
+    else:
+        limiter.enabled = False
+        logger.warning("Rate limiter DÉSACTIVÉ")
+
+    app.state.limiter = limiter
+
+    sse_manager = SSEManager(app.state.redis)
+
+    if app.state.redis:
+        await sse_manager.start_listener()
+        logger.info("SSE Redis mode ACTIVÉ")
+    else:
+        logger.warning("SSE Redis mode DÉSACTIVÉ (fallback local only)")
+
+    app.state.sse_manager = sse_manager or None
+
     yield
+    if app.state.redis:
+        await sse_manager.shutdown()
+
     app.state.minio_client = None
+    app.state.redis = None
+    app.state.limiter = None
 
 
 # Instanciation de l'app FastAPI
@@ -75,6 +108,20 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
             "message": exc.detail if hasattr(exc, "detail") else "Erreur HTTP",
             "timestamp": datetime.now().isoformat(),
             "status_code": exc.status_code,
+        },
+    )
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={
+            "success": False,
+            "data": None,
+            "message": "Too many requests",
+            "timestamp": datetime.now().isoformat(),
+            "status_code": 429,
         },
     )
 

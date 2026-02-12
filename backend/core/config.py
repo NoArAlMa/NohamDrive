@@ -8,6 +8,7 @@ from termcolor import colored
 
 # Classe qui va nous permettre d'accéder à notre .env
 
+
 class Settings(BaseSettings):
     # Database
 
@@ -26,6 +27,11 @@ class Settings(BaseSettings):
     MINIO_ACCESS_KEY: str
     MINIO_SECRET_KEY: str
     MINIO_SECURE: bool = False
+
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_DB: int = 0
+    REDIS_PASSWORD: str | None = None
 
     # Developemment
     DEBUG: bool = False
