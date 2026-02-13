@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     DB_USER: str
     DB_HOST: str
     DB_PASSWORD: str
+    DB_PORT: int = 5432
+    DB_DSN: str = f"host={DB_HOST} port={DB_PORT} dbname={DB_NAME} user={DB_USER} password={DB_PASSWORD}"
 
     # Token
     SECRET_KEY: str
