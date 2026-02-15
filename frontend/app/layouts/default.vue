@@ -1,5 +1,12 @@
 <template>
   <UApp>
-    <NuxtPage />
+    <UDashboardGroup>
+      <NavigationSidebar />
+
+      <UDashboardPanel>
+        <UDashboardSearch />
+        <NuxtPage />
+      </UDashboardPanel>
+    </UDashboardGroup>
   </UApp>
 </template>
