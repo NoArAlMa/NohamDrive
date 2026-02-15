@@ -8,7 +8,7 @@ def init_pool(min_conn:int = 1, max_conn: int = 5) -> None:
         _pool = ThreadedConnectionPool(
             minconn=min_conn,
             maxconn=max_conn,
-            dsn=settings.DB_DSN)
+            dsn=settings.get_db_dsn())
 
 # Function borrowing a connection from the pool (if it exists) and returning it
 def request_conn():

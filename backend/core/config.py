@@ -10,14 +10,13 @@ from termcolor import colored
 
 
 class Settings(BaseSettings):
+    
     # Database
-
     DB_NAME: str
     DB_USER: str
     DB_HOST: str
     DB_PASSWORD: str
     DB_PORT: int = 5432
-    # DB_DSN: str = f"host={DB_HOST} port={DB_PORT} dbname={DB_NAME} user={DB_USER} password={DB_PASSWORD}"
 
     # Token
     SECRET_KEY: str
@@ -52,6 +51,11 @@ class Settings(BaseSettings):
         """Génère l'URL de connexion à la base de données."""
         return f"postgresql+psycopg2://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:5432/{self.DB_NAME}"
 
+    # Methode pour récupérer le DSN de la DB
+    @computed_field
+    def get_db_dsn(self) -> str:
+        """Génère le DSN de la base de données."""
+        return f"host={self.DB_HOST} port={self.DB_PORT} dbname={self.DB_NAME} user={self.DB_USER} password={self.DB_PASSWORD}"
 
 try:
     # Instanciation des paramètres
