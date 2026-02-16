@@ -1,0 +1,21 @@
+# [Type de modification] Message court décrivant le changement
+# 
+# Types de modification suggérés :
+# feat      -> Nouvelle fonctionnalité
+# fix       -> Correction de bug
+# refactor  -> Refactor sans changement fonctionnel
+# style     -> Formatage / UI
+# docs      -> Documentation
+# test      -> Ajout ou modification de tests
+# chore     -> Maintenance / configuration / scripts
+#
+# Exemple d’utilisation :
+# [feat] Add user authentication
+# [fix] Correct file upload bug
+# [docs] Update API readme
+#
+# Description détaillée (optionnel) :
+#
+# Pourquoi ce changement ? 
+# Quels fichiers / modules sont impactés ?
+# Breaking changes ? (oui / non)
