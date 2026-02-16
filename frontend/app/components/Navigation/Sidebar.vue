@@ -1,6 +1,17 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from "@nuxt/ui";
 import type { DropdownMenuItem } from "@nuxt/ui";
+import { useBreakpoints } from "@vueuse/core";
+
+const breakpoints = useBreakpoints({
+  mobile: 0,
+  tablet: 640,
+  laptop: 1024,
+  desktop: 1280,
+});
+
+const isMobile = breakpoints.smaller("laptop"); // true if < 1024px
+const isDesktop = breakpoints.greaterOrEqual("laptop"); // true if >= 1024px
 
 const itemsDropDown = ref<DropdownMenuItem[]>([
   {
@@ -84,6 +95,8 @@ const items: NavigationMenuItem[][] = [
 
 <template>
   <UDashboardSidebar
+    mode="drawer"
+    toggle-side="right"
     collapsible
     :ui="{
       root: 'border-e-0 transition-[width] duration-300 ease-in-out ',
@@ -91,12 +104,14 @@ const items: NavigationMenuItem[][] = [
       body: 'transition-[padding] duration-200',
       footer: 'transition-[padding] duration-200 border-t border-default',
     }"
-    class="min-w-fit overflow-hidden"
   >
+    <template #toggle>
+      <UDashboardSidebarToggle variant="subtle" />
+    </template>
     <template #header="{ collapsed }">
       <div class="w-full flex justify-start items-center">
         <h1
-          v-show="!collapsed"
+          v-show="!collapsed && isDesktop"
           class="mr-auto pr-4 text-primary font-bold select-none whitespace-nowrap overflow-hidden text-ellipsis transition-all duration-200 text-sm tablet:text-base laptop:text-lg desktop:text-2xl"
         >
           NohamDrive
@@ -108,6 +123,7 @@ const items: NavigationMenuItem[][] = [
 
     <template #default="{ collapsed }">
       <UDashboardSearchButton
+        v-if="isDesktop"
         :collapsed="collapsed"
         :block="collapsed"
         :square="collapsed"
@@ -150,6 +166,7 @@ const items: NavigationMenuItem[][] = [
 
       <!-- Menu secondaire -->
       <UNavigationMenu
+        v-if="isDesktop"
         :collapsed="collapsed"
         :items="items[1]"
         orientation="vertical"
@@ -194,6 +211,7 @@ const items: NavigationMenuItem[][] = [
           variant="ghost"
           class="w-full"
           :block="collapsed"
+          :square="collapsed"
           :ui="{
             label: 'mr-auto',
           }"
