@@ -9,7 +9,7 @@ from fastapi import (
 )
 from fastapi.responses import StreamingResponse
 from app.services.minio.minio_service import MinioService, get_minio_service
-from app.schemas.file_tree import SimpleFileTreeResponse
+from app.schemas.file_tree import FullFileTreeResponse, SimpleFileTreeResponse
 from app.schemas.files import (
     CompressItems,
     CreateFolder,
@@ -34,6 +34,33 @@ async def sse_endpoint(
     return StreamingResponse(
         sse_manager.add_client(user_id),
         media_type="text/event-stream; charset=utf-8",
+    )
+
+
+@router.get(
+    "/full-tree",
+    response_model=BaseResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Liste complète de l'arborescence avec métadonnées",
+    response_description="Retourne les fichiers/dossiers avec hashs, tailles et timestamps.",
+)
+# @limiter.limit("2/minute")
+async def full_tree_endpoint(
+    request: Request,
+    path: str = Query("", description="Chemin relatif (ex: 'dossier/')"),
+    user_id: int = Query(1, description="ID de l'utilisateur"),
+    recursive: bool = Query(
+        False, description="Inclure les sous-dossiers récursivement"
+    ),
+    minio_service: MinioService = Depends(get_minio_service),
+):
+    metadata = await minio_service.full_list_path(
+        path=path, user_id=user_id, recursive=recursive
+    )
+    return BaseResponse(
+        data=metadata,
+        message="Arborescence récupérée",
+        status_code=status.HTTP_200_OK,
     )
 
 
