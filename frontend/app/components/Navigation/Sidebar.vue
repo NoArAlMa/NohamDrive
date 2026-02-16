@@ -65,9 +65,17 @@ const items: NavigationMenuItem[][] = [
   ],
   [
     {
+      label: "Download desktop app",
+      icon: "material-symbols:download-2-outline-rounded",
+      to: "/download-app",
+      target: "_blank",
+      tooltip: true,
+    },
+    {
       label: "Report a bug",
       icon: "i-lucide-info",
-      onSelect: () => {},
+      to: "https://c.tenor.com/e3OI7DDT9i0AAAAd/tenor.gif",
+      target: "_blank",
       tooltip: true,
     },
   ],
@@ -89,7 +97,7 @@ const items: NavigationMenuItem[][] = [
       <div class="w-full flex justify-start items-center">
         <h1
           v-show="!collapsed"
-          class="mr-auto pr-4 text-primary font-bold select-none whitespace-nowrap overflow-hidden text-ellipsis transition-all duration-200 text-sm tablet:text-base laptop:text-lg desktop:text-xl"
+          class="mr-auto pr-4 text-primary font-bold select-none whitespace-nowrap overflow-hidden text-ellipsis transition-all duration-200 text-sm tablet:text-base laptop:text-lg desktop:text-2xl"
         >
           NohamDrive
         </h1>
@@ -152,14 +160,14 @@ const items: NavigationMenuItem[][] = [
             'whitespace-nowrap overflow-hidden',
             'transition-all duration-200',
             collapsed
-              ? 'justify-center px-2 py-2'
-              : 'px-3 py-2.5 tablet:px-4 tablet:py-3',
+              ? 'justify-center px-2 py-1.5'
+              : 'px-2 py-1.5 tablet:px-4 tablet:py-3',
             'text-sm tablet:text-base',
           ].join(' '),
 
           linkLeadingIcon: [
             'shrink-0 transition-all duration-200',
-            collapsed ? 'size-5' : 'size-4 tablet:size-5',
+            collapsed ? 'size-4' : 'size-3 tablet:size-4',
           ].join(' '),
         }"
       />
