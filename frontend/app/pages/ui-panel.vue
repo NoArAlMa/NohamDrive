@@ -92,7 +92,7 @@ definePageMeta({
     <!-- Surfaces -->
     <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div
-        class="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm"
+        class="rounded-xl border border-[--color-border] bg-[--color-surface] p-4 shadow-sm"
       >
         <p class="font-medium text-primary">Surface Default</p>
         <p class="text-sm text-muted">Surface principale</p>
