@@ -93,17 +93,17 @@ class SSEManager:
                 await self.redis.publish(f"sse:user:{user_id}", json.dumps(message))
             except Exception as e:
                 logger.error(f"Erreur Redis notify_user: {e}")
-
-        await self._notify_local_user(user_id, message)
+        else:
+            await self._notify_local_user(user_id, message)
 
     async def notify_all(self, message: Dict[str, Any]):
-        """Broadcast global. Redis si dispo, sinon local."""
         if self.redis:
             try:
                 await self.redis.publish("sse:broadcast", json.dumps(message))
             except Exception as e:
                 logger.error(f"Erreur Redis notify_all: {e}")
-        await self._notify_local_all(message)
+        else:
+            await self._notify_local_all(message)
 
     async def _notify_local_user(self, user_id: int, message: Dict[str, Any]):
         """Envoie un message localement à tous les clients d’un user"""
