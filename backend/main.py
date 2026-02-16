@@ -131,18 +131,21 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     errors = {}
     for err in exc.errors():
-        # err contient : {'loc': (...), 'msg': '...', 'type': '...'}
         loc = err.get("loc", [])
         if loc:
-            field_name = loc[-1]  # le dernier élément = nom du champ
-            errors[field_name] = err.get("msg")
+            field_name = loc[-1]
+            msg = err.get("msg", "")
+            # 🔹 nettoyer le préfixe "Value error, " si présent
+            if msg.startswith("Value error, "):
+                msg = msg.replace("Value error, ", "", 1)
+            errors[field_name] = msg
 
     return JSONResponse(
         status_code=422,
         content={
             "success": False,
-            "data": None,
-            "message": errors,
+            "data": errors,
+            "message": "Validation error",
             "timestamp": datetime.now().isoformat(),
             "status_code": 422,
         },
