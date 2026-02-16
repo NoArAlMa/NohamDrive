@@ -91,24 +91,24 @@ const items: NavigationMenuItem[][] = [
     },
   ],
 ];
+const collapsed = ref(false);
 </script>
 
 <template>
   <UDashboardSidebar
+    v-model:collapsed="collapsed"
     mode="drawer"
     toggle-side="right"
     collapsible
     :ui="{
-      root: 'border-e-0 transition-[width] duration-300 ease-in-out ',
+      root: 'border-e-0 transition-[width] duration-300 ease-in-out',
       header: 'transition-[padding,opacity] duration-200',
       body: 'transition-[padding] duration-200',
       footer: 'transition-[padding] duration-200 border-t border-default',
     }"
+    :class="collapsed ? '' : 'w-fit'"
   >
-    <template #toggle>
-      <UDashboardSidebarToggle variant="subtle" />
-    </template>
-    <template #header="{ collapsed }">
+    <template #header>
       <div class="w-full flex justify-start items-center">
         <h1
           v-show="!collapsed && isDesktop"
@@ -121,7 +121,7 @@ const items: NavigationMenuItem[][] = [
       </div>
     </template>
 
-    <template #default="{ collapsed }">
+    <template #default>
       <UDashboardSearchButton
         v-if="isDesktop"
         :collapsed="collapsed"
@@ -190,7 +190,7 @@ const items: NavigationMenuItem[][] = [
       />
     </template>
 
-    <template #footer="{ collapsed }">
+    <template #footer>
       <UDropdownMenu
         :items="itemsDropDown"
         :content="{
