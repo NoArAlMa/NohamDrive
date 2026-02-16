@@ -4,6 +4,7 @@ import json
 from fastapi import Request
 import redis.asyncio as redis
 from core.logging import setup_logger
+from datetime import datetime
 
 logger = setup_logger(__name__)
 
@@ -58,10 +59,7 @@ class SSEManager:
             # Broadcast global
             if channel == "sse:broadcast":
                 await self._notify_local_all(data)
-                continue
-
-            # Channel user spécifique
-            if channel.startswith("sse:user:"):
+            elif channel.startswith("sse:user:"):
                 try:
                     user_id = int(channel.split(":")[-1])
                 except ValueError:
@@ -77,8 +75,13 @@ class SSEManager:
 
         try:
             while True:
-                message = await queue.get()
+                message: Dict[str, Any] = await queue.get()
+                event_name = message.pop("event", "message")
+                yield f"event: {event_name}\n"
                 yield f"data: {json.dumps(message)}\n\n"
+
+                # Ping optionnel
+                yield ": ping\n\n"
         finally:
             async with self.lock:
                 if user_id in self.clients and queue in self.clients[user_id]:
@@ -108,12 +111,11 @@ class SSEManager:
     async def _notify_local_user(self, user_id: int, message: Dict[str, Any]):
         """Envoie un message localement à tous les clients d’un user"""
         async with self.lock:
-            if user_id in self.clients:
-                for queue in list(self.clients[user_id]):
-                    try:
-                        await queue.put(message)
-                    except Exception as e:
-                        logger.error(f"SSE local error user {user_id}: {e}")
+            for queue in list(self.clients.get(user_id, [])):
+                try:
+                    await queue.put(message)
+                except Exception as e:
+                    logger.error(f"SSE local error user {user_id}: {e}")
 
     async def _notify_local_all(self, message: Dict[str, Any]):
         """Envoie un message localement à tous les clients"""

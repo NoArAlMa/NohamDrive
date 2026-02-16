@@ -10,7 +10,10 @@ class SSEMessage(BaseModel):
     )
     user_id: int = Field(..., description="ID de l'utilisateur concerné")
     message: str = Field(..., description="Message lisible pour l'utilisateur")
-    data: Optional[Dict[str, Any]] = Field(
+    payload: Optional[Dict[str, Any]] = Field(
+        None, description="Données métier spécifiques à l'événement."
+    )
+    timestamp: Optional[str] = Field(
         None,
-        description="Données spécifiques à l'événement. Structure dépend de `event`.",
+        description="Timestamp ISO du message (facultatif, utile pour debug ou UI)",
     )
