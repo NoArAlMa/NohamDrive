@@ -16,7 +16,7 @@ const levelClassMap: Record<string, string> = {
 <template>
   <div>
     <pre
-      class="text-sm whitespace-pre-wrap"
+      class="text-sm whitespace-pre-wrap font-terminal"
       :class="levelClassMap[(props.block as any).level ?? 'default']"
       v-text="props.block.content"
     />
