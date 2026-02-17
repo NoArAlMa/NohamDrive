@@ -27,5 +27,4 @@ async def login_user_endpoint(
     payload: UserLogin,
     auth_service: AuthService = Depends(get_auth_service),
 ):
-    login_user = auth_service.login_user()
-    return BaseResponse(success=True, data=login_user)
+    return BaseResponse(success=True, data=payload)

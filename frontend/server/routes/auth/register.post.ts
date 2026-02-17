@@ -1,14 +1,14 @@
+import { UserCreatePayload } from "./../../../shared/types/auth";
 import { GenericAPIResponse } from "~~/shared/types/API";
-import { UserLoginPayload } from "~~/shared/types/auth";
 
 export default defineEventHandler(async (event) => {
-  const payload = await readBody<UserLoginPayload>(event);
+  const payload = await readBody<UserCreatePayload>(event);
 
   const API_URL = useRuntimeConfig().public.apiBaseUrl;
 
   try {
     const data = await $fetch<GenericAPIResponse<null>>(
-      `${API_URL}/auth/login`,
+      `${API_URL}/auth/register`,
       {
         method: "POST",
         body: payload,
@@ -21,7 +21,8 @@ export default defineEventHandler(async (event) => {
       throw createError({
         statusCode: error.response.status,
         data: error.response._data.data ?? {},
-        message: error.response._data?.message ?? "Impossible de se connecter",
+        message:
+          error.response._data?.message ?? "Impossible de créer un compte",
       });
     }
     throw createError({

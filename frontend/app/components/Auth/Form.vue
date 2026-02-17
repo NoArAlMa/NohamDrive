@@ -15,6 +15,10 @@ const emit = defineEmits<{
   (e: "update:mode", value: "login" | "register"): void;
 }>();
 
+const authForm = useTemplateRef("authForm");
+
+const generalError = ref<string | null>(null);
+
 const loginFields: AuthFormField[] = [
   {
     name: "email",
@@ -97,11 +101,51 @@ const createSchema = z
     path: ["password_confirmation"],
   });
 
-function onSubmit(payload: FormSubmitEvent<any>) {
+async function onSubmit(payload: FormSubmitEvent<any>) {
+  generalError.value = null;
+
   if (mode.value === "login") {
-    console.log("LOGIN", payload.data);
+    try {
+      await $fetch("/auth/login", {
+        method: "POST",
+        body: payload.data,
+      });
+    } catch (error: any) {
+      if (error.data?.fieldErrors) {
+        authForm.value?.formRef?.setErrors(error.data.fieldErrors);
+      }
+
+      // Handle general error message
+      if (error.data?.message) {
+        generalError.value = error.data.message;
+      }
+    }
   } else {
-    console.log("REGISTER", payload.data);
+    const { password_confirmation, ...cleanedData } = payload.data;
+    try {
+      await $fetch("/auth/register", {
+        method: "POST",
+        body: cleanedData,
+      });
+    } catch (error: any) {
+      const backend = error?.data;
+
+      if (backend?.statusCode === 422 && backend?.data) {
+        const formattedErrors = Object.entries(backend.data).map(
+          ([name, message]) => ({
+            name,
+            message: String(message),
+          }),
+        );
+
+        authForm.value?.formRef?.setErrors(formattedErrors);
+
+        generalError.value = backend.message;
+      } else {
+        generalError.value =
+          backend?.message ?? "Une erreur inattendue est survenue";
+      }
+    }
   }
 }
 </script>
@@ -111,6 +155,7 @@ function onSubmit(payload: FormSubmitEvent<any>) {
     <UPageCard class="w-full max-w-md">
       <Transition name="auth" mode="out-in">
         <UAuthForm
+          ref="authForm"
           :key="mode"
           :title="mode === 'login' ? 'Login' : 'Create account'"
           :schema="mode === 'login' ? loginSchema : createSchema"
@@ -127,6 +172,15 @@ function onSubmit(payload: FormSubmitEvent<any>) {
             color: 'primary',
           }"
         >
+          <template #validation>
+            <UAlert
+              v-if="generalError"
+              color="error"
+              variant="subtle"
+              icon="i-lucide-info"
+              :title="generalError"
+            />
+          </template>
           <template #footer>
             <UButton
               :label="
