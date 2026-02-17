@@ -9,7 +9,7 @@ const levelClassMap: Record<string, string> = {
   success: "text-success",
   warning: "text-warning",
   error: "text-error",
-  muted: "text-gray-500",
+  muted: "text-muted",
 };
 </script>
 

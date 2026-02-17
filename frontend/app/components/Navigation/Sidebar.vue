@@ -40,39 +40,48 @@ const itemsDropDown = ref<DropdownMenuItem[]>([
 
 const items: NavigationMenuItem[][] = [
   [
-    {
-      label: "Home",
-      icon: "i-lucide-house",
-      tooltip: true,
-      to: "/",
-    },
-    {
-      label: "My files",
-      icon: "material-symbols:folder-copy-outline-rounded",
-      tooltip: true,
-      to: "/explorer",
-    },
-    {
-      label: "Contacts",
-      icon: "material-symbols:person-outline-rounded",
-      tooltip: true,
-    },
-    {
-      label: "Teams",
-      icon: "material-symbols:groups-outline-rounded",
-      tooltip: true,
-      children: [
-        {
-          label: "Teams1",
-        },
-        {
-          label: "Teams2",
-        },
-        {
-          label: "Teams3",
-        },
-      ],
-    },
+    [
+      {
+        label: "Home",
+        icon: "i-lucide-house",
+        tooltip: true,
+        to: "/",
+      },
+      {
+        label: "My files",
+        icon: "material-symbols:folder-copy-outline-rounded",
+        tooltip: true,
+        to: "/explorer",
+      },
+      {
+        label: "Contacts",
+        icon: "material-symbols:person-outline-rounded",
+        tooltip: true,
+      },
+      {
+        label: "Teams",
+        icon: "material-symbols:groups-outline-rounded",
+        tooltip: true,
+        children: [
+          {
+            label: "Teams1",
+          },
+          {
+            label: "Teams2",
+          },
+          {
+            label: "Teams3",
+          },
+        ],
+      },
+    ],
+    [
+      {
+        label: "Echo",
+        icon: "mdi:star-four-points-outline",
+        to: "/terminal",
+      },
+    ],
   ],
   [
     {
@@ -161,7 +170,9 @@ const collapsed = ref(false);
               collapsed ? 'size-5' : 'size-4 tablet:size-5',
             ].join(' '),
           }"
-        />
+        >
+          <template #list-leading></template>
+        </UNavigationMenu>
       </div>
 
       <!-- Menu secondaire -->
