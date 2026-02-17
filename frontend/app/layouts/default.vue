@@ -1,8 +1,9 @@
 <template>
   <UApp>
     <UDashboardGroup>
-      <NavigationSidebar />
-
+      <ClientOnly>
+        <NavigationSidebar />
+      </ClientOnly>
       <UDashboardPanel>
         <template #header>
           <div class="lg:hidden p-4 border-b">
