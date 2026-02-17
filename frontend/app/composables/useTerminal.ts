@@ -108,7 +108,11 @@ export function useTerminal(inputRef?: any) {
     const token = getLastTokenInfo(input);
 
     const before = input.slice(0, token.start);
-    const completed = token.value + ghostText.value;
+    let completed = token.value + ghostText.value;
+
+    if (!token.quote && completed.includes(" ")) {
+      completed = `"${completed}"`;
+    }
 
     let result = before + completed;
 
