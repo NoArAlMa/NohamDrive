@@ -88,7 +88,7 @@ watch(
 
 <template>
   <div
-    class="h-screen overflow-y-auto bg-(--terminal) p-4 font-terminal text-sm text-gray-300"
+    class="h-screen overflow-y-auto bg-(--terminal) p-4 font-terminal text-sm"
     @click="focusInput"
   >
     <!-- History -->
