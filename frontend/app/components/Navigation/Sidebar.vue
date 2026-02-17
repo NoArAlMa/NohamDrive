@@ -44,24 +44,20 @@ const items: NavigationMenuItem[][] = [
       {
         label: "Home",
         icon: "i-lucide-house",
-        tooltip: true,
         to: "/",
       },
       {
         label: "My files",
         icon: "material-symbols:folder-copy-outline-rounded",
-        tooltip: true,
         to: "/explorer",
       },
       {
         label: "Contacts",
         icon: "material-symbols:person-outline-rounded",
-        tooltip: true,
       },
       {
         label: "Teams",
         icon: "material-symbols:groups-outline-rounded",
-        tooltip: true,
         children: [
           {
             label: "Teams1",
@@ -151,6 +147,7 @@ const collapsed = ref(false);
       <!-- Menu principal -->
       <div class="overflow-y-scroll no-scrollbar">
         <UNavigationMenu
+          tooltip
           :collapsed="collapsed"
           :items="items[0]"
           orientation="vertical"
@@ -214,7 +211,7 @@ const collapsed = ref(false);
       >
         <UButton
           :avatar="{
-            src: 'https://github.com/Karssou.png',
+            src: 'https://i.pinimg.com/736x/be/a3/49/bea3491915571d34a026753f4a872000.jpg',
             size: 'md',
           }"
           :label="collapsed ? undefined : 'Username'"
