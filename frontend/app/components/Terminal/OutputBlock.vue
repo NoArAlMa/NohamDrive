@@ -1,14 +1,14 @@
 <script lang="ts" setup>
-import type { TerminalBlock } from "~~/shared/types/terminal_types";
+import type { OutputBlock } from "~~/shared/types/terminal_types";
 
-const props = defineProps<{ block: TerminalBlock }>();
+const props = defineProps<{ block: OutputBlock }>();
 
 const levelClassMap: Record<string, string> = {
-  default: "text-gray-300",
-  info: "text-blue-400",
-  success: "text-green-400",
-  warning: "text-yellow-400",
-  error: "text-red-500",
+  default: "",
+  info: "text-info",
+  success: "text-success",
+  warning: "text-warning",
+  error: "text-error",
   muted: "text-gray-500",
 };
 </script>
