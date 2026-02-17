@@ -67,14 +67,12 @@ export function useTerminal(inputRef?: any) {
     }
     const fileTreeStore = useFileTree();
 
-    const match = fileTreeStore.fileTree
-      .map((f) => f.name)
-      .sort()
-      .find((name) =>
-        token.value
-          ? name.startsWith(token.value) && name !== token.value
-          : true,
-      );
+    const sortedFileNames = computed(() =>
+      [...fileTreeStore.fileTree.map((f) => f.name)].sort(),
+    );
+    const match = sortedFileNames.value.find((name) =>
+      token.value ? name.startsWith(token.value) && name !== token.value : true,
+    );
 
     if (!match) return "";
 
@@ -82,26 +80,19 @@ export function useTerminal(inputRef?: any) {
   });
 
   function getLastTokenInfo(input: string) {
-    const singleQuotes = (input.match(/'/g) || []).length;
-    const doubleQuotes = (input.match(/"/g) || []).length;
+    const single = (input.match(/'/g) || []).length;
+    const double = (input.match(/"/g) || []).length;
 
-    const inSingle = singleQuotes % 2 !== 0;
-    const inDouble = doubleQuotes % 2 !== 0;
+    const inSingle = single % 2 !== 0;
+    const inDouble = double % 2 !== 0;
 
     if (inSingle || inDouble) {
-      const quoteChar = inSingle ? "'" : '"';
-      const startIndex = input.lastIndexOf(quoteChar);
-
-      return {
-        start: startIndex + 1,
-        end: input.length,
-        value: input.slice(startIndex + 1),
-        quote: quoteChar,
-      };
+      const quote = inSingle ? "'" : '"';
+      const start = input.lastIndexOf(quote) + 1;
+      return { start, end: input.length, value: input.slice(start), quote };
     }
 
     const lastSpace = input.lastIndexOf(" ");
-
     return {
       start: lastSpace + 1,
       end: input.length,
