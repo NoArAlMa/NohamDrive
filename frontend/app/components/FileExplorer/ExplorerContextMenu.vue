@@ -54,8 +54,8 @@ const rowItems = computed((): ContextMenuItem[] => {
   if (item.is_dir) {
     return [
       {
-        label: "Ouvrir dans le terminal",
-        icon: "material-symbols:terminal-rounded",
+        label: "Ouvrir avec Echo",
+        icon: "mdi:star-four-points-outline",
         onSelect: () => fsActions.terminal(item),
       },
       { type: "separator" as const },

@@ -37,7 +37,11 @@ async function confirmCreateFolder() {
 </script>
 
 <template>
-  <UModal v-model:open="isModalOpen">
+  <UModal
+    v-model:open="isModalOpen"
+    title="Nouveau dossier"
+    description="Formulaire pour créer un nouveau dossier"
+  >
     <UButton
       label="Créer dossier"
       variant="soft"
