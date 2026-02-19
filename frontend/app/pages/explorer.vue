@@ -2,10 +2,10 @@
 
 <template>
   <section
-    class="flex flex-1 items-center justify-center px-4 py-6 overflow-hidden"
+    class="flex flex-1 overflow-hidden md:items-center md:justify-center md:px-4 md:py-6"
   >
     <div
-      class="w-full max-w-7xl h-[80vh] flex flex-col overflow-hidden rounded-xl"
+      class="w-full h-full flex flex-col overflow-hidden md:max-w-7xl md:h-[80vh] md:rounded-md md:shadow-lg"
     >
       <FileExplorerContainer class="flex-1 overflow-auto" />
     </div>

@@ -1,3 +1,4 @@
+import { FileExplorerView } from "#components";
 import type { Toast } from "@nuxt/ui/runtime/composables/useToast.js";
 import type {
   CompressFilePayload,
@@ -10,10 +11,34 @@ import type { ApiFileItem } from "~~/shared/types/file_tree";
 export const useFsActions = () => {
   const FSStore = useFSStore();
   const toast = useToast();
-  const { openDrawerWithProperties } = usePropertyDrawer();
-  const open = (item: ApiFileItem) => {
+
+  const overlay = useOverlay();
+
+  const open = async (item: ApiFileItem) => {
     if (item.is_dir) {
       FSStore.navigate(item.name);
+    } else {
+      const fullPath = `${joinPath(FSStore.currentPath, item.name)}`;
+      const cleanPath = fullPath.replace(/^\/+/, "");
+
+      const response = await $fetch(`/storage/preview/${cleanPath}`, {
+        responseType: "blob",
+      });
+
+      const blob = new Blob([response], { type: response.type });
+
+      const fileName = item.name;
+
+      // Crée un objet File
+      const file = new File([blob], fileName, { type: blob.type });
+
+      const viewModal = overlay.create(FileExplorerView, {
+        props: {
+          fileName: fileName,
+          fileUrl: file,
+        },
+      });
+      viewModal.open();
     }
   };
 
