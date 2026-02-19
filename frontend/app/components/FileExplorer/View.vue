@@ -31,12 +31,11 @@ const props = defineProps<{
 </template>
 
 <style scoped>
-:deep(video),
 :deep(canvas),
 :deep(iframe),
 :deep(embed) {
   width: 100% !important;
-  height: 100% !important;
+  height: 100vh !important;
   max-width: 100% !important;
   max-height: 100% !important;
   object-fit: contain;
@@ -45,5 +44,10 @@ const props = defineProps<{
 :deep(audio) {
   width: 100% !important;
   max-width: 100% !important;
+}
+
+:deep(video) {
+  max-width: 100% !important;
+  max-height: 100% !important;
 }
 </style>
