@@ -164,6 +164,17 @@ async def download_file_endpoint(
     return await minio_service.download_service.download_object(user_id, object_name)
 
 
+@router.get("/preview/{object_name:path}", response_class=StreamingResponse)
+@limiter.limit("20/minute")
+async def preview_file_endpoint(
+    request: Request,
+    object_name: str,
+    user_id: int = 1,  # TODO: Remplacer par l'ID réel (via auth)
+    minio_service: MinioService = Depends(get_minio_service),
+):
+    return await minio_service.download_service.preview_object(user_id, object_name)
+
+
 @router.post(
     "/folder",
     response_model=BaseResponse[str],

@@ -66,7 +66,9 @@ const rowItems = computed((): ContextMenuItem[] => {
       {
         label: "Visualiser",
         icon: "material-symbols:visibility-outline-rounded",
-        onSelect: () => {},
+        onSelect: () => {
+          fsActions.open(item);
+        },
       },
       { type: "separator" as const },
       ...baseMenu(item),

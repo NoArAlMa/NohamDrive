@@ -9,7 +9,7 @@ from app.services.minio.bucket_service import BucketService
 from app.utils.minio_utils import MinioUtils
 from core.logging import setup_logger
 import zipstream
-
+import mimetypes
 
 logger = setup_logger(__name__)
 
@@ -112,7 +112,6 @@ class DownloadService:
                 else:
                     raise
 
-
             if is_file:
 
                 def file_iterator() -> Iterator[bytes]:
@@ -133,7 +132,6 @@ class DownloadService:
                         "Content-Disposition": f'attachment; filename="{filename}"'
                     },
                 )
-
 
             prefix = object_name.rstrip("/") + "/"
 
@@ -195,4 +193,62 @@ class DownloadService:
             raise HTTPException(
                 status_code=500,
                 detail=f"Erreur lors du téléchargement: {str(e)}",
+            )
+
+    async def preview_object(
+        self,
+        user_id: int,
+        object_name: str,
+    ) -> StreamingResponse:
+        """
+        Prévisualise un fichier depuis MinIO.
+        """
+
+        bucket_name = await self.bucket_service.get_user_bucket(user_id)
+
+        object_name = MinioUtils.normalize_path(object_name, is_folder=False)
+
+        if ".." in object_name:
+            raise HTTPException(status_code=400, detail="Chemin invalide.")
+
+        try:
+            stat = self.minio.stat_object(bucket_name, object_name)
+
+            def file_iterator() -> Iterator[bytes]:
+                response = self.minio.get_object(bucket_name, object_name)
+                try:
+                    for chunk in response.stream(1024 * 1024):
+                        yield cast(bytes, chunk)
+                finally:
+                    response.close()
+                    response.release_conn()
+
+            filename = object_name.split("/")[-1]
+
+            content_type = stat.content_type
+            if not content_type or content_type == "application/octet-stream":
+                guessed_type, _ = mimetypes.guess_type(filename)
+                content_type = guessed_type or "application/octet-stream"
+
+            return StreamingResponse(
+                file_iterator(),
+                media_type=content_type,
+                headers={
+                    "Content-Disposition": f'inline; filename="{filename}"',
+                    "Content-Length": str(stat.size),
+                },
+            )
+
+        except S3Error as e:
+            logger.error(
+                "Preview failed",
+                extra={
+                    "user_id": user_id,
+                    "object_name": object_name,
+                    "error": str(e),
+                },
+            )
+            raise HTTPException(
+                status_code=404,
+                detail="Fichier introuvable.",
             )
