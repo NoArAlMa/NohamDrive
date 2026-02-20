@@ -1,7 +1,10 @@
-import { app, BrowserWindow } from "electron";
+import electron from "electron";
 import { setupAutoUpdater } from "./src/main/update.js";
-import { createWindow, getMainWindow } from "./src/main/window.js";
+import { createWindow } from "./src/main/window.js";
 import { startNitro, stopNitro } from "./src/main/nitro.js";
+import os from "node:os";
+
+const { BrowserWindow, app, ipcMain } = electron;
 
 /**
  * Nettoie les ressources avant la fermeture de l'application.
@@ -17,6 +20,17 @@ app.whenReady().then(() => {
   const mainWindow = createWindow();
   startNitro();
   setupAutoUpdater(mainWindow);
+});
+
+
+
+ipcMain.handle("get-app-info", async () => {
+  return {
+    isElectron: true,
+    appVersion: app.getVersion(),
+    platform: os.platform(),
+    arch: os.arch(),
+  };
 });
 
 app.on("window-all-closed", () => {

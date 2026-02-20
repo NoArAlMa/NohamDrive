@@ -1,7 +1,9 @@
 import { spawn, ChildProcessWithoutNullStreams } from "node:child_process";
 import path from "node:path";
 import log from "electron-log";
-import { app } from "electron";
+import electron from "electron";
+
+const { app } = electron;
 
 let nitroProcess: ChildProcessWithoutNullStreams | null = null;
 
