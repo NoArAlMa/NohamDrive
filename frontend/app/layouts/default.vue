@@ -6,7 +6,7 @@ const { isMobile } = useResponsive();
   <UApp>
     <UDashboardGroup>
       <ClientOnly>
-        <NavigationSidebar />
+        <LazyNavigationSidebar />
       </ClientOnly>
       <UDashboardPanel :ui="{ body: 'p-0 laptop:p-4' }">
         <template #header>
@@ -16,7 +16,7 @@ const { isMobile } = useResponsive();
         </template>
 
         <template #body>
-          <UDashboardSearch />
+          <LazyUDashboardSearch />
           <NuxtPage />
         </template>
       </UDashboardPanel>

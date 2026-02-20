@@ -78,7 +78,7 @@ const rowItems = computed((): ContextMenuItem[] => {
 </script>
 
 <template>
-  <UContextMenu :items="rowItems" :aria-hidden="false">
+  <UContextMenu :items="rowItems">
     <slot />
   </UContextMenu>
 </template>
