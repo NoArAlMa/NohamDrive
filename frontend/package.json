@@ -57,13 +57,17 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "icon.ico",
+      "icon": "electron/assets/icons/nh-icon.ico",
       "forceCodeSigning": true
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "artifactName": "NohamDrive-Setup.${ext}"
+      "artifactName": "NohamDrive-Setup.${ext}",
+      "installerIcon": "electron/assets/icons/nh-icon.ico",
+      "uninstallerIcon": "electron/assets/icons/nh-icon.ico",
+      "installerHeaderIcon": "electron/assets/icons/nh-icon.ico",
+      "installerSidebar": "electron/assets/images/sidebar.bmp"
     },
     "cscLink": "./electron/nohamdrive.pfx",
     "cscKeyPassword": "nohamdrive"
@@ -92,6 +96,6 @@
     "baseline-browser-mapping": "^2.9.14",
     "concurrently": "^9.2.1",
     "electron": "^40.0.0",
-    "electron-builder": "^21.1.4"
+    "electron-builder": "^26.8.1"
   }
 }
