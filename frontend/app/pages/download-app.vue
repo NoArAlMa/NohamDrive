@@ -7,12 +7,8 @@ const links = ref<ButtonProps[]>([
     color: "primary",
     variant: "outline",
     leadingIcon: "mdi:microsoft",
-    onClick: () => {
-      open(
-        "https://github.com/NoArAlMa/NohamDrive/releases/latest/download/NohamDrive-Setup.exe",
-        "_blank ",
-      );
-    },
+    to: "https://github.com/NoArAlMa/NohamDrive/releases/latest/download/NohamDrive-Setup.exe",
+    target: "_blank",
   },
   {
     label: "Download App for Mac",
@@ -20,6 +16,7 @@ const links = ref<ButtonProps[]>([
     variant: "outline",
     leadingIcon: "file-icons:apple",
     to: "https://www.apple.com/fr/",
+    target: "_blank",
   },
 ]);
 </script>

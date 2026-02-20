@@ -1,19 +1,10 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from "@nuxt/ui";
 import type { DropdownMenuItem } from "@nuxt/ui";
-import { useBreakpoints } from "@vueuse/core";
 
-const breakpoints = useBreakpoints({
-  mobile: 0,
-  tablet: 640,
-  laptop: 1024,
-  desktop: 1280,
-});
+const { isMobile } = useResponsive();
 
 const { isElectron } = useElectron();
-
-const isMobile = breakpoints.smaller("laptop"); // true if < 1024px
-const isDesktop = breakpoints.greaterOrEqual("laptop"); // true if >= 1024px
 
 const itemsDropDown = ref<DropdownMenuItem[]>([
   {
@@ -121,7 +112,7 @@ const collapsed = ref(false);
     <template #header>
       <div class="w-full flex justify-start items-center">
         <h1
-          v-show="!collapsed && isDesktop"
+          v-show="!collapsed && !isMobile"
           class="mr-auto pr-4 text-primary font-bold select-none whitespace-nowrap overflow-hidden text-ellipsis transition-all duration-200 text-sm tablet:text-base laptop:text-lg desktop:text-2xl"
         >
           NohamDrive
@@ -133,7 +124,7 @@ const collapsed = ref(false);
 
     <template #default>
       <UDashboardSearchButton
-        v-if="isDesktop"
+        v-if="!isMobile"
         :collapsed="collapsed"
         :block="collapsed"
         :square="collapsed"
@@ -179,7 +170,7 @@ const collapsed = ref(false);
 
       <!-- Menu secondaire -->
       <UNavigationMenu
-        v-if="isDesktop"
+        v-if="!isMobile"
         :collapsed="collapsed"
         :items="items[1]"
         orientation="vertical"
