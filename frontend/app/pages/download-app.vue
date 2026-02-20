@@ -3,16 +3,23 @@ import type { ButtonProps } from "@nuxt/ui";
 
 const links = ref<ButtonProps[]>([
   {
-    label: "Download App on windows",
+    label: "Download App for windows",
     color: "primary",
     variant: "outline",
-    leadingIcon: "material-symbols:download-rounded",
+    leadingIcon: "mdi:microsoft",
     onClick: () => {
       open(
         "https://github.com/NoArAlMa/NohamDrive/releases/latest/download/NohamDrive-Setup.exe",
         "_blank ",
       );
     },
+  },
+  {
+    label: "Download App for Mac",
+    color: "neutral",
+    variant: "outline",
+    leadingIcon: "file-icons:apple",
+    to: "https://www.apple.com/fr/",
   },
 ]);
 </script>
