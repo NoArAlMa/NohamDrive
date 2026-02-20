@@ -22,8 +22,7 @@ const selectedCount = computed({
 });
 
 const selectedItems = computed<ApiFileItem[]>(() => {
-  if (!table.value) return [];
-
+  if (!table.value?.tableApi) return [];
   return (
     table.value.tableApi
       .getSelectedRowModel()
@@ -31,12 +30,18 @@ const selectedItems = computed<ApiFileItem[]>(() => {
   );
 });
 
-watch(selectedItems, (items) => {
-  emit("update:selectedItems", items);
-});
+onMounted(() => {
+  watch(selectedItems, (items) => {
+    if (items) emit("update:selectedItems", items);
+  });
 
-watch(selectedCount, (count) => emit("update:selectedCount", count), {
-  immediate: true,
+  watch(
+    selectedCount,
+    (count) => {
+      if (count !== undefined) emit("update:selectedCount", count);
+    },
+    { immediate: true },
+  );
 });
 
 const ExplorerContextMenu = defineAsyncComponent(
