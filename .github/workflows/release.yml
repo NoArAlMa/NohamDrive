@@ -48,7 +48,7 @@ jobs:
         run: npm run build
 
       - name: Compile Electron TS
-        run: npx tsc -p electron
+        run: npm run electron:build
 
       - name: Setup Windows code signing certificate
         run: |

@@ -14,6 +14,10 @@ const preloadPath = isDev
   ? path.join(process.cwd(), "dist-electron/preload.js")
   : path.join(__dirname, "../../preload.js");
 
+const NITRO_URL = "http://localhost:3000";
+const RETRY_INTERVAL = 200; // ms entre chaque tentative
+const MAX_RETRIES = 50; // sécurité → 50 * 200ms = 10s max
+
 /**
  * Crée et configure la fenêtre principale
  */
@@ -30,14 +34,37 @@ export function createWindow() {
     },
   });
 
+  let retries = 0;
+
+  function tryLoadURL() {
+    if (!mainWindow) return;
+
+    mainWindow.loadURL(NITRO_URL).catch(() => {
+      // si ça échoue, on retry après RETRY_INTERVAL
+      retries++;
+      if (retries <= MAX_RETRIES) {
+        setTimeout(tryLoadURL, RETRY_INTERVAL);
+      } else {
+        console.error("Impossible de charger Nitro après plusieurs tentatives");
+        // fallback : afficher une page locale
+        mainWindow?.loadFile(path.join(__dirname, "offline.html"));
+      }
+    });
+  }
+
+  // Événement si la page ne peut pas charger (ex: serveur pas encore prêt)
   mainWindow.webContents.on("did-fail-load", () => {
-    setTimeout(() => mainWindow?.reload(), 200);
+    retries++;
+    if (retries <= MAX_RETRIES) {
+      setTimeout(tryLoadURL, RETRY_INTERVAL);
+    } else {
+      console.error("Impossible de charger Nitro après plusieurs tentatives");
+      mainWindow?.loadFile(path.join(__dirname, "offline.html"));
+    }
   });
 
-  setTimeout(() => {
-    mainWindow?.loadURL("http://localhost:3000");
-  }, 1000);
-
+  // Premier essai immédiat
+  tryLoadURL();
   return mainWindow;
 }
 
