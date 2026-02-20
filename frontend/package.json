@@ -91,6 +91,7 @@
     "@iconify-json/heroicons": "^1.2.3",
     "@iconify-json/vscode-icons": "^1.2.37",
     "@types/node": "^25.0.1",
+    "@types/node-fetch": "^2.6.13",
     "@types/wait-on": "^5.3.4",
     "@vueuse/nuxt": "^14.1.0",
     "baseline-browser-mapping": "^2.9.14",
