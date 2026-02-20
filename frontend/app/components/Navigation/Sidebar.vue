@@ -10,6 +10,8 @@ const breakpoints = useBreakpoints({
   desktop: 1280,
 });
 
+const { isElectron } = useElectron();
+
 const isMobile = breakpoints.smaller("laptop"); // true if < 1024px
 const isDesktop = breakpoints.greaterOrEqual("laptop"); // true if >= 1024px
 
@@ -80,13 +82,16 @@ const items: NavigationMenuItem[][] = [
     ],
   ],
   [
-    {
-      label: "Download desktop app",
-      icon: "material-symbols:download-2-outline-rounded",
-      to: "/download-app",
-      target: "_blank",
-      tooltip: true,
-    },
+    ...(isElectron.value === false
+      ? [
+          {
+            label: "Download desktop app",
+            icon: "material-symbols:download-2-outline-rounded",
+            to: "/download-app",
+            tooltip: true,
+          },
+        ]
+      : []),
     {
       label: "Report a bug",
       icon: "i-lucide-info",
@@ -145,7 +150,7 @@ const collapsed = ref(false);
       />
 
       <!-- Menu principal -->
-      <div class="overflow-y-scroll no-scrollbar">
+      <div class="overflow-y-auto">
         <UNavigationMenu
           tooltip
           :collapsed="collapsed"

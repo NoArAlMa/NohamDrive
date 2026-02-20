@@ -5,7 +5,7 @@
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-
+    "rootDir": ".",
     "outDir": "../dist-electron",
     "strict": true,
     "skipLibCheck": true,
@@ -13,6 +13,6 @@
     "types": ["node", "electron"],
     "lib": ["ES2022"]
   },
-  "include": ["*.ts"],
+  "include": ["*.ts", "preload.ts"],
   "exclude": ["../node_modules"]
 }

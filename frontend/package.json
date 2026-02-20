@@ -13,7 +13,8 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "electron:build": "tsc -p electron",
+    "build:preload": "tsc -p electron/tsconfig.preload.json",
+    "electron:build": "tsc -p electron && npm run build:preload",
     "electron:dev": "concurrently \"nuxt dev\" \"wait-on http://localhost:3000 && npm run electron:start\"",
     "electron:start": "npm run electron:build && electron .",
     "build:elec": "nuxt build && cd .output/server && npm install --omit=dev --prefer-offline",
@@ -61,7 +62,8 @@
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "NohamDrive-Setup.${ext}"
     },
     "cscLink": "./electron/nohamdrive.pfx",
     "cscKeyPassword": "nohamdrive"
