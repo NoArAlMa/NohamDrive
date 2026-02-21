@@ -13,7 +13,6 @@ const items = ref<NavigationMenuItem[][]>([
     {
       label: "Review",
       icon: "i-lucide-database",
-      to: "#",
     },
     {
       label: "Echo",
@@ -48,16 +47,8 @@ const items = ref<NavigationMenuItem[][]>([
             <UNavigationMenu :items="items" />
 
             <template #right>
-              <UButton
-                label="Connexion"
-                to=""
-                variant="ghost"
-                color="neutral"
-                class=""
-              />
-              <UButton to="" color="primary" variant="subtle"
-                >S’inscrire</UButton
-              >
+              <UButton label="Connexion" variant="ghost" color="neutral" />
+              <UButton color="primary" variant="subtle">S’inscrire</UButton>
               <UButton
                 icon="mdi:github"
                 variant="ghost"
@@ -76,5 +67,3 @@ const items = ref<NavigationMenuItem[][]>([
     </UDashboardGroup>
   </UApp>
 </template>
-
-
