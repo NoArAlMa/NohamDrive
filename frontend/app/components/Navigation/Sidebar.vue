@@ -37,7 +37,7 @@ const items: NavigationMenuItem[][] = [
       {
         label: "Home",
         icon: "i-lucide-house",
-        to: "/",
+        to: "/home",
       },
       {
         label: "My files",

@@ -2,6 +2,10 @@
 const route = useRoute();
 const router = useRouter();
 
+definePageMeta({
+  layout: false,
+});
+
 const mode = ref<"login" | "register">("login");
 </script>
 ²
