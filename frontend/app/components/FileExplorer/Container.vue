@@ -58,11 +58,11 @@ async function onDrop(e: DragEvent) {
       class="shrink-0 p-2 border-b border-neutral-300 flex items-center justify-between h-12"
     >
       <div>
-        <FileExplorerToolbar :items="selectedItems" v-if="FileCount > 0" />
+        <LazyFileExplorerToolbar :items="selectedItems" v-if="FileCount > 0" />
         <FileExplorerBreadcrumb v-else />
       </div>
       <div>
-        <FileExplorerUploadFolder v-if="!isMobile" />
+        <LazyFileExplorerUploadFolder v-if="!isMobile" />
       </div>
     </div>
 
@@ -94,7 +94,7 @@ async function onDrop(e: DragEvent) {
       </ClientOnly>
     </div>
 
-    <FileExplorerFooter :selected-count="FileCount" />
+    <LazyFileExplorerFooter :selected-count="FileCount" />
   </section>
 </template>
 
