@@ -37,7 +37,8 @@ jobs:
           script: |
             echo "Cleaning old .output..."
             rm -rf ~/NohamDrive/frontend/.output
-            mkdir -p ~/NohamDrive/frontend
+            mkdir -p ~/NohamDrive/frontend/.output
+
 
       - name: Transfer .output
         uses: appleboy/scp-action@v0.1.4
@@ -46,7 +47,7 @@ jobs:
           username: ${{ secrets.RPI_USER }}
           key: ${{ secrets.RPI_SSH_KEY }}
           port: ${{ secrets.RPI_PORT }}
-          source: "frontend/.output/*"
+          source: "frontend/.output/*"           
           target: "~/NohamDrive/frontend/.output"
 
 
