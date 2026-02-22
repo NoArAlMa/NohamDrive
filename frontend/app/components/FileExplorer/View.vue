@@ -64,6 +64,15 @@ function closeModal() {
   border-radius: 0;
 }
 
+:deep(img) {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 0.5rem;
+}
+
 /* MARKDOWN */
 
 :deep(.md-preview) {
@@ -76,7 +85,6 @@ function closeModal() {
 
 :deep(.md-preview table) {
   width: 100%;
-
   margin: 1rem 0;
   border-radius: 0.25rem;
   font-size: 0.95rem;
@@ -108,11 +116,6 @@ function closeModal() {
 
 :deep(.md-preview tbody tr:nth-child(even)) {
   background-color: rgb(55 65 81);
-}
-
-:deep(.md-preview tbody tr:hover) {
-  background-color: rgb(55 65 81 / 0.3);
-  transition: background 0.2s ease;
 }
 
 /* AUDIO WRAPPER */
