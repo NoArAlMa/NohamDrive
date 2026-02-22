@@ -21,36 +21,32 @@ jobs:
         run: |
           npm ci --prefer-offline --no-audit --progress=false
 
-      - name: Setup .env
-        working-directory: ./frontend
-        run: |
-          cp .env.example .env
-          echo "NUXT_PUBLIC_API_BASE_URL=http://localhost:8000" >> .env
-
       - name: Build Nuxt frontend
         working-directory: ./frontend
         run: |
           npm run build
 
-      - name: Copy .output to Raspberry Pi
-        uses: appleboy/scp-action@v0.1.4
+      - name: Clean previous .output
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.RPI_HOST }}
           username: ${{ secrets.RPI_USER }}
           key: ${{ secrets.RPI_SSH_KEY }}
           port: ${{ secrets.RPI_PORT }}
-          source: "frontend/.output/"
-          target: "/home/${{ secrets.RPI_USER }}/NohamDrive/frontend/.output"
+          script: |
+            echo "Cleaning old .output..."
+            rm -rf ~/NohamDrive/frontend/.output
+            mkdir -p ~/NohamDrive/frontend
 
-      - name: Copy .env to Raspberry Pi
+      - name: Transfer .output
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.RPI_HOST }}
           username: ${{ secrets.RPI_USER }}
           key: ${{ secrets.RPI_SSH_KEY }}
           port: ${{ secrets.RPI_PORT }}
-          source: "frontend/.env"
-          target: "/home/${{ secrets.RPI_USER }}/NohamDrive/frontend/.env"
+          source: "frontend/.output"
+          target: "~/NohamDrive/frontend/"
 
       - name: Launch frontend on Raspberry Pi
         uses: appleboy/ssh-action@v1

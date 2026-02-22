@@ -39,7 +39,7 @@ export default defineNuxtConfig({
   },
 
   $production: {
-    ssr: false,
+    ssr: true,
     nitro: {
       compressPublicAssets: true,
       minify: true,
