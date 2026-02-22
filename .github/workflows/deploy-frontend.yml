@@ -21,12 +21,6 @@ jobs:
         run: |
           npm ci --prefer-offline --no-audit --progress=false
 
-      - name: Setup .env
-        working-directory: ./frontend
-        run: |
-          cp .env.example .env
-          echo "NUXT_PUBLIC_API_BASE_URL=http://localhost:8000" >> .env
-
       - name: Build Nuxt frontend
         working-directory: ./frontend
         run: |
@@ -41,16 +35,6 @@ jobs:
           port: ${{ secrets.RPI_PORT }}
           source: "frontend/.output/"
           target: "/home/${{ secrets.RPI_USER }}/NohamDrive/frontend/.output"
-
-      - name: Copy .env to Raspberry Pi
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.RPI_HOST }}
-          username: ${{ secrets.RPI_USER }}
-          key: ${{ secrets.RPI_SSH_KEY }}
-          port: ${{ secrets.RPI_PORT }}
-          source: "frontend/.env"
-          target: "/home/${{ secrets.RPI_USER }}/NohamDrive/frontend/.env"
 
       - name: Launch frontend on Raspberry Pi
         uses: appleboy/ssh-action@v1
