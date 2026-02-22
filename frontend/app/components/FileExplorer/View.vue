@@ -115,68 +115,78 @@ function closeModal() {
   transition: background 0.2s ease;
 }
 
-/* AUDIO */
-
+/* AUDIO WRAPPER */
 :deep(.audio-preview) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  gap: 2rem;
+  gap: 1.5rem;
+  padding: 1.5rem;
 }
 
-/* Carte audio */
+/* CARD */
 :deep(.audio-container) {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  padding: 1.5rem 2rem;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  max-width: 900px;
+  gap: 1.25rem;
+
   width: 100%;
+  max-width: 720px;
+
+  padding: 1.25rem 1.5rem;
+
+  border-radius: 0.5rem;
+  background: var(--ui-bg-elevated);
+  border: 1px solid var(--ui-border);
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  transition: all 0.2s ease;
 }
 
-/* Nom du fichier */
+/* FILE NAME */
 :deep(.audio-container > .flex-column > div) {
-  font-size: 1.2rem !important;
-  font-weight: 600;
-  color: var(--ui-text, #e5e5e5) !important;
+  font-size: 0.95rem !important;
+  font-weight: 500;
+  color: var(--ui-text) !important;
+
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Player audio */
+/* AUDIO PLAYER */
 :deep(audio) {
-  border-radius: 8px;
-  width: 280px;
+  width: 240px;
+  height: 36px;
+  border-radius: 0.5rem;
 }
 
-/* Bouton mode */
+/* MODE BUTTON */
 :deep(.mode-btn) {
-  background: rgba(255, 255, 255, 0.08);
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  background: var(--ui-secondary);
+  border: 1px solid var(--ui-border-muted);
+  color: var(--ui-text);
+
+  padding: 0.4rem 0.9rem;
+  border-radius: 0.5rem;
+
+  font-size: 0.85rem;
+  font-weight: 500;
+
+  transition: all 0.15s ease;
 }
 
-:deep(.mode-btn:hover) {
-  background: rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
-}
-
-/* Visualizer container */
+/* VISUALIZER */
 :deep(.cvs-container) {
   width: 100%;
-  max-width: 1000px;
-  border-radius: 12px;
+  max-width: 720px;
+
+  border-radius: 0.5rem;
   overflow: hidden;
+
+  background: var(--ui-bg-elevated);
+  border: 1px solid var(--ui-border);
 }
 
 /* Canvas */
