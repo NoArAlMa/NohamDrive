@@ -12,32 +12,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Récupération du code
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Installation de Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 24
 
-      # 3️⃣ Installation des dépendances Nuxt
       - name: Install dependencies
         working-directory: ./frontend
         run: npm ci --prefer-offline --no-audit --progress=false
 
-      # 4️⃣ Build du frontend
       - name: Build Nuxt frontend
         working-directory: ./frontend
         run: npm run build
 
-      # 5️⃣ Vérification du contenu local de .output
       - name: Check build output
         run: ls -la frontend/.output
 
-      # 6️⃣ Déploiement sur le Raspberry Pi via rsync
-      - name: Sync frontend to Raspberry Pi
+      - name: Copy build to Raspberry Pi
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.RPI_HOST }}
@@ -50,12 +44,11 @@ jobs:
             echo "🧹 Nettoyage du dossier cible..."
             rm -rf $TARGET_DIR
             mkdir -p $TARGET_DIR
-        # Séparation pour rsync en local (via SCP)
-      - name: Rsync build to Raspberry Pi
-        run: |
-          rsync -avz --delete ./frontend/.output/ ${{ secrets.RPI_USER }}@${{ secrets.RPI_HOST }}:~/NohamDrive/frontend/.output/
 
-      # 7️⃣ Redémarrage du conteneur Docker sur le Pi
+      - name: SCP frontend build to Raspberry Pi
+        run: |
+          scp -r -P ${{ secrets.RPI_PORT }} ./frontend/.output/* ${{ secrets.RPI_USER }}@${{ secrets.RPI_HOST }}:~/NohamDrive/frontend/.output/
+
       - name: Launch frontend Docker container
         uses: appleboy/ssh-action@v1
         with:
@@ -67,9 +60,9 @@ jobs:
             set -e
             APP_PATH=~/NohamDrive/frontend
             echo "🔄 Arrêt du conteneur frontend existant (si présent)..."
-            docker compose -f ~/NohamDrive/docker compose -f docker-compose.frontend.yml down || true
+            docker compose -f $APP_PATH/docker-compose.frontend.yml down || true
             echo "🐳 Démarrage du conteneur frontend..."
-            docker compose -f  ~/NohamDrive/docker compose -f docker-compose.frontend.yml up -d --remove-orphans
+            docker compose -f $APP_PATH/docker-compose.frontend.yml up -d --remove-orphans
             echo "🧹 Nettoyage des images Docker inutilisées..."
             docker image prune -f
             echo "✅ Déploiement terminé !"
