@@ -28,7 +28,12 @@ jobs:
         run: |
           npm run build
 
-      - name: Clean previous .output
+      - name: Check .output content
+        working-directory: ./frontend
+        run: |
+          ls -la .output
+
+      - name: Prepare Raspberry Pi directory
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.RPI_HOST }}
@@ -36,8 +41,10 @@ jobs:
           key: ${{ secrets.RPI_SSH_KEY }}
           port: ${{ secrets.RPI_PORT }}
           script: |
-            echo "Cleaning old .output..."
+            echo "Preparing directory..."
+            mkdir -p ~/NohamDrive/frontend
             rm -rf ~/NohamDrive/frontend/.output
+            chmod -R 755 ~/NohamDrive
 
       - name: Transfer .output
         uses: appleboy/scp-action@v0.1.4
@@ -47,7 +54,18 @@ jobs:
           key: ${{ secrets.RPI_SSH_KEY }}
           port: ${{ secrets.RPI_PORT }}
           source: "./frontend/.output"
-          target: "~/NohamDrive/frontend/" 
+          target: "~/NohamDrive/frontend/"
+
+      - name: Verify transfer
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.RPI_HOST }}
+          username: ${{ secrets.RPI_USER }}
+          key: ${{ secrets.RPI_SSH_KEY }}
+          port: ${{ secrets.RPI_PORT }}
+          script: |
+            echo "Contenu de ~/NohamDrive/frontend :"
+            ls -la ~/NohamDrive/frontend
 
       - name: Launch frontend on Raspberry Pi
         uses: appleboy/ssh-action@v1
@@ -62,19 +80,16 @@ jobs:
             YELLOW='\033[1;33m'
             NC='\033[0m'
             APP_PATH="~/NohamDrive/frontend"
-
             echo -e "${YELLOW}=== Début du déploiement du frontend ===${NC}"
             cd "$APP_PATH" || { echo -e "${RED}❌ Impossible d'accéder au dossier ${APP_PATH}${NC}"; exit 1; }
-
+            echo -e "${YELLOW}Contenu actuel :${NC}"
+            ls -la
             echo -e "${YELLOW}🔄 Arrêt du conteneur existant (si présent)...${NC}"
             docker compose -f docker-compose.frontend.yml down || true
-
             echo -e "${YELLOW}🐳 Lancement du conteneur frontend...${NC}"
             docker compose -f docker-compose.frontend.yml up -d --remove-orphans || { echo -e "${RED}❌ Erreur lors du démarrage du conteneur${NC}"; exit 1; }
-
             echo -e "${YELLOW}🧹 Nettoyage des images Docker inutilisées...${NC}"
             docker image prune -f || { echo -e "${RED}❌ Erreur lors du nettoyage${NC}"; exit 1; }
-
             if docker ps | grep -q "frontend"; then
               echo -e "${GREEN}============================${NC}"
               echo -e "${GREEN}✨ Déploiement frontend terminé avec succès ! ✨${NC}"
