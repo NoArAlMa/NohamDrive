@@ -107,7 +107,7 @@ const collapsed = ref(false);
       body: 'transition-[padding] duration-200',
       footer: 'transition-[padding] duration-200 border-t border-default',
     }"
-    :class="collapsed ? '' : 'w-fit'"
+    :class="collapsed ? '' : 'min-w-fit'"
   >
     <template #header>
       <div class="w-full flex justify-start items-center">
@@ -203,7 +203,7 @@ const collapsed = ref(false);
           sideOffset: 2,
         }"
         :ui="{ content: 'w-(--reka-dropdown-menu-trigger-width)' }"
-        class="w-full"
+        :class="collapsed ? '' : 'w-full'"
       >
         <UButton
           :avatar="{
@@ -213,11 +213,15 @@ const collapsed = ref(false);
           :label="collapsed ? undefined : 'Username'"
           color="neutral"
           variant="ghost"
-          class="w-full"
+          :square="false"
           :block="collapsed"
-          :square="collapsed"
+          :class="
+            collapsed
+              ? 'size-10 flex items-center justify-center mx-auto'
+              : 'w-full'
+          "
           :ui="{
-            label: 'mr-auto',
+            label: 'ml-1',
           }"
         >
         </UButton>
