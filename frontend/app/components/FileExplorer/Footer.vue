@@ -17,19 +17,22 @@ const selectionLabel = computed(() => {
 
 <template>
   <div
-    class="shrink-0 border-t border-neutral-300 min-h-6 pl-3 pt-1 w-full flex items-center justify-between"
+    class="shrink-0 min-h-6 pl-2 pt-1 w-full flex items-center justify-between"
   >
-    <div>
+    <div class="rounded-md px-2.5 py-1 md:border border-muted shadow-sm">
       <span>{{ selectionLabel }}</span>
     </div>
 
     <UButton
       v-if="totalElements > 0 && !isMobile"
       leading-icon="mdi:star-four-points-outline"
-      variant="ghost"
+      variant="outline"
       label="Ouvrir avec Echo"
       color="neutral"
-      class="py-1"
+      :ui="{
+        base: 'px-2 py-1.5',
+        leadingIcon: 'text-primary',
+      }"
       @click="navigateTo('/terminal')"
     />
   </div>

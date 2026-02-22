@@ -19,7 +19,8 @@ async function openModal() {
       icon="material-symbols:create-new-folder-outline"
       color="neutral"
       variant="outline"
-      size="md"
+      size="lg"
+      class="shadow-md"
       @click="openModal"
     />
   </UTooltip>

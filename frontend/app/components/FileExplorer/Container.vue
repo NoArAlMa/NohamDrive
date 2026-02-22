@@ -54,10 +54,8 @@ async function onDrop(e: DragEvent) {
   <section
     class="flex flex-col relative rounded-md laptop:border border-muted px-0 py-0 laptop:px-5 laptop:py-2"
   >
-    <div
-      class="shrink-0 pl-2 border-b border-neutral-300 flex items-center justify-between h-12"
-    >
-      <div>
+    <div class="shrink-0 pl-2 pr-1 mb-1 flex items-center justify-between h-12">
+      <div class="rounded-md px-2 py-1.5 md:border border-muted shadow-md">
         <LazyFileExplorerToolbar :items="selectedItems" v-if="FileCount > 0" />
         <FileExplorerBreadcrumb v-else />
       </div>
