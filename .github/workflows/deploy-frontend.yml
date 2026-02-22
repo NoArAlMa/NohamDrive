@@ -20,20 +20,16 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./frontend
-        run: |
-          npm ci --prefer-offline --no-audit --progress=false
+        run: npm ci --prefer-offline --no-audit --progress=false
 
       - name: Build Nuxt frontend
         working-directory: ./frontend
-        run: |
-          npm run build
+        run: npm run build
 
       - name: Check .output content
-        working-directory: ./frontend
-        run: |
-          ls -la .output
+        run: ls -la frontend/.output
 
-      - name: Prepare Raspberry Pi directory
+      - name: Clean previous .output
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.RPI_HOST }}
@@ -41,31 +37,18 @@ jobs:
           key: ${{ secrets.RPI_SSH_KEY }}
           port: ${{ secrets.RPI_PORT }}
           script: |
-            echo "Preparing directory..."
-            mkdir -p ~/NohamDrive/frontend
             rm -rf ~/NohamDrive/frontend/.output
-            chmod -R 755 ~/NohamDrive
+            mkdir -p ~/NohamDrive/frontend/.output
 
-      - name: Transfer .output
+      - name: Transfer .output content
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.RPI_HOST }}
           username: ${{ secrets.RPI_USER }}
           key: ${{ secrets.RPI_SSH_KEY }}
           port: ${{ secrets.RPI_PORT }}
-          source: "./frontend/.output"
-          target: "~/NohamDrive/frontend/"
-
-      - name: Verify transfer
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.RPI_HOST }}
-          username: ${{ secrets.RPI_USER }}
-          key: ${{ secrets.RPI_SSH_KEY }}
-          port: ${{ secrets.RPI_PORT }}
-          script: |
-            echo "Contenu de ~/NohamDrive/frontend :"
-            ls -la ~/NohamDrive/frontend
+          source: "frontend/.output/*"  # Copie uniquement le contenu du dossier .output
+          target: "~/NohamDrive/frontend/.output"
 
       - name: Launch frontend on Raspberry Pi
         uses: appleboy/ssh-action@v1
@@ -82,8 +65,7 @@ jobs:
             APP_PATH="~/NohamDrive/frontend"
             echo -e "${YELLOW}=== Début du déploiement du frontend ===${NC}"
             cd "$APP_PATH" || { echo -e "${RED}❌ Impossible d'accéder au dossier ${APP_PATH}${NC}"; exit 1; }
-            echo -e "${YELLOW}Contenu actuel :${NC}"
-            ls -la
+            ls -la .output  # Vérifie le contenu de .output
             echo -e "${YELLOW}🔄 Arrêt du conteneur existant (si présent)...${NC}"
             docker compose -f docker-compose.frontend.yml down || true
             echo -e "${YELLOW}🐳 Lancement du conteneur frontend...${NC}"
