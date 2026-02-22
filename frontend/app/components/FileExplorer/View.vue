@@ -4,6 +4,8 @@ const { fileName, fileUrl } = defineProps<{
   fileName: string;
 }>();
 
+const VueFilesPreview = defineAsyncComponent(() => import("vue-files-preview"));
+
 const showPreview = ref(true);
 
 function closeModal() {
