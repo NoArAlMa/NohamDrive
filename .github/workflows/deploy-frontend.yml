@@ -1,5 +1,6 @@
 name: Deploy Frontend
 on:
+  workflow_dispatch:
   push:
     branches: ["main"]
     paths:
@@ -46,7 +47,8 @@ jobs:
           key: ${{ secrets.RPI_SSH_KEY }}
           port: ${{ secrets.RPI_PORT }}
           source: "frontend/.output"
-          target: "~/NohamDrive/frontend/"
+          target: "~/NohamDrive/frontend/.output"
+
 
       - name: Launch frontend on Raspberry Pi
         uses: appleboy/ssh-action@v1
