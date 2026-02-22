@@ -46,7 +46,7 @@ jobs:
           username: ${{ secrets.RPI_USER }}
           key: ${{ secrets.RPI_SSH_KEY }}
           port: ${{ secrets.RPI_PORT }}
-          source: ".output"
+          source: ".output/"
           target: "~/NohamDrive/frontend/" 
 
       - name: Launch frontend on Raspberry Pi
