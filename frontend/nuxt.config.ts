@@ -27,6 +27,17 @@ export default defineNuxtConfig({
     transpile: ["vue-files-preview"],
   },
 
+  postcss: {
+    plugins: {
+      "@tailwindcss/postcss": {},
+      autoprefixer: {},
+      cssnano:
+        process.env.NODE_ENV === "production"
+          ? { preset: ["default", { discardComments: { removeAll: true } }] }
+          : false,
+    },
+  },
+
   $production: {
     ssr: false,
     nitro: {

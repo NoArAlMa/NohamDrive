@@ -90,6 +90,7 @@
   "devDependencies": {
     "@iconify-json/heroicons": "^1.2.3",
     "@iconify-json/vscode-icons": "^1.2.37",
+    "@tailwindcss/postcss": "^4.2.0",
     "@types/node": "^25.0.1",
     "@types/node-fetch": "^2.6.13",
     "@types/wait-on": "^5.3.4",
