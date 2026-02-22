@@ -2,7 +2,7 @@
 import type { TableRow } from "@nuxt/ui";
 import type { ApiFileItem } from "~~/shared/types/file_tree";
 import { UCheckbox, UButton, UDropdownMenu, UIcon } from "#components";
-
+import type { TableMeta, Row } from "@tanstack/vue-table";
 const fileTreeStore = useFileTree();
 
 const { fileTree, loading, hasError, errorMessage, errorStatus } =
@@ -22,21 +22,27 @@ const selectedCount = computed({
 });
 
 const selectedItems = computed<ApiFileItem[]>(() => {
-  if (!table.value) return [];
+  return fileTree.value.filter((item, index) => rowSelection.value[index]);
+});
 
-  return (
-    table.value.tableApi
-      .getSelectedRowModel()
-      ?.rows.map((row) => row.original) ?? []
+onMounted(() => {
+  watch(selectedItems, (items) => {
+    emit("update:selectedItems", items);
+  });
+
+  watch(
+    () => Object.values(rowSelection.value).filter(Boolean).length,
+    (count) => emit("update:selectedCount", count),
+    { immediate: true },
   );
-});
 
-watch(selectedItems, (items) => {
-  emit("update:selectedItems", items);
-});
-
-watch(selectedCount, (count) => emit("update:selectedCount", count), {
-  immediate: true,
+  watch(
+    selectedCount,
+    (count) => {
+      if (count !== undefined) emit("update:selectedCount", count);
+    },
+    { immediate: true },
+  );
 });
 
 const ExplorerContextMenu = defineAsyncComponent(
@@ -50,8 +56,9 @@ const ExplorerLoader = defineAsyncComponent(
 // Importation des components Nuxt UI pour pouvoir les utiliser en JS
 const contextRow = ref<TableRow<ApiFileItem> | null>(null);
 const ui = { UCheckbox, UButton, UDropdownMenu, UIcon };
+const { isMobile } = useResponsive();
 // Importation des colonnes et du système de sorting
-const { columns } = useFileExplorerColumns(ui);
+const { columns } = useFileExplorerColumns(ui, isMobile);
 const sorting = ref([]);
 
 // Variable "debounced" du loading
@@ -60,13 +67,7 @@ const loading_debounced = refDebounced(loading, 100);
 function goBack() {
   const fs = useFSStore();
 
-  if (fs.currentPath === "/" || fs.currentPath === "") return;
-
-  const parts = fs.currentPath.split("/").filter(Boolean);
-  parts.pop();
-
-  const newPath = "/" + parts.join("/");
-  fs.navigate(newPath || "/");
+  fs.navigate("..");
 }
 
 watch(
@@ -76,8 +77,6 @@ watch(
   },
   { deep: true },
 );
-
-console.log("FileExplorer - fileTree:", fileTree);
 </script>
 
 <template>
@@ -98,7 +97,13 @@ console.log("FileExplorer - fileTree:", fileTree);
         :virtualize="false"
         @hover=""
         class="w-full h-full overflow-x-hidden table-fixed"
-        @contextmenu="(e, row) => (contextRow = row ?? null)"
+        @contextmenu="
+          (e, row) => {
+            if (!isMobile) {
+              contextRow = row ?? null;
+            }
+          }
+        "
       >
         <template #name-cell="{ row }">
           <FileExplorerTableRowFile :row="row" />

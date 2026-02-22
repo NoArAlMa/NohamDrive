@@ -4,14 +4,12 @@ const props = defineProps<{
   message: string;
   onRetry: () => void;
 }>();
-
-
 </script>
 
 <template>
   <div class="flex items-center justify-center">
     <UEmpty
-      class="min-w-100"
+      class="w-full max-w-100 sm:max-w-75 laptop:min-w-25"
       variant="soft"
       icon="material-symbols:error-outline-rounded"
       :description="message"

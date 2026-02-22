@@ -23,6 +23,8 @@ export function useTerminal(inputRef?: any) {
   const blocks = ref<TerminalBlock[]>([]);
   const currentInput = ref("");
 
+  const sortedCommands = Object.keys(commandRegistry).sort();
+
   function parseCommand(input: string): {
     name: string;
     command?: TerminalCommand;
@@ -39,6 +41,86 @@ export function useTerminal(inputRef?: any) {
         : undefined;
 
     return { name, command, args };
+  }
+
+  const ghostText = computed(() => {
+    const input = currentInput.value;
+    if (!input) return "";
+
+    const token = getLastTokenInfo(input);
+
+    const trimmed = input.trimStart();
+    const firstSpaceIndex = trimmed.indexOf(" ");
+
+    const isTypingCommand = firstSpaceIndex === -1 && !input.endsWith(" ");
+
+    if (isTypingCommand) {
+      const partial = token.value;
+
+      const match = sortedCommands.find(
+        (cmd) => cmd.startsWith(partial) && cmd !== partial,
+      );
+
+      if (!match) return "";
+
+      return match.slice(partial.length);
+    }
+    const fileTreeStore = useFileTree();
+
+    const sortedFileNames = computed(() =>
+      [...fileTreeStore.fileTree.map((f) => f.name)].sort(),
+    );
+    const match = sortedFileNames.value.find((name) =>
+      token.value ? name.startsWith(token.value) && name !== token.value : true,
+    );
+
+    if (!match) return "";
+
+    return match.slice(token.value.length);
+  });
+
+  function getLastTokenInfo(input: string) {
+    const single = (input.match(/'/g) || []).length;
+    const double = (input.match(/"/g) || []).length;
+
+    const inSingle = single % 2 !== 0;
+    const inDouble = double % 2 !== 0;
+
+    if (inSingle || inDouble) {
+      const quote = inSingle ? "'" : '"';
+      const start = input.lastIndexOf(quote) + 1;
+      return { start, end: input.length, value: input.slice(start), quote };
+    }
+
+    const lastSpace = input.lastIndexOf(" ");
+    return {
+      start: lastSpace + 1,
+      end: input.length,
+      value: input.slice(lastSpace + 1),
+      quote: null,
+    };
+  }
+
+  function applySuggestion() {
+    const input = currentInput.value;
+    if (!ghostText.value) return;
+
+    const token = getLastTokenInfo(input);
+
+    const before = input.slice(0, token.start);
+    let completed = token.value + ghostText.value;
+
+    if (!token.quote && completed.includes(" ")) {
+      completed = `"${completed}"`;
+    }
+
+    let result = before + completed;
+
+    if (token.quote) {
+      result = before + completed;
+    }
+
+    currentInput.value = result;
   }
 
   async function submit() {
@@ -101,5 +183,5 @@ export function useTerminal(inputRef?: any) {
     nextTick(() => inputRef?.value?.focus());
   }
 
-  return { blocks, currentInput, submit };
+  return { blocks, currentInput, submit, applySuggestion, ghostText };
 }

@@ -23,6 +23,10 @@ export default defineNuxtConfig({
     disableTransition: false,
   },
 
+  build: {
+    transpile: ["vue-files-preview"],
+  },
+
   $production: {
     ssr: false,
     nitro: {

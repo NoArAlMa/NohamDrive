@@ -7,6 +7,7 @@ const dragCounter = ref(0); // Compteur pour gérer les entrées/sorties de la z
 
 const { upload } = useFsActions();
 const { runBatch } = useBatchAction();
+const { isMobile } = useResponsive();
 
 // Fonction pour gérer l'entrée dans la zone de drop
 function onDragEnter(e: DragEvent) {
@@ -51,15 +52,15 @@ async function onDrop(e: DragEvent) {
 
 <template>
   <section
-    class="flex flex-col h-full w-full overflow-hidden relative rounded-xl px-5 py-2 bg-[#0D1520] border border-muted shadow-lg"
+    class="flex flex-col relative rounded-md laptop:border border-muted px-0 py-0 laptop:px-5 laptop:py-2"
   >
-    <div class="shrink-0 p-2 border-b flex items-center justify-between h-12">
-      <div>
-        <FileExplorerToolbar :items="selectedItems" v-if="FileCount > 0" />
+    <div class="shrink-0 pl-2 pr-1 mb-1 flex items-center justify-between h-12">
+      <div class="rounded-md px-2 py-1.5 md:border border-muted shadow-md">
+        <LazyFileExplorerToolbar :items="selectedItems" v-if="FileCount > 0" />
         <FileExplorerBreadcrumb v-else />
       </div>
       <div>
-        <FileExplorerUploadFolder />
+        <LazyFileExplorerUpload />
       </div>
     </div>
 
@@ -91,7 +92,7 @@ async function onDrop(e: DragEvent) {
       </ClientOnly>
     </div>
 
-    <FileExplorerFooter :selected-count="FileCount" />
+    <LazyFileExplorerFooter :selected-count="FileCount" />
   </section>
 </template>
 

@@ -1,4 +1,3 @@
-// stores/fileTree.ts
 import { defineStore } from "pinia";
 import { ref, computed, watch } from "vue";
 import { useFSStore } from "./fs";

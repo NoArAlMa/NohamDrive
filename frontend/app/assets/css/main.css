@@ -1,7 +1,23 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
+@font-face {
+  font-family: "Fira Code";
+  src: url("@/assets/fonts/FiraCode-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Fira Code";
+  src: url("@/assets/fonts/FiraCode-bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+}
+
 @theme static {
+  --font-terminal: "Fira Code", monospace;
+
   /* Override default green color */
   --color-green-50: #effdf5;
   --color-green-100: #d9fbe8;
@@ -50,6 +66,9 @@
   --color-secondary-800: #142f4f;
   --color-secondary-900: #0d2847;
   --color-secondary-950: #081a33;
+
+  --color-terminal-black: #04080f;
+  --color-terminal-white: #e7e7e7;
 }
 
 @theme {
@@ -62,6 +81,7 @@
 :root {
   /* Border Radius général */
   --ui-radius: 0.25rem;
+  --terminal: var(--color-terminal-white);
 
   /* Couleurs principales */
   --ui-primary: var(--color-primary-500);
@@ -72,18 +92,19 @@
   --ui-error: var(--ui-color-error-500);
 
   /* Couleur de texte */
-  --ui-text-dimmed: var(--ui-color-neutral-400);
-  --ui-text-muted: var(--ui-color-neutral-500);
-  --ui-text-toned: var(--ui-color-neutral-600);
-  --ui-text: var(--ui-color-neutral-700);
+  --ui-text-dimmed: var(--ui-color-neutral-500);
+  --ui-text-muted: var(--ui-color-neutral-600);
+  --ui-text-toned: var(--ui-color-neutral-700);
+  --ui-text: var(--ui-color-neutral-800);
   --ui-text-highlighted: var(--ui-color-neutral-900);
   --ui-text-inverted: white;
 
   /* Couleur de background */
-  --ui-bg: white;
+  --ui-bg: #f9f8f6;
   --ui-bg-muted: var(--ui-color-neutral-50);
-  --ui-bg-elevated: var(--ui-color-neutral-100);
-  --ui-bg-accented: var(--ui-color-neutral-200);
+  --ui-bg-elevated: var(--ui-color-neutral-300);
+  /* --ui-bg-elevated: #df0505; */
+  --ui-bg-accented: var(--ui-color-neutral-400);
   --ui-bg-inverted: var(--ui-color-neutral-900);
 
   /* Couleur des bordures */
@@ -96,6 +117,8 @@
 .dark {
   /* Border Radius général */
   --ui-radius: 0.3rem;
+
+  --terminal: var(--color-terminal-black);
 
   /* Couleurs principales */
   --ui-primary: var(--color-primary-400);

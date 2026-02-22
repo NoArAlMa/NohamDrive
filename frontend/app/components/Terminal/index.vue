@@ -1,7 +1,8 @@
 <script setup lang="ts">
 const fsStore = useFSStore();
 const { currentPath } = storeToRefs(fsStore);
-const { blocks, currentInput, submit } = useTerminal();
+const { blocks, currentInput, submit, applySuggestion, ghostText } =
+  useTerminal();
 
 const input = ref<HTMLInputElement | null>(null);
 
@@ -37,7 +38,7 @@ async function submitCommand() {
   await submit();
 
   currentInput.value = "";
-  commandLoading.value = false; 
+  commandLoading.value = false;
 
   // Scroll automatique
   await nextTick();
@@ -88,7 +89,7 @@ watch(
 
 <template>
   <div
-    class="h-screen overflow-y-auto bg-[#0d1117] p-4 font-mono text-sm text-gray-300"
+    class="h-screen overflow-y-auto bg-(--terminal) rounded-md p-4 font-terminal text-sm"
     @click="focusInput"
   >
     <!-- History -->
@@ -106,7 +107,7 @@ watch(
       />
       <!-- Command echo -->
       <div v-else-if="block.type === 'command'" class="flex items-center gap-1">
-        <span class="text-blue-400">ND:{{ block.cwd }} $</span>
+        <span class="text-primary">ND:{{ block.cwd }} $</span>
         <span>{{ block.content }}</span>
       </div>
     </div>
@@ -114,24 +115,33 @@ watch(
     <div ref="bottom" />
 
     <!-- Active input -->
-    <section class="flex items-center gap-1">
+    <section class="flex items-center gap-1 relative">
       <UIcon
         name="material-symbols:progress-activity"
         class="animate-spin mr-2"
         v-if="commandLoading"
       />
-      <span class="text-blue-400">ND:{{ currentPath }} $ </span>
+      <span class="text-primary">ND:{{ currentPath }} $ </span>
 
-      <input
-        ref="input"
-        v-model="currentInput"
-        @keydown.enter.prevent="submitCommand"
-        class="flex-1 bg-transparent outline-none caret-blue-400"
-        autocomplete="off"
-        spellcheck="false"
-        @keydown.up.prevent="navigateUp"
-        @keydown.down.prevent="navigateDown"
-      />
+      <div class="relative flex-1">
+        <!-- Ghost text -->
+        <div class="absolute inset-0 pointer-events-none text-muted">
+          {{ currentInput }}<span>{{ ghostText }}</span>
+        </div>
+
+        <!-- Real input -->
+        <input
+          ref="input"
+          v-model="currentInput"
+          @keydown.enter.prevent="submitCommand"
+          class="relative w-full bg-transparent outline-none"
+          autocomplete="off"
+          spellcheck="false"
+          @keydown.up.prevent="navigateUp"
+          @keydown.down.prevent="navigateDown"
+          @keydown.tab.prevent="applySuggestion"
+        />
+      </div>
     </section>
   </div>
 </template>

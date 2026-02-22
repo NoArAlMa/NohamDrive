@@ -1,3 +1,4 @@
+import { LazyFileExplorerView } from "#components";
 import type { Toast } from "@nuxt/ui/runtime/composables/useToast.js";
 import type {
   CompressFilePayload,
@@ -10,10 +11,55 @@ import type { ApiFileItem } from "~~/shared/types/file_tree";
 export const useFsActions = () => {
   const FSStore = useFSStore();
   const toast = useToast();
-  const { openDrawerWithProperties } = usePropertyDrawer();
-  const open = (item: ApiFileItem) => {
+
+  const overlay = useOverlay();
+
+  const open = async (item: ApiFileItem) => {
     if (item.is_dir) {
       FSStore.navigate(item.name);
+    } else {
+      const fullPath = `${joinPath(FSStore.currentPath, item.name)}`;
+      const cleanPath = fullPath.replace(/^\/+/, "");
+      let loadingToast: Toast | undefined;
+      loadingToast = toast.add({
+        title: "En cours d'ouverture...",
+        color: "neutral",
+        duration: 0,
+        close: false,
+        ui: { icon: "animate-spin" },
+        icon: "material-symbols:progress-activity",
+      });
+      try {
+        const response = await $fetch(`/storage/preview/${cleanPath}`, {
+          responseType: "blob",
+        });
+        const blob = new Blob([response], { type: response.type });
+        const fileName = item.name;
+
+        // Crée un objet File
+        const file = new File([blob], fileName, { type: blob.type });
+
+        const viewModal = overlay.create(LazyFileExplorerView, {
+          props: {
+            fileName: fileName,
+            fileUrl: file,
+          },
+        });
+        viewModal.open();
+        if (loadingToast) toast.remove(loadingToast.id);
+      } catch (error: any) {
+        if (loadingToast) toast.remove(loadingToast.id);
+        toast.add({
+          title: "Erreur",
+          description:
+            error.data?.statusMessage ??
+            "Impossible de supprimer le fichier/dossier.",
+          color: "error",
+          icon: "material-symbols:error-outline-rounded",
+        });
+
+        throw error;
+      }
     }
   };
 

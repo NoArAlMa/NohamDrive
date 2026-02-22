@@ -1,6 +1,9 @@
 import updater from "electron-updater";
-import { dialog, BrowserWindow, app } from "electron";
 import log from "electron-log";
+import electron from "electron";
+import type { BrowserWindow } from "electron";
+
+const { app, dialog } = electron;
 
 const { autoUpdater } = updater;
 /**

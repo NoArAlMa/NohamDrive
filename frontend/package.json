@@ -2,7 +2,7 @@
   "name": "frontend",
   "productName": "NohamDrive",
   "type": "module",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "author": "Alexandre LARUE",
   "description": "NohamDrive, le meilleur Drive, fait par les meilleurs, pour les meilleurs !",
   "private": true,
@@ -13,7 +13,8 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "electron:build": "tsc -p electron",
+    "build:preload": "tsc -p electron/tsconfig.preload.json",
+    "electron:build": "tsc -p electron && npm run build:preload",
     "electron:dev": "concurrently \"nuxt dev\" \"wait-on http://localhost:3000 && npm run electron:start\"",
     "electron:start": "npm run electron:build && electron .",
     "build:elec": "nuxt build && cd .output/server && npm install --omit=dev --prefer-offline",
@@ -56,12 +57,17 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "icon.ico",
+      "icon": "electron/assets/icons/nh-icon.ico",
       "forceCodeSigning": true
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "NohamDrive-Setup.${ext}",
+      "installerIcon": "electron/assets/icons/nh-icon.ico",
+      "uninstallerIcon": "electron/assets/icons/nh-icon.ico",
+      "installerHeaderIcon": "electron/assets/icons/nh-icon.ico",
+      "installerSidebar": "electron/assets/images/sidebar.bmp"
     },
     "cscLink": "./electron/nohamdrive.pfx",
     "cscKeyPassword": "nohamdrive"
@@ -77,6 +83,7 @@
     "nuxt": "^4.2.1",
     "pinia": "^3.0.4",
     "vue": "^3.5.22",
+    "vue-files-preview": "^1.0.41",
     "vue-router": "^4.6.3",
     "zod": "^4.3.6"
   },
@@ -84,11 +91,12 @@
     "@iconify-json/heroicons": "^1.2.3",
     "@iconify-json/vscode-icons": "^1.2.37",
     "@types/node": "^25.0.1",
+    "@types/node-fetch": "^2.6.13",
     "@types/wait-on": "^5.3.4",
     "@vueuse/nuxt": "^14.1.0",
     "baseline-browser-mapping": "^2.9.14",
     "concurrently": "^9.2.1",
     "electron": "^40.0.0",
-    "electron-builder": "^26.4.0"
+    "electron-builder": "^26.8.1"
   }
 }

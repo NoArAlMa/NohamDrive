@@ -57,7 +57,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="NohamDrive API",
     description="API pour NohamDrive un service de stockage cloud type OneDrive.",
-    version="0.2.0",
+    version="0.3.0",
     docs_url="/docs" if settings.DEBUG else None,
     redoc_url="/redoc" if settings.DEBUG else None,
     openapi_url="/openapi.json" if settings.DEBUG else None,
@@ -129,12 +129,23 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
 # Gestion des erreurs de validation (ex: Query, Body)
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    errors = {}
+    for err in exc.errors():
+        loc = err.get("loc", [])
+        if loc:
+            field_name = loc[-1]
+            msg = err.get("msg", "")
+            # 🔹 nettoyer le préfixe "Value error, " si présent
+            if msg.startswith("Value error, "):
+                msg = msg.replace("Value error, ", "", 1)
+            errors[field_name] = msg
+
     return JSONResponse(
         status_code=422,
         content={
             "success": False,
-            "data": None,
-            "message": str(exc),
+            "data": errors,
+            "message": "Validation error",
             "timestamp": datetime.now().isoformat(),
             "status_code": 422,
         },

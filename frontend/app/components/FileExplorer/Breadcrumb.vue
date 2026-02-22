@@ -3,7 +3,10 @@ defineNuxtComponent({
   ssr: false,
 });
 
-const { setCurrentPath, generateBreadcrumbItems } = useFSStore();
+const { setCurrentPath, generateBreadcrumbItems, navigate } = useFSStore();
+
+const { isRoot } = storeToRefs(useFSStore());
+const { isMobile } = useResponsive();
 
 const items = computed(() => {
   return generateBreadcrumbItems();
@@ -13,17 +16,22 @@ const items = computed(() => {
 function handleClick(path: string) {
   setCurrentPath(path);
 }
+
+function handleReturn() {
+  navigate("..");
+}
 </script>
 
 <template>
   <ClientOnly>
     <Transition name="slide-fade" appear>
-      <div class="bg-gray/50">
+      <div v-if="!isMobile">
         <UBreadcrumb
           :items="items"
           overflow="ellipsis"
           :max-items="4"
           :ui="{
+            root: '',
             list: 'flex items-center gap-0.5 min-w-0',
             item: 'min-w-0',
             link: 'group flex items-center gap-1 truncate',
@@ -35,7 +43,7 @@ function handleClick(path: string) {
 
           <template #item="{ item }">
             <ULink
-              class="mx-0 px-2 py-1 rounded-md hover:bg-gray-600/25 truncate max-w-40"
+              class="mx-0 px-2 py-1 rounded-md hover:bg-elevated truncate max-w-40"
               :title="item.label"
               @click="handleClick(item.path)"
             >
@@ -43,6 +51,14 @@ function handleClick(path: string) {
             </ULink>
           </template>
         </UBreadcrumb>
+      </div>
+      <div v-else-if="isMobile && !isRoot">
+        <UButton
+          icon="material-symbols:keyboard-backspace-rounded"
+          variant="ghost"
+          color="neutral"
+          @click="handleReturn"
+        />
       </div>
     </Transition>
   </ClientOnly>

@@ -17,6 +17,7 @@ from app.schemas.files import (
     MoveItem,
     CopyItem,
 )
+from datetime import datetime
 from app.utils.response import BaseResponse
 from app.services.sse_service import SSEManager, get_sse_manager
 from app.schemas.sse import SSEMessage
@@ -34,6 +35,33 @@ async def sse_endpoint(
     return StreamingResponse(
         sse_manager.add_client(user_id),
         media_type="text/event-stream; charset=utf-8",
+    )
+
+
+@router.get(
+    "/full-tree",
+    response_model=BaseResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Liste complète de l'arborescence avec métadonnées",
+    response_description="Retourne les fichiers/dossiers avec hashs, tailles et timestamps.",
+)
+# @limiter.limit("2/minute")
+async def full_tree_endpoint(
+    request: Request,
+    path: str = Query("", description="Chemin relatif (ex: 'dossier/')"),
+    user_id: int = Query(1, description="ID de l'utilisateur"),
+    recursive: bool = Query(
+        False, description="Inclure les sous-dossiers récursivement"
+    ),
+    minio_service: MinioService = Depends(get_minio_service),
+):
+    metadata = await minio_service.full_list_path(
+        path=path, user_id=user_id, recursive=recursive
+    )
+    return BaseResponse(
+        data=metadata,
+        message="Arborescence récupérée",
+        status_code=status.HTTP_200_OK,
     )
 
 
@@ -70,8 +98,9 @@ async def upload_file_endpoint(
     sse_message = SSEMessage(
         event="upload",
         user_id=user_id,
-        data=metadata.model_dump(),
+        payload=metadata.model_dump(),
         message=message,
+        timestamp=datetime.now().isoformat(),
     )
 
     await sse_manager.notify_user(user_id, sse_message.model_dump())
@@ -135,6 +164,17 @@ async def download_file_endpoint(
     return await minio_service.download_service.download_object(user_id, object_name)
 
 
+@router.get("/preview/{object_name:path}", response_class=StreamingResponse)
+@limiter.limit("20/minute")
+async def preview_file_endpoint(
+    request: Request,
+    object_name: str,
+    user_id: int = 1,  # TODO: Remplacer par l'ID réel (via auth)
+    minio_service: MinioService = Depends(get_minio_service),
+):
+    return await minio_service.download_service.preview_object(user_id, object_name)
+
+
 @router.post(
     "/folder",
     response_model=BaseResponse[str],
@@ -175,8 +215,9 @@ async def create_folder_endpoint(
     sse_message = SSEMessage(
         event="folder_created",
         user_id=user_id,
-        data=payload.model_dump(),
+        payload=payload.model_dump(),
         message=f"Fichier {payload.folderPath} créer",
+        timestamp=datetime.now().isoformat(),
     )
     await sse_manager.notify_user(user_id, sse_message.model_dump())
 
@@ -208,8 +249,9 @@ async def delete_object_endpoint(
     sse_message = SSEMessage(
         event="delete",
         user_id=user_id,
-        data=data,
+        payload=data,
         message=message,
+        timestamp=datetime.now().isoformat(),
     )
     await sse_manager.notify_user(user_id, sse_message.model_dump())
 
@@ -264,8 +306,9 @@ async def rename_endpoint(
     sse_message = SSEMessage(
         event="rename",
         user_id=user_id,
-        data=data,
+        payload=data,
         message=message,
+        timestamp=datetime.utcnow().isoformat(),
     )
 
     await sse_manager.notify_user(user_id, sse_message.model_dump())
@@ -312,8 +355,9 @@ async def move_endpoint(
     sse_message = SSEMessage(
         event="move",
         user_id=user_id,
-        data=data,
+        payload=data,
         message=message,
+        timestamp=datetime.now().isoformat(),
     )
     await sse_manager.notify_user(user_id, sse_message.model_dump())
     await sse_manager.notify_user(user_id, sse_message.model_dump())
@@ -341,8 +385,9 @@ async def copy_endpoint(
     sse_message = SSEMessage(
         event="copy",
         user_id=user_id,
-        data=data,
+        payload=data,
         message=message,
+        timestamp=datetime.now().isoformat(),
     )
     await sse_manager.notify_user(user_id, sse_message.model_dump())
     return BaseResponse(

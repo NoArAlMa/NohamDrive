@@ -2,9 +2,12 @@
 import type { TableRow } from "@nuxt/ui";
 import { useFileRenameRegistry } from "~/composables/file/RenameRegistry";
 import { useDebounceFn } from "@vueuse/core";
+import { onLongPress } from "@vueuse/core";
 
 // Ce composant reçoit une prop "row" qui représente une ligne du tableau (un fichier ou un dossier).
 const props = defineProps<{ row: TableRow<ApiFileItem> }>();
+
+const { isMobile } = useResponsive();
 
 // On utilise un composable maison pour enregistrer/désenregistrer les fonctions de renommage.
 // Cela permet de déclencher l'édition depuis n'importe où (ex: menu contextuel).
@@ -18,6 +21,7 @@ const isSubmitting = ref(false);
 const baseName = ref("");
 const extension = ref("");
 const inputRef = ref<HTMLInputElement | null>(null);
+const rowRef = ref<HTMLElement | null>(null);
 
 const key = computed(() =>
   joinPath(FSStore.currentPath, props.row.original.name),
@@ -89,6 +93,18 @@ async function submitEditing() {
   }
 }
 
+onLongPress(
+  rowRef,
+  () => {
+    if (!isMobile.value) return;
+
+    props.row.toggleSelected?.();
+  },
+  {
+    delay: 400,
+  },
+);
+
 const cancelEditing = useDebounceFn(() => {
   isEditing.value = false;
 }, 100);
@@ -104,7 +120,8 @@ function onRowClick() {
   <div
     class="relative max-w-64 py-4 flex items-center group"
     :aria-hidden="false"
-    @dblclick="onRowClick"
+    @dblclick="!isMobile && onRowClick"
+    ref="rowRef"
   >
     <!-- Icone dossier ou fichier -->
     <UIcon

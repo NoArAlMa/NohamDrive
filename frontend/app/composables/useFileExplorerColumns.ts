@@ -1,5 +1,5 @@
 import { h } from "vue";
-import type { TableColumn } from "@nuxt/ui";
+import type { TableColumn, TableRow } from "@nuxt/ui";
 import type { Column } from "@tanstack/vue-table";
 import type { ApiFileItem } from "~~/shared/types/file_tree";
 import formatDate from "~/utils/date";
@@ -11,7 +11,10 @@ type UIComponents = {
   UIcon: any;
 };
 
-export function useFileExplorerColumns(ui: UIComponents) {
+export function useFileExplorerColumns(
+  ui: UIComponents,
+  isMobile: Ref<boolean>,
+) {
   function sortingItems(column: Column<ApiFileItem>) {
     const isSorted = column.getIsSorted();
 
@@ -58,31 +61,37 @@ export function useFileExplorerColumns(ui: UIComponents) {
     );
   }
 
-  const columns = shallowRef<TableColumn<ApiFileItem>[]>([
-    {
-      id: "select",
-      minSize: 30,
-      maxSize: 60,
-      size: 40,
-      header: ({ table }) =>
-        h(ui.UCheckbox, {
-          ui: { base: "rounded-full" },
+  const columns = computed<TableColumn<ApiFileItem>[]>(() => {
+    const baseColumns: TableColumn<ApiFileItem>[] = [];
 
-          modelValue: table.getIsAllPageRowsSelected(),
-          indeterminate: table.getIsSomePageRowsSelected(),
-          "onUpdate:modelValue": (value: boolean) =>
-            table.toggleAllPageRowsSelected(value),
-          icon: "material-symbols:check-rounded",
-        }),
-      cell: ({ row }) =>
-        h(ui.UCheckbox, {
-          ui: { base: "rounded-full" },
-          modelValue: row.getIsSelected(),
-          "onUpdate:modelValue": (value: boolean) => row.toggleSelected(value),
-          icon: "material-symbols:check-rounded",
-        }),
-    },
-    {
+    if (!isMobile.value) {
+      baseColumns.push({
+        id: "select",
+        minSize: 30,
+        maxSize: 60,
+        size: 40,
+        header: ({ table }) =>
+          h(ui.UCheckbox, {
+            ui: { base: "rounded-full" },
+
+            modelValue: table.getIsAllPageRowsSelected(),
+            indeterminate: table.getIsSomePageRowsSelected(),
+            "onUpdate:modelValue": (value: boolean) =>
+              table.toggleAllPageRowsSelected(value),
+            icon: "material-symbols:check-rounded",
+          }),
+        cell: ({ row }) =>
+          h(ui.UCheckbox, {
+            ui: { base: "rounded-full" },
+            modelValue: row.getIsSelected(),
+            "onUpdate:modelValue": (value: boolean) =>
+              row.toggleSelected(value),
+            icon: "material-symbols:check-rounded",
+          }),
+      });
+    }
+
+    baseColumns.push({
       accessorKey: "name",
       size: 300,
       minSize: 200,
@@ -92,16 +101,20 @@ export function useFileExplorerColumns(ui: UIComponents) {
           h(ui.UIcon, { name: "i-heroicons-document", class: "text-lg" }),
           getHeader(column, "Name"),
         ]),
-    },
-    {
-      accessorKey: "last_modified",
-      minSize: 100,
-      maxSize: 250,
-      size: 150,
-      header: ({ column }) => getHeader(column, "Date"),
-      cell: ({ row }) => formatDate(row.getValue("last_modified")),
-    },
-  ]);
+    });
+
+    if (!isMobile.value) {
+      baseColumns.push({
+        accessorKey: "last_modified",
+        minSize: 100,
+        maxSize: 250,
+        size: 150,
+        header: ({ column }) => getHeader(column, "Date"),
+        cell: ({ row }) => formatDate(row.getValue("last_modified")),
+      });
+    }
+    return baseColumns;
+  });
 
   return { columns };
 }
