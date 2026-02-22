@@ -26,15 +26,27 @@ jobs:
         run: |
           npm run build
 
-      - name: Copy .output to Raspberry Pi
+      - name: Clean previous .output
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.RPI_HOST }}
+          username: ${{ secrets.RPI_USER }}
+          key: ${{ secrets.RPI_SSH_KEY }}
+          port: ${{ secrets.RPI_PORT }}
+          script: |
+            echo "Cleaning old .output..."
+            rm -rf ~/NohamDrive/frontend/.output
+            mkdir -p ~/NohamDrive/frontend
+
+      - name: Transfer .output
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.RPI_HOST }}
           username: ${{ secrets.RPI_USER }}
           key: ${{ secrets.RPI_SSH_KEY }}
           port: ${{ secrets.RPI_PORT }}
-          source: "frontend/.output/"
-          target: "/home/${{ secrets.RPI_USER }}/NohamDrive/frontend/.output"
+          source: "frontend/.output"
+          target: "~/NohamDrive/frontend/"
 
       - name: Launch frontend on Raspberry Pi
         uses: appleboy/ssh-action@v1
