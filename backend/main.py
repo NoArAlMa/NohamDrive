@@ -57,7 +57,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="NohamDrive API",
     description="API pour NohamDrive un service de stockage cloud type OneDrive.",
-    version="0.2.0",
+    version="0.3.0",
     docs_url="/docs" if settings.DEBUG else None,
     redoc_url="/redoc" if settings.DEBUG else None,
     openapi_url="/openapi.json" if settings.DEBUG else None,
