@@ -31,6 +31,11 @@ jobs:
       - name: Check build output
         run: ls -la frontend/.output
 
+      - name: Add Raspberry Pi to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p ${{ secrets.RPI_PORT }} ${{ secrets.RPI_HOST }} >> ~/.ssh/known_hosts
+          
       - name: Copy build to Raspberry Pi
         uses: appleboy/ssh-action@v1
         with:
