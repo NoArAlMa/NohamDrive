@@ -107,7 +107,7 @@ const collapsed = ref(false);
       body: 'transition-[padding] duration-200',
       footer: 'transition-[padding] duration-200 border-t border-default',
     }"
-    :class="collapsed ? '' : 'min-w-fit'"
+    :class="collapsed ? '' : 'min-w-fit max-w-70'"
   >
     <template #header>
       <div class="w-full flex justify-start items-center">
