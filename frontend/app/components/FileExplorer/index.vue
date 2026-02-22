@@ -22,18 +22,19 @@ const selectedCount = computed({
 });
 
 const selectedItems = computed<ApiFileItem[]>(() => {
-  if (!table.value?.tableApi) return [];
-  return (
-    table.value.tableApi
-      .getSelectedRowModel()
-      ?.rows.map((row) => row.original) ?? []
-  );
+  return fileTree.value.filter((item, index) => rowSelection.value[index]);
 });
 
 onMounted(() => {
   watch(selectedItems, (items) => {
-    if (items) emit("update:selectedItems", items);
+    emit("update:selectedItems", items);
   });
+
+  watch(
+    () => Object.values(rowSelection.value).filter(Boolean).length,
+    (count) => emit("update:selectedCount", count),
+    { immediate: true },
+  );
 
   watch(
     selectedCount,

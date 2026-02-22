@@ -111,7 +111,7 @@ const DrawerItems = ref<NavigationMenuItem[]>([
     <Transition name="slide-fade" appear>
       <section
         v-if="!isMobile"
-        class="px-4 py-2 flex justify-between gap-2 w-full h-full shadow-sm rounded-xl"
+        class="flex justify-start items-center gap-2 w-full h-full shadow-sm rounded-md"
       >
         <div>
           <UButton
@@ -121,9 +121,11 @@ const DrawerItems = ref<NavigationMenuItem[]>([
             :label="action.label"
             :color="action.color ?? 'neutral'"
             variant="ghost"
+            size="lg"
             class="px-2 py-1"
             :disabled="action.disabled"
             @click="action.handler"
+            loading-auto
           />
 
           <UDropdownMenu :items="DropdownItems" class="ml-3">

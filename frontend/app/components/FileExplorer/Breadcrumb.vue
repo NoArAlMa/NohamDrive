@@ -31,6 +31,7 @@ function handleReturn() {
           overflow="ellipsis"
           :max-items="4"
           :ui="{
+            root: '',
             list: 'flex items-center gap-0.5 min-w-0',
             item: 'min-w-0',
             link: 'group flex items-center gap-1 truncate',

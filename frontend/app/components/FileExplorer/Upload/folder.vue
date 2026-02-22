@@ -1,23 +1,13 @@
 <script lang="ts" setup>
 const { createFolder } = useFsActions();
 
-function randomWord(length = 8): string {
-  const chars = "abcdefghijklmnopqrstuvwxyz"; // lettres possibles
-  let word = "";
-  for (let i = 0; i < length; i++) {
-    word += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return word;
-}
-
-const isModalOpen = ref(false);
 const newFolderName = ref("");
 const error = ref<string | undefined>();
 
-function openModal() {
-  newFolderName.value = "";
-  error.value = undefined;
-  isModalOpen.value = true;
+const emit = defineEmits<{ close: [any] }>();
+
+function close() {
+  emit("close", "");
 }
 
 async function confirmCreateFolder() {
@@ -28,28 +18,18 @@ async function confirmCreateFolder() {
 
   const { success, message } = await createFolder(newFolderName.value.trim());
   if (success) {
-    isModalOpen.value = false;
-    error.value = undefined;
+    close();
   } else {
-    error.value = message; // Affiche l'erreur dans le formulaire
+    error.value = message;
   }
 }
 </script>
 
 <template>
   <UModal
-    v-model:open="isModalOpen"
     title="Nouveau dossier"
     description="Formulaire pour créer un nouveau dossier"
   >
-    <UButton
-      label="Créer dossier"
-      variant="soft"
-      color="neutral"
-      @click="openModal"
-      :close-on-esc="true"
-    />
-
     <template #content>
       <UCard class="flex flex-col gap-2 justify-between">
         <h3 class="text-2xl font-semibold mb-10">Nouveau dossier</h3>
@@ -68,7 +48,7 @@ async function confirmCreateFolder() {
             label="Annuler"
             variant="ghost"
             color="neutral"
-            @click="isModalOpen = false"
+            @click="close"
           />
           <UButton
             label="Créer"
