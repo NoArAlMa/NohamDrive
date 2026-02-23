@@ -50,13 +50,13 @@ jobs:
           strip_components: 2
 
       - name: Launch frontend on Raspberry Pi
-      uses: appleboy/ssh-action@v1
-      with:
-        host: ${{ secrets.RPI_HOST }}
-        username: ${{ secrets.RPI_USER }}
-        key: ${{ secrets.RPI_SSH_KEY }}
-        port: ${{ secrets.RPI_PORT }}
-        script: |
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.RPI_HOST }}
+          username: ${{ secrets.RPI_USER }}
+          key: ${{ secrets.RPI_SSH_KEY }}
+          port: ${{ secrets.RPI_PORT }}
+          script: |
             RED='\033[0;31m'
             GREEN='\033[0;32m'
             YELLOW='\033[1;33m'
