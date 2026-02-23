@@ -47,3 +47,4 @@ jobs:
           port: ${{ secrets.RPI_PORT }}
           source: "frontend/.output/*"
           target: "~/.output"
+          strip_components: 2
