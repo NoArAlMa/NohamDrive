@@ -45,5 +45,5 @@ jobs:
           username: ${{ secrets.RPI_USER }}
           key: ${{ secrets.RPI_SSH_KEY }}
           port: ${{ secrets.RPI_PORT }}
-          source: "frontend/.output"
+          source: "frontend/.output/*"
           target: "~/.output"
