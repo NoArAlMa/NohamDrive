@@ -42,7 +42,7 @@ export const useFsActions = () => {
         const viewModal = overlay.create(LazyFileExplorerView, {
           props: {
             fileName: fileName,
-            fileUrl: file,
+            file: file,
           },
         });
         viewModal.open();

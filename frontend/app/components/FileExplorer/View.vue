@@ -1,10 +1,8 @@
 <script lang="ts" setup>
-const { fileName, fileUrl } = defineProps<{
-  fileUrl: File | null;
+const { fileName, file } = defineProps<{
+  file: File | null;
   fileName: string;
 }>();
-
-const VueFilesPreview = defineAsyncComponent(() => import("vue-files-preview"));
 
 const showPreview = ref(true);
 
@@ -35,7 +33,7 @@ function closeModal() {
           <div
             class="w-full h-full max-w-full max-h-full flex items-center justify-center"
           >
-            <VueFilesPreview :file="fileUrl" class="w-full h-full" />
+            <VueFilesPreview :file="file" class="w-full h-full" />
           </div>
         </ClientOnly>
       </div>
