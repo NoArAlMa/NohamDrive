@@ -61,7 +61,7 @@ jobs:
             GREEN='\033[0;32m'
             YELLOW='\033[1;33m'
             NC='\033[0m'
-            APP_PATH="~/NohamDrive"
+            APP_PATH="$HOME/NohamDrive"
             echo -e "${YELLOW}=== Début du déploiement du frontend ===${NC}"
             cd "$APP_PATH" || { echo -e "${RED}❌ Impossible d'accéder au dossier ${APP_PATH}${NC}"; exit 1; }
             echo -e "${YELLOW}🔄 Arrêt du conteneur existant (si présent)...${NC}"
