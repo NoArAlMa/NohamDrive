@@ -11,11 +11,14 @@ const { isMobile } = useResponsive();
 
 // Fonction pour gérer l'entrée dans la zone de drop
 function onDragEnter(e: DragEvent) {
+  const hasFiles = e.dataTransfer?.types.includes("Files");
+
+  if (!hasFiles) return;
+
   e.preventDefault();
   dragCounter.value++;
   isDragging.value = true;
 }
-
 // Fonction pour gérer la sortie de la zone de drop
 function onDragLeave(e: DragEvent) {
   e.preventDefault();
@@ -27,34 +30,42 @@ function onDragLeave(e: DragEvent) {
 
 // Fonction pour empêcher le comportement par défaut pendant le drag
 function onDragOver(e: DragEvent) {
+  const hasFiles = e.dataTransfer?.types.includes("Files");
+  if (!hasFiles) return;
+
   e.preventDefault();
 }
-
 // Fonction pour gérer le drop des fichiers
 async function onDrop(e: DragEvent) {
+  const hasFiles = e.dataTransfer?.files?.length;
+  if (!hasFiles) return;
+
   e.preventDefault();
+
   dragCounter.value = 0;
   isDragging.value = false;
 
   const files = Array.from(e.dataTransfer?.files || []);
+
   if (!files.length) return;
+
   if (files.length > 1) {
     await runBatch(files, upload, {
       loading: "Upload en cours…",
       success: "Upload terminé",
       error: "Une erreur est survenue pendant l’upload.",
     });
-  } else if (files[0]) {
-    await upload(files[0]);
+  } else {
+    await upload(files[0]!);
   }
 }
 </script>
 
 <template>
   <section
-    class="flex flex-col relative rounded-md laptop:border border-muted px-0 py-0 laptop:px-5 laptop:py-2"
+    class="flex flex-col relative rounded-md laptop:border border-muted px-0 py-0 laptop:px-2 laptop:py-2"
   >
-    <div class="shrink-0 pl-2 pr-1 mb-1 flex items-center justify-between h-12">
+    <div class="shrink-0 pl-1 pr-1 mb-1 flex items-center justify-between h-12">
       <div class="rounded-md px-2 py-1.5 md:border border-muted shadow-md">
         <LazyFileExplorerToolbar :items="selectedItems" v-if="FileCount > 0" />
         <FileExplorerBreadcrumb v-else />

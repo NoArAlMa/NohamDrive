@@ -447,6 +447,54 @@ export const useFsActions = () => {
     }
   };
 
+  const move = async (
+    item_name: string,
+    destination_folder: string,
+    options?: {
+      silent?: boolean;
+    },
+  ) => {
+    const payload: MoveFilePayload = {
+      source_path: item_name,
+      destination_folder: destination_folder,
+    };
+    let loadingToast: Toast | undefined;
+    try {
+      loadingToast = toast.add({
+        title: "Déplacement en cours...",
+        color: "neutral",
+        duration: 0,
+        close: false,
+        ui: { icon: "animate-spin" },
+        icon: "material-symbols:progress-activity",
+      });
+
+      const req = await $fetch<GenericAPIResponse<CopyFilePayload>>(
+        "/storage/move",
+        {
+          method: "POST",
+          body: payload,
+        },
+      );
+
+      useFileTree().retryFetching();
+      if (loadingToast) toast.remove(loadingToast.id);
+      return req;
+    } catch (error: any) {
+      if (loadingToast) toast.remove(loadingToast.id);
+      const message =
+        error.data?.data.message ||
+        "Impossible de renommer le fichier/dossier.";
+      toast.add({
+        title: "Erreur",
+        icon: "material-symbols:error-outline-rounded",
+        description: message,
+        color: "error",
+      });
+      throw error;
+    }
+  };
+
   return {
     open,
     rename,
@@ -458,5 +506,6 @@ export const useFsActions = () => {
     upload,
     compress,
     createFolder,
+    move,
   };
 };

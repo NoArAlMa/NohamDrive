@@ -25,7 +25,7 @@ const links = ref<ButtonProps[]>([
   <UPageCTA
     class="w-full h-full flex items-center justify-center"
     title="Télécharge notre application !!"
-    description="On fait une app alors pourquoi pas la téléchargée hein ?"
+    description="On fait une app alors pourquoi pas la télécharger hein ?"
     variant="soft"
     :links="links"
     orientation="horizontal"

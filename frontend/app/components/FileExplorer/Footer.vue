@@ -17,7 +17,7 @@ const selectionLabel = computed(() => {
 
 <template>
   <div
-    class="shrink-0 min-h-6 pl-2 pt-1 w-full flex items-center justify-between"
+    class="shrink-0 min-h-6 pl-1 pt-1 w-full flex items-center justify-between"
   >
     <div class="rounded-md px-2.5 py-1 md:border border-muted shadow-sm">
       <span>{{ selectionLabel }}</span>

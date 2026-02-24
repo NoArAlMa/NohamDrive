@@ -66,7 +66,6 @@ const loading_debounced = refDebounced(loading, 100);
 
 function goBack() {
   const fs = useFSStore();
-
   fs.navigate("..");
 }
 
@@ -88,6 +87,7 @@ watch(
         v-model:row-selection="rowSelection"
         :loading="loading_debounced"
         loading-color="info"
+        :sticky="true"
         :data="fileTree"
         :columns="columns"
         :ui="{

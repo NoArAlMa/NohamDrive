@@ -34,8 +34,14 @@ export const moveCommand: TerminalCommand = {
         ctx?.currentPath!,
       );
 
+      const item = Array.from(ctx!.fileTree!.values()).find((f: any) => {
+        return resolvePath(f.name, ctx.currentPath!) === correct_path;
+      });
+
+      const is_dir = item!.is_dir;
+
       const payload: MoveFilePayload = {
-        source_path: correct_path,
+        source_path: is_dir ? `${correct_path}/` : correct_path,
         destination_folder: correct_destination_path,
       };
 
