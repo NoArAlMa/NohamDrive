@@ -96,6 +96,9 @@ watch(
         }"
         :virtualize="false"
         @hover=""
+        :meta="{
+          class: 'text-center',
+        }"
         class="w-full h-full overflow-x-hidden table-fixed"
         @contextmenu="
           (e: any, row: Row<ApiFileItem>) => {

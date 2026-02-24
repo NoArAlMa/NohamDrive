@@ -70,7 +70,8 @@ async function onDrop(e: DragEvent) {
         <LazyFileExplorerToolbar :items="selectedItems" v-if="FileCount > 0" />
         <LazyFileExplorerBreadcrumb v-else />
       </div>
-      <div>
+      <div class="flex flex-row gap-2 shrink-0" v-if="!isMobile">
+        <LazyFileExplorerColumnSelect />
         <LazyFileExplorerUpload />
       </div>
     </div>

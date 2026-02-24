@@ -77,7 +77,7 @@ async function onDropCrumb(e: DragEvent, path: string) {
           </template>
           <template #item="{ item }">
             <LazyULink
-              class="mx-0 px-2 py-1 rounded-md hover:bg-elevated truncate max-w-40"
+              class="mx-0 px-2 py-0.5 rounded-md hover:bg-elevated truncate max-w-40"
               :class="{
                 'border-2 border-neutral': dragOverPath === item.path,
                 'hover:bg-elevated': dragOverPath !== item.path,
