@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const FileCount = ref(0);
 const selectedItems = ref<ApiFileItem[]>([]);
-
+const explorerRef = ref();
 const isDragging = ref(false); // Affiche l'overlay de drag
 const dragCounter = ref(0); // Compteur pour gérer les entrées/sorties de la zone de drop
 
@@ -67,9 +67,26 @@ async function onDrop(e: DragEvent) {
   >
     <div class="shrink-0 pl-1 pr-1 mb-1 flex items-center justify-between h-12">
       <div class="rounded-md px-2 py-1.5 md:border border-muted shadow-md">
-        <LazyFileExplorerToolbar :items="selectedItems" v-if="FileCount > 0" />
+        <div v-if="FileCount > 0" class="flex gap-1 items-center">
+          <LazyFileExplorerToolbar :items="selectedItems" />
+          <USeparator
+            :decorative="true"
+            orientation="vertical"
+            class="h-6 mr-2"
+          />
+          <UTooltip text="Unselect all" :delay-duration="200">
+            <UButton
+              variant="subtle"
+              size="sm"
+              color="error"
+              leading-icon="material-symbols:close"
+              @click="explorerRef?.clearSelection()"
+            />
+          </UTooltip>
+        </div>
         <LazyFileExplorerBreadcrumb v-else />
       </div>
+
       <div class="flex flex-row gap-2 shrink-0" v-if="!isMobile">
         <LazyFileExplorerColumnSelect />
         <LazyFileExplorerUpload />
@@ -100,6 +117,7 @@ async function onDrop(e: DragEvent) {
         <LazyFileExplorer
           v-model:selectedCount="FileCount"
           v-model:selected-items="selectedItems"
+          ref="explorerRef"
         />
       </ClientOnly>
     </div>

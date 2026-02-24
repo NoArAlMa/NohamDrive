@@ -76,6 +76,15 @@ watch(
   },
   { deep: true },
 );
+
+function clearSelection() {
+  rowSelection.value = {};
+}
+
+defineExpose({
+  clearSelection,
+});
+
 </script>
 
 <template>
