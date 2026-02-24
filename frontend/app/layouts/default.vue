@@ -3,15 +3,15 @@ const { isMobile } = useResponsive();
 </script>
 
 <template>
-  <UApp>
-    <UDashboardGroup>
+  <LazyUApp>
+    <LazyUDashboardGroup>
       <ClientOnly>
         <LazyNavigationSidebar />
       </ClientOnly>
-      <UDashboardPanel :ui="{ body: 'p-0 laptop:p-4' }">
+      <LazyUDashboardPanel :ui="{ body: 'p-0 laptop:p-4' }">
         <template #header>
           <div class="lg:hidden p-4 border-b">
-            <UDashboardSidebarToggle variant="subtle" label="Menu" />
+            <LazyUDashboardSidebarToggle variant="subtle" label="Menu" />
           </div>
         </template>
 
@@ -19,7 +19,7 @@ const { isMobile } = useResponsive();
           <LazyUDashboardSearch />
           <NuxtPage />
         </template>
-      </UDashboardPanel>
-    </UDashboardGroup>
-  </UApp>
+      </LazyUDashboardPanel>
+    </LazyUDashboardGroup>
+  </LazyUApp>
 </template>

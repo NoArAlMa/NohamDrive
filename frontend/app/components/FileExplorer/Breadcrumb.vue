@@ -61,7 +61,7 @@ async function onDropCrumb(e: DragEvent, path: string) {
   <ClientOnly>
     <Transition name="slide-fade" appear>
       <div v-if="!isMobile">
-        <UBreadcrumb
+        <LazyUBreadcrumb
           :items="items"
           overflow="ellipsis"
           :max-items="4"
@@ -76,7 +76,7 @@ async function onDropCrumb(e: DragEvent, path: string) {
             <span class="text-muted shrink-0">/</span>
           </template>
           <template #item="{ item }">
-            <ULink
+            <LazyULink
               class="mx-0 px-2 py-1 rounded-md hover:bg-elevated truncate max-w-40"
               :class="{
                 'border-2 border-neutral': dragOverPath === item.path,
@@ -89,9 +89,9 @@ async function onDropCrumb(e: DragEvent, path: string) {
               @drop.prevent="onDropCrumb($event, item.path)"
             >
               {{ item.label }}
-            </ULink>
+            </LazyULink>
           </template>
-        </UBreadcrumb>
+        </LazyUBreadcrumb>
       </div>
       <div v-else-if="isMobile && !isRoot">
         <UButton

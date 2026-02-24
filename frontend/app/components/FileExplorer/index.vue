@@ -81,7 +81,7 @@ watch(
 <template>
   <ExplorerContextMenu :row="contextRow">
     <div class="h-full w-full overflow-y-hidden overflow-x-hidden">
-      <UTable
+      <LazyUTable
         ref="table"
         v-model:sorting="sorting"
         v-model:row-selection="rowSelection"
@@ -98,7 +98,7 @@ watch(
         @hover=""
         class="w-full h-full overflow-x-hidden table-fixed"
         @contextmenu="
-          (e, row) => {
+          (e: any, row: Row<ApiFileItem>) => {
             if (!isMobile) {
               contextRow = row ?? null;
             }
@@ -106,13 +106,13 @@ watch(
         "
       >
         <template #name-cell="{ row }">
-          <FileExplorerTableRowFile :row="row" />
+          <LazyFileExplorerTableRowFile :row="row" />
         </template>
 
         <!-- Page lorsque l'explorateur est vide  -->
         <template #empty>
           <div v-if="!hasError" class="flex items-center justify-center">
-            <UEmpty
+            <LazyUEmpty
               class="min-w-125"
               variant="soft"
               icon="material-symbols:sad-tab-outline-rounded"
@@ -144,7 +144,7 @@ watch(
         <template #loading>
           <ExplorerLoader v-if="loading_debounced" />
         </template>
-      </UTable>
+      </LazyUTable>
     </div>
   </ExplorerContextMenu>
 </template>

@@ -68,7 +68,7 @@ async function onDrop(e: DragEvent) {
     <div class="shrink-0 pl-1 pr-1 mb-1 flex items-center justify-between h-12">
       <div class="rounded-md px-2 py-1.5 md:border border-muted shadow-md">
         <LazyFileExplorerToolbar :items="selectedItems" v-if="FileCount > 0" />
-        <FileExplorerBreadcrumb v-else />
+        <LazyFileExplorerBreadcrumb v-else />
       </div>
       <div>
         <LazyFileExplorerUpload />
@@ -88,7 +88,7 @@ async function onDrop(e: DragEvent) {
           v-if="isDragging"
           class="absolute inset-0 z-50 flex flex-col gap-3 items-center justify-center backdrop-blur-sm rounded-md border-2 border-white border-dashed bg-black/10 pointer-events-none"
         >
-          <UIcon
+          <LazyUIcon
             name="material-symbols:file-copy-outline-rounded"
             class="size-10"
           />
@@ -96,7 +96,7 @@ async function onDrop(e: DragEvent) {
         </div>
       </Transition>
       <ClientOnly>
-        <FileExplorer
+        <LazyFileExplorer
           v-model:selectedCount="FileCount"
           v-model:selected-items="selectedItems"
         />

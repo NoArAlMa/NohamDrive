@@ -78,7 +78,7 @@ const rowItems = computed((): ContextMenuItem[] => {
 </script>
 
 <template>
-  <UContextMenu :items="rowItems">
+  <LazyUContextMenu :items="rowItems">
     <slot />
-  </UContextMenu>
+  </LazyUContextMenu>
 </template>

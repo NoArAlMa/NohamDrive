@@ -13,7 +13,7 @@ async function openModal() {
 </script>
 
 <template>
-  <UTooltip text="Create folder" :delay-duration="0">
+  <LazyUTooltip text="Create folder" :delay-duration="0">
     <UButton
       :square="true"
       icon="material-symbols:create-new-folder-outline"
@@ -23,5 +23,5 @@ async function openModal() {
       class="shadow-md"
       @click="openModal"
     />
-  </UTooltip>
+  </LazyUTooltip>
 </template>

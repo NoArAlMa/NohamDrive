@@ -197,13 +197,13 @@ async function onDrop(e: DragEvent) {
     @dragleave="onDragLeave"
   >
     <!-- Icone dossier ou fichier -->
-    <UIcon
+    <LazyUIcon
       draggable="false"
       v-if="row.original.is_dir"
       name="heroicons-folder"
       class="text-lg mr-2 shrink-0"
     />
-    <UIcon
+    <LazyUIcon
       draggable="false"
       v-else
       :name="getFileIcon(row.original.name)"
@@ -212,7 +212,7 @@ async function onDrop(e: DragEvent) {
     />
 
     <!-- Nom du fichier -->
-    <ULink draggable="false" v-if="!isEditing" class="min-w-0">
+    <LazyULink draggable="false" v-if="!isEditing" class="min-w-0">
       <span
         draggable="false"
         class="block truncate hover:underline underline-offset-2 cursor-pointer"
@@ -221,13 +221,13 @@ async function onDrop(e: DragEvent) {
       >
         {{ row.getValue("name") }}
       </span>
-    </ULink>
+    </LazyULink>
     <div
       v-else
       class="relative h-full flex items-center group"
       :aria-hidden="false"
     >
-      <UInput
+      <LazyUInput
         ref="inputRef"
         v-model="baseName"
         variant="none"
