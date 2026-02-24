@@ -22,7 +22,12 @@ const selectValue = computed({
     value-attribute="value"
     option-attribute="label"
     placeholder="Columns"
-    class="w-fit"
+    :arrow="true"
+    :ui="{
+      trailingIcon:
+        'group-data-[state=open]:rotate-180 transition-transform duration-200',
+    }"
+    class="w-fit shadow-md"
   >
     <template #default>Columns</template>
   </USelectMenu>
