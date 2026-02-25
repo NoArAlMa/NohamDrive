@@ -16,35 +16,23 @@ const emit = defineEmits<{
   (e: "update:selectedItems", items: ApiFileItem[]): void;
 }>();
 
-const selectedCount = computed({
-  get: () => Object.values(rowSelection.value).filter(Boolean).length,
-  set: (value) => emit("update:selectedCount", value),
-});
+const selectedCount = computed(
+  () => Object.values(rowSelection.value).filter(Boolean).length,
+);
 
 const selectedItems = computed<ApiFileItem[]>(() => {
   return fileTree.value.filter((item, index) => rowSelection.value[index]);
 });
 
 onMounted(() => {
-  watch(selectedItems, (items) => {
-    emit("update:selectedItems", items);
-  });
-
   watch(
-    () => Object.values(rowSelection.value).filter(Boolean).length,
-    (count) => emit("update:selectedCount", count),
-    { immediate: true },
-  );
-
-  watch(
-    selectedCount,
-    (count) => {
-      if (count !== undefined) emit("update:selectedCount", count);
+    selectedItems,
+    (items) => {
+      emit("update:selectedItems", items);
+      emit("update:selectedCount", selectedItems.value.length); // Met à jour les deux en une fois
     },
     { immediate: true },
   );
-  emit("update:selectedCount", 0);
-  emit("update:selectedItems", []);
 });
 
 const ExplorerContextMenu = defineAsyncComponent(
@@ -69,17 +57,13 @@ function goBack() {
   fs.navigate("..");
 }
 
-watch(
-  () => fileTree.value,
-  () => {
-    rowSelection.value = {};
-  },
-  { deep: true },
-);
-
 function clearSelection() {
   rowSelection.value = {};
 }
+
+watch(fileTree, () => {
+  clearSelection
+});
 
 defineExpose({
   clearSelection,
@@ -87,7 +71,7 @@ defineExpose({
 </script>
 
 <template>
-  <FileExplorerContextMenu :row="contextRow">
+  <ExplorerContextMenu :row="contextRow">
     <div class="h-full w-full overflow-y-hidden overflow-x-hidden">
       <LazyUTable
         ref="table"
@@ -144,7 +128,7 @@ defineExpose({
             />
           </div>
 
-          <FileExplorerError
+          <ExplorerError
             v-if="hasError"
             :ErrorStatus="errorStatus"
             :message="errorMessage"
@@ -153,9 +137,9 @@ defineExpose({
         </template>
         <!-- Page pour le chargement de l'explorateur -->
         <template #loading>
-          <FileExplorerLoaderList v-if="loading_debounced" />
+          <ExplorerLoaderList v-if="loading_debounced" />
         </template>
       </LazyUTable>
     </div>
-  </FileExplorerContextMenu>
+  </ExplorerContextMenu>
 </template>
