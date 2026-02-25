@@ -130,13 +130,13 @@ async function clearSelectionedFiles(explorerRef: any) {
       </Transition>
       <ClientOnly>
         <LazyFileExplorerViewList
-          v-if="viewMode === 'list'"
+          v-if="viewMode === 'list' || isMobile"
           v-model:selectedCount="FileCount"
           v-model:selected-items="selectedItems"
           ref="explorerRef"
         />
         <LazyFileExplorerViewTiles
-          v-else
+          v-else-if="viewMode === 'tiles' && !isMobile"
           v-model:selectedCount="FileCount"
           v-model:selected-items="selectedItems"
           ref="explorerRef"

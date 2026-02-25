@@ -1,14 +1,14 @@
-export type FileColumn = "last_modified" | "size" | "type";
+export type FileColumn = "last_modified" | "size";
 export type FileViewMode = "list" | "tiles";
 
 export function useFileExplorerSettings() {
+  const { isMobile } = useResponsive();
   const visibleColumns = useState<FileColumn[]>("file-explorer-columns", () => [
     "last_modified",
   ]);
   const availableColumns = [
     { label: "Date", value: "last_modified" as FileColumn },
     { label: "Size", value: "size" as FileColumn },
-    { label: "Type", value: "type" as FileColumn },
   ];
 
   const viewMode = useState<FileViewMode>("file-explorer-view-mode", () => {
