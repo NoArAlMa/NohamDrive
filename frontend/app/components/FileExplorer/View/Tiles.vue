@@ -67,10 +67,7 @@ function updateSelection(item: ApiFileItem, checked: boolean) {
       class="flex items-center justify-center h-full"
       v-if="loading_debounced"
     >
-      <UIcon
-        name="material-symbols:progress-activity"
-        class="animate-spin size-30"
-      />
+      <LazyFileExplorerLoaderTile />
     </div>
 
     <div class="flex items-center justify-center h-full" v-else-if="hasError">
@@ -107,7 +104,7 @@ function updateSelection(item: ApiFileItem, checked: boolean) {
     </div>
 
     <div
-      class="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] auto-rows-min content-start gap-4 p-4 h-full overflow-y-auto"
+      class="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] auto-rows-min content-start justify-items-center gap-4 p-4 h-full overflow-y-auto"
       v-else
     >
       <LazyFileExplorerElementsTile
