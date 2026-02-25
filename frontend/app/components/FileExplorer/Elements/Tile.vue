@@ -232,16 +232,22 @@ async function onDrop(e: DragEvent) {
           </template>
 
           <template v-else>
-            <div class="flex items-center justify-center w-full">
+            <div
+              class="flex items-center justify-center w-full"
+              :aria-hidden="false"
+            >
               <LazyUInput
                 ref="inputRef"
                 v-model="baseName"
-                size="sm"
-                variant="outline"
+                size="md"
+                variant="none"
+                :highlight="true"
+                :ui="{ base: 'h-6' }"
+                class="w-auto"
                 :loading="isSubmitting"
                 @keydown.enter.prevent="submitEditing"
                 @keydown.esc="cancelEditing"
-                @blur="cancelEditing"
+                @blur.prevent="cancelEditing"
               />
             </div>
           </template>
