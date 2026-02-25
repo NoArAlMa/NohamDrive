@@ -11,6 +11,7 @@ const props = defineProps<{
 const overlay = useOverlay();
 const fsActions = useFsActions();
 const FSStore = useFSStore();
+const { runBatch } = useBatchAction();
 
 const { start } = useFileRenameRegistry();
 
@@ -67,6 +68,26 @@ const rowItems = computed((): ContextMenuItem[] => {
       {
         label: "Import file",
         icon: "material-symbols:file-open-outline-rounded",
+        onSelect: async () => {
+          console.log("Début de la sélection de fichiers...");
+          const files = await openFilePicker(true);
+          console.log("Fichiers sélectionnés :", files);
+
+          if (!files.length) {
+            console.log("Aucun fichier sélectionné.");
+            return;
+          }
+
+          if (files.length > 1) {
+            await runBatch(files, fsActions.upload, {
+              loading: "Upload en cours…",
+              success: "Upload terminé",
+              error: "Une erreur est survenue pendant l’upload.",
+            });
+          } else {
+            await fsActions.upload(files[0]!);
+          }
+        },
       },
     ];
   const item: ApiFileItem =
