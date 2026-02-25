@@ -74,7 +74,7 @@ function updateSelection(item: ApiFileItem, checked: boolean) {
     </div>
 
     <div class="flex items-center justify-center h-full" v-else-if="hasError">
-      <FileExplorerError
+      <LazyFileExplorerError
         :ErrorStatus="errorStatus"
         :message="errorMessage"
         :on-retry="useFileTree().retryFetching"
@@ -110,7 +110,7 @@ function updateSelection(item: ApiFileItem, checked: boolean) {
       class="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] auto-rows-min content-start gap-4 p-4 h-full overflow-y-auto"
       v-else
     >
-      <FileExplorerTiles
+      <LazyFileExplorerElementsTile
         v-for="item in fileTree"
         :key="item.name"
         :item="item"

@@ -1,4 +1,4 @@
-import { LazyFileExplorerView } from "#components";
+import { LazyFileExplorerModalPreview } from "#components";
 import type { Toast } from "@nuxt/ui/runtime/composables/useToast.js";
 import type {
   CompressFilePayload,
@@ -39,7 +39,7 @@ export const useFsActions = () => {
         // Crée un objet File
         const file = new File([blob], fileName, { type: blob.type });
 
-        const viewModal = overlay.create(LazyFileExplorerView, {
+        const viewModal = overlay.create(LazyFileExplorerModalPreview, {
           props: {
             fileName: fileName,
             file: file,

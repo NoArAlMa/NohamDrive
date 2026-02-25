@@ -2,7 +2,7 @@
 import type { ContextMenuItem, TableRow } from "@nuxt/ui";
 import { useFileRenameRegistry } from "~/composables/file/RenameRegistry";
 import type { ApiFileItem } from "~~/shared/types/file_tree";
-import { LazyFileExplorerUploadFolder } from "#components";
+import { LazyFileExplorerModalCreateFolder } from "#components";
 
 const props = defineProps<{
   row: TableRow<ApiFileItem> | ApiFileItem | null;
@@ -58,7 +58,7 @@ const rowItems = computed((): ContextMenuItem[] => {
         icon: "material-symbols:create-new-folder-outline-rounded",
         onSelect: () => {
           const createFolderModal = overlay.create(
-            LazyFileExplorerUploadFolder,
+            LazyFileExplorerModalCreateFolder,
           );
 
           createFolderModal.open();

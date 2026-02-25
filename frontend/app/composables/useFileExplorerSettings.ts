@@ -11,7 +11,6 @@ export function useFileExplorerSettings() {
     { label: "Type", value: "type" as FileColumn },
   ];
 
-  // 🔥 Hydratation client
   onMounted(() => {
     const saved = localStorage.getItem("columns");
     if (saved) {
@@ -23,7 +22,6 @@ export function useFileExplorerSettings() {
     }
   });
 
-  // 🔥 Sauvegarde
   watch(
     visibleColumns,
     (val) => {

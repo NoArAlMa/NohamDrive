@@ -1,4 +1,12 @@
 <script setup lang="ts">
+import {
+  LazyFileExplorerHeaderBreadcrumb,
+  LazyFileExplorerHeaderSelectColumns,
+  LazyFileExplorerHeaderSelectDisplay,
+  LazyFileExplorerHeaderToolbar,
+  LazyFileExplorerHeaderUpload,
+} from "#components";
+
 const FileCount = ref(0);
 const selectedItems = ref<ApiFileItem[]>([]);
 const explorerRef = ref();
@@ -74,7 +82,7 @@ async function clearSelectionedFiles(explorerRef: any) {
     <div class="shrink-0 pl-1 pr-1 mb-1 flex items-center justify-between h-12">
       <div class="rounded-md px-2 py-1.5 md:border border-muted shadow-md">
         <div v-if="FileCount > 0" class="flex gap-1 items-center">
-          <LazyFileExplorerToolbar :items="selectedItems" />
+          <LazyFileExplorerHeaderToolbar :items="selectedItems" />
           <USeparator
             :decorative="true"
             orientation="vertical"
@@ -90,16 +98,16 @@ async function clearSelectionedFiles(explorerRef: any) {
             />
           </UTooltip>
         </div>
-        <LazyFileExplorerBreadcrumb v-else />
+        <LazyFileExplorerHeaderBreadcrumb v-else />
       </div>
 
       <div class="flex flex-row gap-2 shrink-0" v-if="!isMobile">
-        <LazyFileExplorerChooseAffichage
+        <LazyFileExplorerHeaderSelectDisplay
           class="transition-transform duration-75"
           v-model="viewMode"
         />
-        <LazyFileExplorerColumnSelect v-if="isList" />
-        <LazyFileExplorerUpload />
+        <LazyFileExplorerHeaderSelectColumns v-if="isList" />
+        <LazyFileExplorerHeaderUpload />
       </div>
     </div>
 
@@ -124,13 +132,13 @@ async function clearSelectionedFiles(explorerRef: any) {
         </div>
       </Transition>
       <ClientOnly>
-        <LazyFileExplorer
+        <LazyFileExplorerViewList
           v-if="viewMode === 'list'"
           v-model:selectedCount="FileCount"
           v-model:selected-items="selectedItems"
           ref="explorerRef"
         />
-        <LazyFileExplorerTilesView
+        <LazyFileExplorerViewTiles
           v-else
           v-model:selectedCount="FileCount"
           v-model:selected-items="selectedItems"

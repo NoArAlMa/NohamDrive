@@ -46,12 +46,10 @@ onMounted(() => {
 });
 
 const ExplorerContextMenu = defineAsyncComponent(
-  () => import("./ExplorerContextMenu.vue"),
+  () => import("../ContextMenu.vue"),
 );
-const ExplorerError = defineAsyncComponent(() => import("./ExplorerError.vue"));
-const ExplorerLoader = defineAsyncComponent(
-  () => import("./ExplorerLoader.vue"),
-);
+const ExplorerError = defineAsyncComponent(() => import("../Error.vue"));
+const ExplorerLoader = defineAsyncComponent(() => import("../Loader/List.vue"));
 
 // Importation des components Nuxt UI pour pouvoir les utiliser en JS
 const contextRow = ref<TableRow<ApiFileItem> | null>(null);
@@ -84,11 +82,10 @@ function clearSelection() {
 defineExpose({
   clearSelection,
 });
-
 </script>
 
 <template>
-  <ExplorerContextMenu :row="contextRow">
+  <FileExplorerContextMenu :row="contextRow">
     <div class="h-full w-full overflow-y-hidden overflow-x-hidden">
       <LazyUTable
         ref="table"
@@ -118,7 +115,7 @@ defineExpose({
         "
       >
         <template #name-cell="{ row }">
-          <LazyFileExplorerTableRowFile :row="row" />
+          <LazyFileExplorerElementsRow :row="row" />
         </template>
 
         <!-- Page lorsque l'explorateur est vide  -->
@@ -145,7 +142,7 @@ defineExpose({
             />
           </div>
 
-          <ExplorerError
+          <FileExplorerError
             v-if="hasError"
             :ErrorStatus="errorStatus"
             :message="errorMessage"
@@ -154,9 +151,9 @@ defineExpose({
         </template>
         <!-- Page pour le chargement de l'explorateur -->
         <template #loading>
-          <ExplorerLoader v-if="loading_debounced" />
+          <FileExplorerLoaderList v-if="loading_debounced" />
         </template>
       </LazyUTable>
     </div>
-  </ExplorerContextMenu>
+  </FileExplorerContextMenu>
 </template>

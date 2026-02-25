@@ -1,9 +1,9 @@
 <script lang="ts" setup>
-import { LazyFileExplorerUploadFolder } from "#components";
+import { LazyFileExplorerModalCreateFolder } from "#components";
 
 const overlay = useOverlay();
 
-const createFolderModal = overlay.create(LazyFileExplorerUploadFolder);
+const createFolderModal = overlay.create(LazyFileExplorerModalCreateFolder);
 
 async function openModal() {
   const modal = createFolderModal.open();
