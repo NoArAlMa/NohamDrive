@@ -15,6 +15,8 @@ export function useFileExplorerColumns(
   ui: UIComponents,
   isMobile: Ref<boolean>,
 ) {
+  const { visibleColumns } = useFileExplorerSettings();
+
   function sortingItems(column: Column<ApiFileItem>) {
     const isSorted = column.getIsSorted();
 
@@ -103,7 +105,7 @@ export function useFileExplorerColumns(
         ]),
     });
 
-    if (!isMobile.value) {
+    if (!isMobile.value && visibleColumns.value.includes("last_modified")) {
       baseColumns.push({
         accessorKey: "last_modified",
         minSize: 100,
@@ -111,6 +113,17 @@ export function useFileExplorerColumns(
         size: 150,
         header: ({ column }) => getHeader(column, "Date"),
         cell: ({ row }) => formatDate(row.getValue("last_modified")),
+      });
+    }
+
+    if (!isMobile.value && visibleColumns.value.includes("size")) {
+      baseColumns.push({
+        accessorKey: "size",
+        minSize: 100,
+        maxSize: 250,
+        size: 150,
+        header: ({ column }) => getHeader(column, "Size"),
+        cell: ({ row }) => formatFileSize(row.getValue("size") || 0),
       });
     }
     return baseColumns;

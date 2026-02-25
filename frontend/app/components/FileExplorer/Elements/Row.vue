@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { TableRow } from "@nuxt/ui";
 import { useFileRenameRegistry } from "~/composables/file/RenameRegistry";
-import { useDebounceFn } from "@vueuse/core";
+import { useDebounceFn, useDraggable, useDropZone } from "@vueuse/core";
 import { onLongPress } from "@vueuse/core";
 
 // Ce composant reçoit une prop "row" qui représente une ligne du tableau (un fichier ou un dossier).
@@ -15,7 +15,6 @@ const { register, unregister } = useFileRenameRegistry();
 
 const action = useFsActions();
 const FSStore = useFSStore();
-
 const isEditing = ref(false);
 const isSubmitting = ref(false);
 const baseName = ref("");
@@ -55,15 +54,6 @@ function startEditing() {
     baseName.value = base;
     extension.value = ext;
   }
-
-  // On attend que l'input soit rendu, puis on le focus et on sélectionne tout son contenu.
-  // nextTick(() => {
-  //   setTimeout(() => {
-  //     const input = inputRef?.value;
-  //     input?.focus;
-  //     input?.select;
-  //   }, 50);
-  // });
 }
 
 // Appelée quand on appuie sur Entrée ou que l'input perd le focus.
@@ -114,22 +104,98 @@ function onRowClick() {
 
   props.row.toggleSelected?.();
 }
+
+function onDragStart(e: DragEvent) {
+  if (!e.dataTransfer) return;
+
+  const payload = {
+    name: props.row.original.name,
+    is_dir: props.row.original.is_dir,
+    path: joinPath(FSStore.currentPath, props.row.original.name),
+  };
+
+  e.dataTransfer.effectAllowed = "move";
+  e.dataTransfer.setData("application/json", JSON.stringify(payload));
+}
+
+const isDragOver = ref(false);
+
+function onDragOver(e: DragEvent) {
+  if (!props.row.original.is_dir) return;
+  e.preventDefault();
+  e.dataTransfer!.dropEffect = "move";
+  isDragOver.value = true;
+}
+
+function onDragLeave() {
+  isDragOver.value = false;
+}
+
+async function onDrop(e: DragEvent) {
+  if (!props.row.original.is_dir || !e.dataTransfer) return;
+
+  e.preventDefault();
+
+  let data: {
+    name: string;
+    path: string;
+    is_dir: boolean;
+  } | null = null;
+
+  try {
+    data = JSON.parse(e.dataTransfer.getData("application/json"));
+  } catch {
+    console.warn("Invalid drag data");
+    isDragOver.value = false;
+    return;
+  }
+
+  if (!data?.path) {
+    isDragOver.value = false;
+    return;
+  }
+
+  const destinationPath = props.row.original.is_dir
+    ? joinPath(FSStore.currentPath, props.row.original.name) + "/"
+    : joinPath(FSStore.currentPath, props.row.original.name);
+
+  const correct_path = data.is_dir
+    ? joinPath(FSStore.currentPath, data.name) + "/"
+    : joinPath(FSStore.currentPath, data.name);
+
+  if (correct_path === destinationPath) {
+    isDragOver.value = false;
+    return;
+  }
+
+  await action.move(correct_path, destinationPath);
+
+  isDragOver.value = false;
+}
 </script>
 
 <template>
   <div
-    class="relative max-w-64 py-4 flex items-center group"
+    class="relative max-w-64 py-4 rounded-sm flex items-center group"
     :aria-hidden="false"
     @dblclick="!isMobile && onRowClick"
     ref="rowRef"
+    :class="{ 'border-2 border-neutral ': isDragOver }"
+    draggable="true"
+    @dragstart="onDragStart"
+    @dragover="onDragOver"
+    @drop.prevent="onDrop"
+    @dragleave="onDragLeave"
   >
     <!-- Icone dossier ou fichier -->
-    <UIcon
+    <LazyUIcon
+      draggable="false"
       v-if="row.original.is_dir"
       name="heroicons-folder"
       class="text-lg mr-2 shrink-0"
     />
-    <UIcon
+    <LazyUIcon
+      draggable="false"
       v-else
       :name="getFileIcon(row.original.name)"
       class="text-lg mr-2 shrink-0"
@@ -137,21 +203,22 @@ function onRowClick() {
     />
 
     <!-- Nom du fichier -->
-    <ULink v-if="!isEditing" class="min-w-0">
+    <LazyULink draggable="false" v-if="!isEditing" class="min-w-0">
       <span
+        draggable="false"
         class="block truncate hover:underline underline-offset-2 cursor-pointer"
         @click="action.open(props.row.original)"
         :title="row.getValue('name')"
       >
         {{ row.getValue("name") }}
       </span>
-    </ULink>
+    </LazyULink>
     <div
       v-else
       class="relative h-full flex items-center group"
       :aria-hidden="false"
     >
-      <UInput
+      <LazyUInput
         ref="inputRef"
         v-model="baseName"
         variant="none"

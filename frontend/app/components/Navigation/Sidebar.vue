@@ -96,7 +96,7 @@ const collapsed = ref(false);
 </script>
 
 <template>
-  <UDashboardSidebar
+  <LazyUDashboardSidebar
     v-model:collapsed="collapsed"
     mode="drawer"
     toggle-side="right"
@@ -118,12 +118,12 @@ const collapsed = ref(false);
           NohamDrive
         </h1>
 
-        <UDashboardSidebarCollapse variant="ghost" :block="collapsed" />
+        <LazyUDashboardSidebarCollapse variant="ghost" :block="collapsed" />
       </div>
     </template>
 
     <template #default>
-      <UDashboardSearchButton
+      <LazyUDashboardSearchButton
         v-if="!isMobile"
         :collapsed="collapsed"
         :block="collapsed"
@@ -142,7 +142,7 @@ const collapsed = ref(false);
 
       <!-- Menu principal -->
       <div class="overflow-y-auto">
-        <UNavigationMenu
+        <LazyUNavigationMenu
           tooltip
           :collapsed="collapsed"
           :items="items[0]"
@@ -165,11 +165,11 @@ const collapsed = ref(false);
           }"
         >
           <template #list-leading></template>
-        </UNavigationMenu>
+        </LazyUNavigationMenu>
       </div>
 
       <!-- Menu secondaire -->
-      <UNavigationMenu
+      <LazyUNavigationMenu
         v-if="!isMobile"
         :collapsed="collapsed"
         :items="items[1]"
@@ -227,5 +227,5 @@ const collapsed = ref(false);
         </UButton>
       </UDropdownMenu>
     </template>
-  </UDashboardSidebar>
+  </LazyUDashboardSidebar>
 </template>

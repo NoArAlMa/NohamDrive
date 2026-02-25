@@ -16,42 +16,30 @@ const emit = defineEmits<{
   (e: "update:selectedItems", items: ApiFileItem[]): void;
 }>();
 
-const selectedCount = computed({
-  get: () => Object.values(rowSelection.value).filter(Boolean).length,
-  set: (value) => emit("update:selectedCount", value),
-});
+const selectedCount = computed(
+  () => Object.values(rowSelection.value).filter(Boolean).length,
+);
 
 const selectedItems = computed<ApiFileItem[]>(() => {
   return fileTree.value.filter((item, index) => rowSelection.value[index]);
 });
 
 onMounted(() => {
-  watch(selectedItems, (items) => {
-    emit("update:selectedItems", items);
-  });
-
   watch(
-    () => Object.values(rowSelection.value).filter(Boolean).length,
-    (count) => emit("update:selectedCount", count),
-    { immediate: true },
-  );
-
-  watch(
-    selectedCount,
-    (count) => {
-      if (count !== undefined) emit("update:selectedCount", count);
+    selectedItems,
+    (items) => {
+      emit("update:selectedItems", items);
+      emit("update:selectedCount", selectedItems.value.length);
     },
     { immediate: true },
   );
 });
 
 const ExplorerContextMenu = defineAsyncComponent(
-  () => import("./ExplorerContextMenu.vue"),
+  () => import("../ContextMenu.vue"),
 );
-const ExplorerError = defineAsyncComponent(() => import("./ExplorerError.vue"));
-const ExplorerLoader = defineAsyncComponent(
-  () => import("./ExplorerLoader.vue"),
-);
+const ExplorerError = defineAsyncComponent(() => import("../Error.vue"));
+const ExplorerLoader = defineAsyncComponent(() => import("../Loader/List.vue"));
 
 // Importation des components Nuxt UI pour pouvoir les utiliser en JS
 const contextRow = ref<TableRow<ApiFileItem> | null>(null);
@@ -66,28 +54,32 @@ const loading_debounced = refDebounced(loading, 100);
 
 function goBack() {
   const fs = useFSStore();
-
   fs.navigate("..");
 }
 
-watch(
-  () => fileTree.value,
-  () => {
-    rowSelection.value = {};
-  },
-  { deep: true },
-);
+function clearSelection() {
+  rowSelection.value = {};
+}
+
+watch(fileTree, () => {
+  clearSelection();
+});
+
+defineExpose({
+  clearSelection,
+});
 </script>
 
 <template>
   <ExplorerContextMenu :row="contextRow">
     <div class="h-full w-full overflow-y-hidden overflow-x-hidden">
-      <UTable
+      <LazyUTable
         ref="table"
         v-model:sorting="sorting"
         v-model:row-selection="rowSelection"
         :loading="loading_debounced"
         loading-color="info"
+        :sticky="true"
         :data="fileTree"
         :columns="columns"
         :ui="{
@@ -96,9 +88,12 @@ watch(
         }"
         :virtualize="false"
         @hover=""
+        :meta="{
+          class: 'text-center',
+        }"
         class="w-full h-full overflow-x-hidden table-fixed"
         @contextmenu="
-          (e, row) => {
+          (e: any, row: Row<ApiFileItem>) => {
             if (!isMobile) {
               contextRow = row ?? null;
             }
@@ -106,13 +101,13 @@ watch(
         "
       >
         <template #name-cell="{ row }">
-          <FileExplorerTableRowFile :row="row" />
+          <LazyFileExplorerElementsRow :row="row" />
         </template>
 
         <!-- Page lorsque l'explorateur est vide  -->
         <template #empty>
           <div v-if="!hasError" class="flex items-center justify-center">
-            <UEmpty
+            <LazyUEmpty
               class="min-w-125"
               variant="soft"
               icon="material-symbols:sad-tab-outline-rounded"
@@ -144,7 +139,7 @@ watch(
         <template #loading>
           <ExplorerLoader v-if="loading_debounced" />
         </template>
-      </UTable>
+      </LazyUTable>
     </div>
   </ExplorerContextMenu>
 </template>

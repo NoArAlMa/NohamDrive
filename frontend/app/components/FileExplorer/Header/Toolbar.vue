@@ -109,10 +109,7 @@ const DrawerItems = ref<NavigationMenuItem[]>([
 <template>
   <ClientOnly>
     <Transition name="slide-fade" appear>
-      <section
-        v-if="!isMobile"
-        class="flex justify-start items-center gap-2 w-full h-full shadow-sm rounded-md"
-      >
+      <section v-if="!isMobile" class="flex justify-start gap-2 w-full h-full">
         <div>
           <UButton
             v-for="action in fileActions"

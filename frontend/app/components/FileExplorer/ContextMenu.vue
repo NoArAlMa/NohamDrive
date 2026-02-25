@@ -2,13 +2,16 @@
 import type { ContextMenuItem, TableRow } from "@nuxt/ui";
 import { useFileRenameRegistry } from "~/composables/file/RenameRegistry";
 import type { ApiFileItem } from "~~/shared/types/file_tree";
+import { LazyFileExplorerModalCreateFolder } from "#components";
 
 const props = defineProps<{
-  row: TableRow<ApiFileItem> | null;
+  row: TableRow<ApiFileItem> | ApiFileItem | null;
 }>();
 
+const overlay = useOverlay();
 const fsActions = useFsActions();
 const FSStore = useFSStore();
+const { runBatch } = useBatchAction();
 
 const { start } = useFileRenameRegistry();
 
@@ -28,7 +31,7 @@ const baseMenu = (item: ApiFileItem): ContextMenuItem[] => [
     icon: "material-symbols:edit-outline-rounded",
     onSelect: () => {
       if (props.row) {
-        const key = joinPath(FSStore.currentPath, props.row.original.name);
+        const key = joinPath(FSStore.currentPath, item.name);
         start(key);
       }
     },
@@ -49,8 +52,46 @@ const baseMenu = (item: ApiFileItem): ContextMenuItem[] => [
 
 // Menu complet avec ajout spécifique
 const rowItems = computed((): ContextMenuItem[] => {
-  if (!props.row) return [];
-  const item = props.row.original;
+  if (!props.row)
+    return [
+      {
+        label: "Creer dossier",
+        icon: "material-symbols:create-new-folder-outline-rounded",
+        onSelect: () => {
+          const createFolderModal = overlay.create(
+            LazyFileExplorerModalCreateFolder,
+          );
+
+          createFolderModal.open();
+        },
+      },
+      {
+        label: "Import file",
+        icon: "material-symbols:file-open-outline-rounded",
+        onSelect: async () => {
+          console.log("Début de la sélection de fichiers...");
+          const files = await openFilePicker(true);
+          console.log("Fichiers sélectionnés :", files);
+
+          if (!files.length) {
+            console.log("Aucun fichier sélectionné.");
+            return;
+          }
+
+          if (files.length > 1) {
+            await runBatch(files, fsActions.upload, {
+              loading: "Upload en cours…",
+              success: "Upload terminé",
+              error: "Une erreur est survenue pendant l’upload.",
+            });
+          } else {
+            await fsActions.upload(files[0]!);
+          }
+        },
+      },
+    ];
+  const item: ApiFileItem =
+    "original" in props.row ? props.row.original : props.row;
   if (item.is_dir) {
     return [
       {
@@ -78,7 +119,7 @@ const rowItems = computed((): ContextMenuItem[] => {
 </script>
 
 <template>
-  <UContextMenu :items="rowItems">
+  <LazyUContextMenu :items="rowItems">
     <slot />
-  </UContextMenu>
+  </LazyUContextMenu>
 </template>
