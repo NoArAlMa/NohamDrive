@@ -12,6 +12,7 @@ export const useFileTree = defineStore("fileTree", () => {
     if (loading.value) return;
     try {
       loading.value = true;
+      error.value = null;
       data.value = await $fetch("/storage/tree", {
         params: { path: FSStore.currentPath },
       });

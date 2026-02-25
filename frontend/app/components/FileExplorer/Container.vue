@@ -8,6 +8,8 @@ const dragCounter = ref(0); // Compteur pour gérer les entrées/sorties de la z
 const { upload } = useFsActions();
 const { runBatch } = useBatchAction();
 const { isMobile } = useResponsive();
+const viewMode = ref<"tiles" | "list">("list");
+const isList = computed(() => viewMode.value === "list");
 
 // Fonction pour gérer l'entrée dans la zone de drop
 function onDragEnter(e: DragEvent) {
@@ -59,6 +61,10 @@ async function onDrop(e: DragEvent) {
     await upload(files[0]!);
   }
 }
+
+async function clearSelectionedFiles(explorerRef: any) {
+  explorerRef?.clearSelection();
+}
 </script>
 
 <template>
@@ -80,7 +86,7 @@ async function onDrop(e: DragEvent) {
               size="sm"
               color="error"
               leading-icon="material-symbols:close"
-              @click="explorerRef?.clearSelection()"
+              @click="clearSelectionedFiles(explorerRef)"
             />
           </UTooltip>
         </div>
@@ -88,7 +94,11 @@ async function onDrop(e: DragEvent) {
       </div>
 
       <div class="flex flex-row gap-2 shrink-0" v-if="!isMobile">
-        <LazyFileExplorerColumnSelect />
+        <LazyFileExplorerChooseAffichage
+          class="transition-transform duration-75"
+          v-model="viewMode"
+        />
+        <LazyFileExplorerColumnSelect v-if="isList" />
         <LazyFileExplorerUpload />
       </div>
     </div>
@@ -115,6 +125,13 @@ async function onDrop(e: DragEvent) {
       </Transition>
       <ClientOnly>
         <LazyFileExplorer
+          v-if="viewMode === 'list'"
+          v-model:selectedCount="FileCount"
+          v-model:selected-items="selectedItems"
+          ref="explorerRef"
+        />
+        <LazyFileExplorerTilesView
+          v-else
           v-model:selectedCount="FileCount"
           v-model:selected-items="selectedItems"
           ref="explorerRef"

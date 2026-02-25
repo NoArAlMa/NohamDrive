@@ -24,7 +24,7 @@ const selectionLabel = computed(() => {
     </div>
 
     <UButton
-      v-if="totalElements > 0 && !isMobile"
+      v-if="!isMobile"
       leading-icon="mdi:star-four-points-outline"
       variant="outline"
       label="Ouvrir avec Echo"

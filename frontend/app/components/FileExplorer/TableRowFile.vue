@@ -54,15 +54,6 @@ function startEditing() {
     baseName.value = base;
     extension.value = ext;
   }
-
-  // On attend que l'input soit rendu, puis on le focus et on sélectionne tout son contenu.
-  // nextTick(() => {
-  //   setTimeout(() => {
-  //     const input = inputRef?.value;
-  //     input?.focus;
-  //     input?.select;
-  //   }, 50);
-  // });
 }
 
 // Appelée quand on appuie sur Entrée ou que l'input perd le focus.

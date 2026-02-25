@@ -2,11 +2,13 @@
 import type { ContextMenuItem, TableRow } from "@nuxt/ui";
 import { useFileRenameRegistry } from "~/composables/file/RenameRegistry";
 import type { ApiFileItem } from "~~/shared/types/file_tree";
+import { LazyFileExplorerUploadFolder } from "#components";
 
 const props = defineProps<{
-  row: TableRow<ApiFileItem> | null;
+  row: TableRow<ApiFileItem> | ApiFileItem | null;
 }>();
 
+const overlay = useOverlay();
 const fsActions = useFsActions();
 const FSStore = useFSStore();
 
@@ -28,7 +30,7 @@ const baseMenu = (item: ApiFileItem): ContextMenuItem[] => [
     icon: "material-symbols:edit-outline-rounded",
     onSelect: () => {
       if (props.row) {
-        const key = joinPath(FSStore.currentPath, props.row.original.name);
+        const key = joinPath(FSStore.currentPath, item.name);
         start(key);
       }
     },
@@ -49,8 +51,26 @@ const baseMenu = (item: ApiFileItem): ContextMenuItem[] => [
 
 // Menu complet avec ajout spécifique
 const rowItems = computed((): ContextMenuItem[] => {
-  if (!props.row) return [];
-  const item = props.row.original;
+  if (!props.row)
+    return [
+      {
+        label: "Creer dossier",
+        icon: "material-symbols:create-new-folder-outline-rounded",
+        onSelect: () => {
+          const createFolderModal = overlay.create(
+            LazyFileExplorerUploadFolder,
+          );
+
+          createFolderModal.open();
+        },
+      },
+      {
+        label: "Import file",
+        icon: "material-symbols:file-open-outline-rounded",
+      },
+    ];
+  const item: ApiFileItem =
+    "original" in props.row ? props.row.original : props.row;
   if (item.is_dir) {
     return [
       {
