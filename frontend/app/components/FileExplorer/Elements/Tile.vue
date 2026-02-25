@@ -179,8 +179,11 @@ async function onDrop(e: DragEvent) {
   <FileExplorerContextMenu :row="props.item">
     <section class="w-35 h-35">
       <div
-        class="relative flex flex-col items-center justify-between p-4 w-full h-full rounded-lg cursor-pointer transition-all duration-150 select-none hover:bg-muted/50 group"
-        :class="{ 'border-2 border-neutral ': isDragOver }"
+        class="relative flex flex-col items-center justify-between p-4 w-full h-full rounded-lg cursor-pointer transition-all duration-150 select-none hover:bg-muted/50 hover:shadow-sm group"
+        :class="{
+          'border-2 border-neutral ': isDragOver,
+          'shadow-sm bg-muted/50': isChecked,
+        }"
         @mouseenter="isHovered = true"
         @mouseleave="isHovered = false"
         @dblclick="open"
