@@ -29,7 +29,7 @@ onMounted(() => {
     selectedItems,
     (items) => {
       emit("update:selectedItems", items);
-      emit("update:selectedCount", selectedItems.value.length); // Met à jour les deux en une fois
+      emit("update:selectedCount", selectedItems.value.length);
     },
     { immediate: true },
   );
@@ -62,7 +62,7 @@ function clearSelection() {
 }
 
 watch(fileTree, () => {
-  clearSelection
+  clearSelection();
 });
 
 defineExpose({
@@ -137,7 +137,7 @@ defineExpose({
         </template>
         <!-- Page pour le chargement de l'explorateur -->
         <template #loading>
-          <ExplorerLoaderList v-if="loading_debounced" />
+          <ExplorerLoader v-if="loading_debounced" />
         </template>
       </LazyUTable>
     </div>

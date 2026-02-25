@@ -15,6 +15,11 @@ const emit = defineEmits<{
   (e: "update:selectedCount", value: number): void;
 }>();
 
+const emitSelection = useDebounceFn(() => {
+  emit("update:selectedItems", Array.from(localSelection.value));
+  emit("update:selectedCount", localSelection.value.size);
+}, 100);
+
 function goBack() {
   const fs = useFSStore();
   fs.navigate("..");
@@ -22,12 +27,11 @@ function goBack() {
 
 const loading_debounced = refDebounced(loading, 100);
 
-const localSelection = ref<ApiFileItem[]>([]);
+const localSelection = ref<Set<ApiFileItem>>(new Set());
 
 function clearSelection() {
-  localSelection.value = [];
-  emit("update:selectedItems", []);
-  emit("update:selectedCount", 0);
+  localSelection.value.clear();
+  emitSelection();
 }
 
 defineExpose({
@@ -36,8 +40,7 @@ defineExpose({
 
 const validSelection = computed(() => {
   const validNames = new Set(fileTree.value.map((i) => i.name));
-
-  return localSelection.value.filter((selected) =>
+  return Array.from(localSelection.value).filter((selected) =>
     validNames.has(selected.name),
   );
 });
@@ -45,23 +48,17 @@ const validSelection = computed(() => {
 watch(
   () => fsstore.currentPath,
   () => {
-    localSelection.value = [];
-    emit("update:selectedItems", []);
-    emit("update:selectedCount", 0);
+    clearSelection();
   },
 );
 
 function updateSelection(item: ApiFileItem, checked: boolean) {
   if (checked) {
-    if (!localSelection.value.includes(item)) {
-      localSelection.value.push(item);
-    }
+    localSelection.value.add(item);
   } else {
-    localSelection.value = localSelection.value.filter((i) => i !== item);
+    localSelection.value.delete(item);
   }
-
-  emit("update:selectedItems", localSelection.value);
-  emit("update:selectedCount", localSelection.value.length);
+  emitSelection();
 }
 </script>
 
@@ -115,7 +112,7 @@ function updateSelection(item: ApiFileItem, checked: boolean) {
         v-for="item in fileTree"
         :key="item.name"
         :item="item"
-        :selected="validSelection.includes(item)"
+        :selected="localSelection.has(item)"
         @update:selected="updateSelection"
       />
     </div>

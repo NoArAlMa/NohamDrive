@@ -13,7 +13,7 @@ const selectValue = computed({
 </script>
 
 <template>
-  <USelectMenu
+  <LazyUSelectMenu
     v-model="selectValue"
     :items="availableColumns"
     multiple
@@ -30,5 +30,5 @@ const selectValue = computed({
     class="w-fit shadow-md"
   >
     <template #default>Columns</template>
-  </USelectMenu>
+  </LazyUSelectMenu>
 </template>

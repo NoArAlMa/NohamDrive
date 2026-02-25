@@ -24,7 +24,7 @@ const currentIcon = computed(
 </script>
 
 <template>
-  <USelect
+  <LazyUSelect
     v-model="viewMode"
     :items="items"
     value-key="value"
