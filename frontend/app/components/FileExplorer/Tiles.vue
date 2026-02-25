@@ -230,7 +230,7 @@ async function onDrop(e: DragEvent) {
 
           <template v-else>
             <div class="flex items-center justify-center w-full">
-              <UInput
+              <LazyUInput
                 ref="inputRef"
                 v-model="baseName"
                 size="sm"

@@ -22,6 +22,8 @@ const localSelection = ref<ApiFileItem[]>([]);
 
 function clearSelection() {
   localSelection.value = [];
+  emit("update:selectedItems", []);
+  emit("update:selectedCount", 0);
 }
 
 defineExpose({
@@ -40,6 +42,8 @@ watch(
   () => fsstore.currentPath,
   () => {
     localSelection.value = [];
+    emit("update:selectedItems", []);
+    emit("update:selectedCount", 0);
   },
 );
 
@@ -103,11 +107,11 @@ function updateSelection(item: ApiFileItem, checked: boolean) {
     </div>
 
     <div
-      class="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] auto-rows-min content-start gap-4 p-4 h-full"
+      class="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] auto-rows-min content-start gap-4 p-4 h-full overflow-y-auto"
       v-else
     >
       <FileExplorerTiles
-        v-for="(item, index) in fileTree"
+        v-for="item in fileTree"
         :key="item.name"
         :item="item"
         :selected="validSelection.includes(item)"

@@ -63,7 +63,7 @@ async function onDrop(e: DragEvent) {
 }
 
 async function clearSelectionedFiles(explorerRef: any) {
-  explorerRef?.clearSelection();
+  await explorerRef?.clearSelection();
 }
 </script>
 
