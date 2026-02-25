@@ -10,13 +10,13 @@ import {
 const FileCount = ref(0);
 const selectedItems = ref<ApiFileItem[]>([]);
 const explorerRef = ref();
-const isDragging = ref(false); // Affiche l'overlay de drag
-const dragCounter = ref(0); // Compteur pour gérer les entrées/sorties de la zone de drop
+const isDragging = ref(false);
+const dragCounter = ref(0);
 
 const { upload } = useFsActions();
 const { runBatch } = useBatchAction();
 const { isMobile } = useResponsive();
-const viewMode = ref<"tiles" | "list">("list");
+const { viewMode } = useFileExplorerSettings();
 const isList = computed(() => viewMode.value === "list");
 
 // Fonction pour gérer l'entrée dans la zone de drop
@@ -102,10 +102,7 @@ async function clearSelectionedFiles(explorerRef: any) {
       </div>
 
       <div class="flex flex-row gap-2 shrink-0" v-if="!isMobile">
-        <LazyFileExplorerHeaderSelectDisplay
-          class="transition-transform duration-75"
-          v-model="viewMode"
-        />
+        <LazyFileExplorerHeaderSelectDisplay />
         <LazyFileExplorerHeaderSelectColumns v-if="isList" />
         <LazyFileExplorerHeaderUpload />
       </div>

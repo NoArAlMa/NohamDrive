@@ -43,6 +43,8 @@ onMounted(() => {
     },
     { immediate: true },
   );
+  emit("update:selectedCount", 0);
+  emit("update:selectedItems", []);
 });
 
 const ExplorerContextMenu = defineAsyncComponent(

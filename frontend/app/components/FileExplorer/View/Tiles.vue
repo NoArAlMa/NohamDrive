@@ -1,10 +1,14 @@
 <script lang="ts" setup>
 import { useFSStore } from "#imports";
-
 const fileTreeStore = useFileTree();
 const fsstore = useFSStore();
 const { fileTree, loading, hasError, errorMessage, errorStatus } =
   storeToRefs(fileTreeStore);
+
+onMounted(() => {
+  emit("update:selectedCount", 0);
+  emit("update:selectedItems", []);
+});
 
 const emit = defineEmits<{
   (e: "update:selectedItems", value: ApiFileItem[]): void;

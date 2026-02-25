@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { SelectItem } from "@nuxt/ui";
 
+const { viewMode } = useFileExplorerSettings();
+
 type ViewMode = "tiles" | "list";
 
 const items = [
@@ -16,16 +18,14 @@ const items = [
   },
 ] satisfies SelectItem[];
 
-const modelValue = defineModel<"tiles" | "list">();
-
 const currentIcon = computed(
-  () => items.find((i) => i.value === modelValue.value)?.icon,
+  () => items.find((i) => i.value === viewMode.value)?.icon,
 );
 </script>
 
 <template>
   <USelect
-    v-model="modelValue"
+    v-model="viewMode"
     :items="items"
     value-key="value"
     :icon="currentIcon"
