@@ -9,6 +9,8 @@ export const useFSStore = defineStore("fs", () => {
     maxAge: 60, // 1 semaine
   });
 
+  const fileTreeStore = useFileTree();
+
   // State synchronisé avec le cookie
   const currentPath = ref<string>(pathCookie.value || "/");
 
@@ -19,7 +21,13 @@ export const useFSStore = defineStore("fs", () => {
 
   // Actions
   const navigate = (inputPath: string) => {
-    currentPath.value = resolvePath(inputPath, currentPath.value);
+    if (fileTreeStore.loading) return;
+
+    const newPath = resolvePath(inputPath, currentPath.value);
+
+    if (newPath === currentPath.value) return;
+
+    currentPath.value = newPath;
   };
 
   const goUp = () => {
@@ -27,7 +35,13 @@ export const useFSStore = defineStore("fs", () => {
   };
 
   const setCurrentPath = (path: string) => {
-    currentPath.value = normalizePath(path);
+    if (fileTreeStore.loading) return;
+
+    const newPath = resolvePath(path, currentPath.value);
+
+    if (newPath === currentPath.value) return;
+
+    currentPath.value = newPath;
   };
 
   // Getters
@@ -58,6 +72,8 @@ export const useFSStore = defineStore("fs", () => {
     ];
   };
 
+  const navigationLocked = computed(() => fileTreeStore.loading);
+
   return {
     currentPath,
     setCurrentPath,
@@ -65,6 +81,7 @@ export const useFSStore = defineStore("fs", () => {
     goUp,
     navigate,
     currentDirName,
+    navigationLocked,
     isRoot,
     generateBreadcrumbItems,
   };
