@@ -89,7 +89,7 @@ async function clearSelectionedFiles(explorerRef: any) {
             class="h-6 mr-2"
           />
           <LazyUTooltip text="Unselect all" :delay-duration="200">
-            <LazyUButton
+            <UButton
               variant="subtle"
               size="sm"
               color="error"
