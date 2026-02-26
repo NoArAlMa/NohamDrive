@@ -6,7 +6,7 @@ const links = ref<ButtonProps[]>([
     label: "Download App for windows",
     color: "primary",
     variant: "outline",
-    leadingIcon: "mdi:microsoft",
+    leadingIcon: "desktop:microsoft-icon",
     to: "https://github.com/NoArAlMa/NohamDrive/releases/latest/download/NohamDrive-Setup.exe",
     target: "_blank",
   },

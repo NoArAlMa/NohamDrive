@@ -191,7 +191,7 @@ async function onDrop(e: DragEvent) {
     <LazyUIcon
       draggable="false"
       v-if="row.original.is_dir"
-      name="heroicons-folder"
+      name="explorer:folder-icon"
       class="text-lg mr-2 shrink-0"
     />
     <LazyUIcon

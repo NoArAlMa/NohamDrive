@@ -82,14 +82,14 @@ async function clearSelectionedFiles(explorerRef: any) {
     <div class="shrink-0 pl-1 pr-1 mb-1 flex items-center justify-between h-12">
       <div class="rounded-md px-2 py-1.5 md:border border-muted shadow-md">
         <div v-if="FileCount > 0" class="flex gap-1 items-center">
-          <LazyFileExplorerHeaderToolbar :items="selectedItems" />
-          <LazyUSeparator
+          <FileExplorerHeaderToolbar :items="selectedItems" />
+          <USeparator
             :decorative="true"
             orientation="vertical"
             class="h-6 mr-2"
           />
           <LazyUTooltip text="Unselect all" :delay-duration="200">
-            <LazyUButton
+            <UButton
               variant="subtle"
               size="sm"
               color="error"

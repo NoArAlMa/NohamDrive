@@ -10,7 +10,6 @@ export const useElectron = () => {
   }>(null);
 
   const checkElectron = async () => {
-    // window.electronAPI peut exister même avant onMounted
     if (typeof window !== "undefined" && window.electronAPI) {
       isElectron.value = true;
       try {

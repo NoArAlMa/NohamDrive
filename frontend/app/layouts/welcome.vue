@@ -16,7 +16,7 @@ const items = ref<NavigationMenuItem[][]>([
     },
     {
       label: "Echo",
-      icon: "mdi:star-four-points-outline",
+      icon: "terminal:echo-icon",
       ui: {
         linkLeadingIcon: "text-secondary",
       },
@@ -50,7 +50,7 @@ const items = ref<NavigationMenuItem[][]>([
               <UButton label="Connexion" variant="ghost" color="neutral" />
               <UButton color="primary" variant="subtle">S’inscrire</UButton>
               <UButton
-                icon="mdi:github"
+                icon="desktop:github-icon"
                 variant="ghost"
                 color="neutral"
                 to="https://github.com/NoArAlMa/NohamDrive"

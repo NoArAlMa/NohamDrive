@@ -25,7 +25,7 @@ const selectionLabel = computed(() => {
 
     <UButton
       v-if="!isMobile"
-      leading-icon="mdi:star-four-points-outline"
+      leading-icon="terminal:echo-icon"
       variant="outline"
       label="Ouvrir avec Echo"
       color="neutral"

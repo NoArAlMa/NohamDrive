@@ -1,43 +1,43 @@
 export const fileIconMap: Record<string, string> = {
   // Documents
-  pdf: "vscode-icons:file-type-pdf2",
-  doc: "vscode-icons:file-type-word",
-  docx: "vscode-icons:file-type-word",
-  xls: "i-vscode-icons:file-type-excel",
-  xlsx: "i-vscode-icons:file-type-excel2",
-  ppt: "vscode-icons:file-type-powerpoint",
-  pptx: "vscode-icons:file-type-powerpoint",
-  txt: "vscode-icons:file-type-text",
+  pdf: "explorer:pdf-icon",
+  doc: "explorer:word-icon",
+  docx: "explorer:word-icon",
+  xls: "explorer:excel-icon",
+  xlsx: "explorer:excel-icon",
+  ppt: "explorer:powerpoint-icon",
+  pptx: "explorer:powerpoint-icon",
+  txt: "explorer:text-icon",
   csv: "material-symbols:csv-outline-rounded",
-  md: "vscode-icons:file-type-markdown",
+  md: "explorer:md-icon",
 
   // Images
-  png: "vscode-icons:file-type-image",
-  jpg: "vscode-icons:file-type-image",
-  jpeg: "vscode-icons:file-type-image",
-  webp: "vscode-icons:file-type-image",
-  svg: "vscode-icons:file-type-image",
+  png: "explorer:image-icon",
+  jpg: "explorer:image-icon",
+  jpeg: "explorer:image-icon",
+  webp: "explorer:image-icon",
+  svg: "explorer:image-icon",
 
   // Archives
-  rar: "vscode-icons:file-type-zip",
-  zip: "vscode-icons:file-type-zip",
+  rar: "explorer:zip-icon",
+  zip: "explorer:zip-icon",
 
   // Médias
-  mp4: "vscode-icons:file-type-video",
-  mp3: "vscode-icons:file-type-audio",
+  mp4: "explorer:video-icon",
+  mp3: "explorer:sound-icon",
 
   // Code
-  js: "vscode-icons:file-type-js-official",
-  py: "vscode-icons:file-type-python",
-  css: "vscode-icons:file-type-css2",
+  js: "explorer:js-icon",
+  py: "explorer:py-icon",
+  css: "explorer:css-icon",
 
   // Par défaut
-  unknown: "heroicons:document",
+  unknown: "explorer:folder-icon",
 };
 
 // Fonction qui retourne le nom de l'icone en fonction de son extension
 
 export const getFileIcon = (filename: string) => {
   const ext = filename.split(".").pop()?.toLowerCase();
-  return fileIconMap[ext ?? ""] ?? "heroicons:document";
+  return fileIconMap[ext ?? "unknown"];
 };
