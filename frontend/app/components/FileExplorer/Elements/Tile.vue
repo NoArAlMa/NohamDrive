@@ -211,7 +211,7 @@ async function onDrop(e: DragEvent) {
         <div class="flex items-center justify-center">
           <UIcon
             v-if="item.is_dir"
-            name="fxemoji:filefolder"
+            name="explorer:folder-icon"
             class="size-16 shrink-0 mb-2"
           />
           <UIcon

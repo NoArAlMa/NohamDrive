@@ -17,6 +17,18 @@ export default defineNuxtConfig({
     },
   },
 
+  icon: {
+    serverBundle: {
+      collections: ["mdi", "heroicons", "material-symbols"],
+    },
+    customCollections: [
+      {
+        prefix: "explorer",
+        dir: "./app/assets/icons/explorer/files",
+      },
+    ],
+  },
+
   // Configuration de ColorMode
   colorMode: {
     preference: "dark",
