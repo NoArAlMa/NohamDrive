@@ -26,6 +26,10 @@ export default defineNuxtConfig({
         prefix: "explorer",
         dir: "./app/assets/icons/explorer/files",
       },
+      {
+        prefix: "terminal",
+        dir: "./app/assets/icons/terminal",
+      },
     ],
   },
 

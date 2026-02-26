@@ -67,7 +67,7 @@ const items: NavigationMenuItem[][] = [
     [
       {
         label: "Echo",
-        icon: "mdi:star-four-points-outline",
+        icon: "terminal:echo-icon",
         to: "/terminal",
       },
     ],
