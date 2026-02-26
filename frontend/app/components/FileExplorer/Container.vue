@@ -140,6 +140,7 @@ async function clearSelectionedFiles(explorerRef: any) {
           v-model:selectedCount="FileCount"
           v-model:selected-items="selectedItems"
           ref="explorerRef"
+          class="border border-muted rounded-md inset-shadow-sm/2"
         />
       </ClientOnly>
     </div>

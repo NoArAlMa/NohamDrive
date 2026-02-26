@@ -21,8 +21,7 @@ const emitSelection = useDebounceFn(() => {
 }, 100);
 
 function goBack() {
-  const fs = useFSStore();
-  fs.navigate("..");
+  fsstore.navigate("..");
 }
 
 const loading_debounced = refDebounced(loading, 100);
@@ -105,7 +104,7 @@ function updateSelection(item: ApiFileItem, checked: boolean) {
     </div>
 
     <div
-      class="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] auto-rows-min content-start justify-items-center gap-4 p-4 h-full overflow-y-auto"
+      class="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] auto-rows-min content-start justify-items-center gap-4 p-4 h-full overflow-y-auto rounded-md"
       v-else
     >
       <LazyFileExplorerElementsTile
