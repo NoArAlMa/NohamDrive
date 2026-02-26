@@ -96,7 +96,7 @@ const rowItems = computed((): ContextMenuItem[] => {
     return [
       {
         label: "Ouvrir avec Echo",
-        icon: "mdi:star-four-points-outline",
+        icon: "terminal:echo-icon",
         onSelect: () => fsActions.terminal(item),
       },
       { type: "separator" as const },

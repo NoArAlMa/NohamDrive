@@ -19,12 +19,16 @@ export default defineNuxtConfig({
 
   icon: {
     serverBundle: {
-      collections: ["mdi", "heroicons", "material-symbols"],
+      collections: ["material-symbols"],
     },
     customCollections: [
       {
         prefix: "explorer",
         dir: "./app/assets/icons/explorer/files",
+      },
+      {
+        prefix: "desktop",
+        dir: "./app/assets/icons/desktop",
       },
       {
         prefix: "terminal",

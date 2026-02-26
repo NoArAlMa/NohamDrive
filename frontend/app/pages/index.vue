@@ -31,7 +31,7 @@ const pageSection = ref<PageFeatureProps[]>([
     title: "Terminal Echo",
     description:
       "Gérez vos fichiers en ligne de commande directement dans le cloud, comme sur un système Linux.",
-    icon: "mdi:star-four-points-outline",
+    icon: "terminal:echo-icon",
   },
   {
     title: "Collaboration en temps réel",
@@ -267,11 +267,7 @@ const PageTitle = "Stock, share & collaborate freely";
           class="text-5xl sm:text-5xl font-bold flex items-center justify-center md:justify-start gap-3 mb-6"
         >
           Découvrez Echo
-          <UIcon
-            name="mdi:star-four-points-outline"
-            class="text-primary"
-            dynamic
-          />
+          <UIcon name="terminal:echo-icon" class="text-primary" dynamic />
         </h1>
         <p class="text-lg sm:text-x mb-8 max-w-lg">
           Une façon révolutionnaire de naviguer entre vos dossiers et fichiers,
@@ -283,13 +279,13 @@ const PageTitle = "Stock, share & collaborate freely";
           variant="solid"
           size="lg"
           class="mx-auto md:mx-0"
-          icon="i-heroicons-arrow-right"
+          icon="material-symbols:arrow-forward-rounded"
         />
       </div>
 
       <div
         class="flex-1 max-w-none md:max-w-2xl lg:max-w-3xl xl:max-w-4xl relative"
-      >
+      > 
         <div class="relative rounded-xl overflow-hidden shadow-2xl">
           <video
             autoplay
