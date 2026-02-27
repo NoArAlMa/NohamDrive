@@ -10,6 +10,7 @@ const { fileTree, loading, hasError, errorMessage, errorStatus } =
 
 const table = useTemplateRef("table");
 const rowSelection = ref<Record<string, boolean>>({});
+const { viewMode } = useFileExplorerSettings();
 
 const emit = defineEmits<{
   (e: "update:selectedCount", count: number): void;
@@ -84,7 +85,7 @@ defineExpose({
         :columns="columns"
         :ui="{
           tbody: 'file-explorer-tbody',
-          td: 'py-0',
+          td: viewMode === 'list' ? ['py-1'] : ['py-0'],
         }"
         :virtualize="false"
         @hover=""
