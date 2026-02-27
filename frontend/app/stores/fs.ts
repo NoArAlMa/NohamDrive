@@ -26,6 +26,7 @@ export const useFSStore = defineStore("fs", () => {
     const newPath = resolvePath(inputPath, currentPath.value);
 
     if (newPath === currentPath.value) return;
+    console.log("NEWPATH :", newPath, "CURRENTPATH:", currentPath.value);
 
     currentPath.value = newPath;
   };
@@ -37,11 +38,7 @@ export const useFSStore = defineStore("fs", () => {
   const setCurrentPath = (path: string) => {
     if (fileTreeStore.loading) return;
 
-    const newPath = resolvePath(path, currentPath.value);
-
-    if (newPath === currentPath.value) return;
-
-    currentPath.value = newPath;
+    currentPath.value = path;
   };
 
   // Getters
@@ -72,8 +69,6 @@ export const useFSStore = defineStore("fs", () => {
     ];
   };
 
-  const navigationLocked = computed(() => fileTreeStore.loading);
-
   return {
     currentPath,
     setCurrentPath,
@@ -81,7 +76,7 @@ export const useFSStore = defineStore("fs", () => {
     goUp,
     navigate,
     currentDirName,
-    navigationLocked,
+
     isRoot,
     generateBreadcrumbItems,
   };
