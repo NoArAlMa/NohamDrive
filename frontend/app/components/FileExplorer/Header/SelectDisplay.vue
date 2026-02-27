@@ -16,6 +16,11 @@ const items = [
     value: "list",
     icon: "material-symbols:format-list-bulleted-rounded",
   },
+  {
+    label: "Compact",
+    value: "compact",
+    icon: "material-symbols:list-rounded",
+  },
 ] satisfies SelectItem[];
 
 const currentIcon = computed(

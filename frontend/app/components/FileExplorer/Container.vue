@@ -17,7 +17,9 @@ const { upload } = useFsActions();
 const { runBatch } = useBatchAction();
 const { isMobile } = useResponsive();
 const { viewMode } = useFileExplorerSettings();
-const isList = computed(() => viewMode.value === "list");
+const isList = computed(
+  () => viewMode.value === "list" || viewMode.value === "compact",
+);
 
 // Fonction pour gérer l'entrée dans la zone de drop
 function onDragEnter(e: DragEvent) {
@@ -130,7 +132,7 @@ async function clearSelectionedFiles(explorerRef: any) {
       </Transition>
       <ClientOnly>
         <LazyFileExplorerViewList
-          v-if="viewMode === 'list' || isMobile"
+          v-if="isList || isMobile"
           v-model:selectedCount="FileCount"
           v-model:selected-items="selectedItems"
           ref="explorerRef"

@@ -1,5 +1,5 @@
 export type FileColumn = "last_modified" | "size";
-export type FileViewMode = "list" | "tiles";
+export type FileViewMode = "list" | "tiles" | "compact";
 
 export function useFileExplorerSettings() {
   const { isMobile } = useResponsive();
@@ -16,7 +16,11 @@ export function useFileExplorerSettings() {
       const savedView = localStorage.getItem(
         "fileExplorerViewMode",
       ) as FileViewMode;
-      return savedView === "list" || savedView === "tiles" ? savedView : "list";
+      return savedView === "compact" ||
+        savedView === "list" ||
+        savedView === "tiles"
+        ? savedView
+        : "list";
     }
     return "list";
   });
@@ -35,7 +39,11 @@ export function useFileExplorerSettings() {
       const savedView = localStorage.getItem(
         "fileExplorerViewMode",
       ) as FileViewMode;
-      if (savedView === "list" || savedView === "tiles") {
+      if (
+        savedView === "list" ||
+        savedView === "tiles" ||
+        savedView === "compact"
+      ) {
         viewMode.value = savedView;
       }
     }
