@@ -1,8 +1,7 @@
 <script lang="ts" setup>
 const action = useFsActions();
 
-const { setCurrentPath, generateBreadcrumbItems, navigate, navigationLocked } =
-  useFSStore();
+const { setCurrentPath, generateBreadcrumbItems, navigate } = useFSStore();
 
 const { isRoot } = storeToRefs(useFSStore());
 const { isMobile } = useResponsive();
@@ -12,7 +11,7 @@ const items = computed(() => {
 });
 
 function handleClick(path: string) {
-  navigate(path);
+  setCurrentPath(path);
 }
 
 function handleReturn() {
@@ -78,7 +77,6 @@ async function onDropCrumb(e: DragEvent, path: string) {
           </template>
           <template #item="{ item }">
             <LazyULink
-              :disabled="navigationLocked"
               class="mx-0 px-2 py-0.5 rounded-md hover:bg-elevated truncate max-w-40"
               :class="{
                 'border-2 border-neutral': dragOverPath === item.path,
