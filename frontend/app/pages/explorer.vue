@@ -1,4 +1,15 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+useHead({
+  title: "File Explorer - NohamDrive ",
+  meta: [
+    {
+      name: "NohamDrive | File Explorer",
+      content:
+        "Browse your file stored in the cloud directly in this file explorer",
+    },
+  ],
+});
+</script>
 
 <template>
   <section

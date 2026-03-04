@@ -1,4 +1,15 @@
 <script lang="ts" setup>
+useHead({
+  title: "Download App - NohamDrive",
+  meta: [
+    {
+      name: "Download Page",
+      content:
+        "Click here to download the latest desktop version of NohamDrive",
+    },
+  ],
+});
+
 import type { ButtonProps } from "@nuxt/ui";
 
 const links = ref<ButtonProps[]>([
