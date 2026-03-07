@@ -25,7 +25,7 @@ const selectValue = computed({
       trailingIcon:
         'group-data-[state=open]:rotate-180 transition-transform duration-200',
     }"
-    class="w-fit shadow-md"
+    class="w-fit shadow-sm"
   >
     <template #default>Columns</template>
   </USelectMenu>

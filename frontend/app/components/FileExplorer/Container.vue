@@ -82,7 +82,7 @@ async function clearSelectionedFiles(explorerRef: any) {
     class="flex flex-col relative rounded-md laptop:border border-muted px-0 py-0 laptop:px-2 laptop:py-2"
   >
     <div class="shrink-0 pl-1 pr-1 mb-1 flex items-center justify-between h-12">
-      <div class="rounded-md px-2 py-1.5 md:border border-muted shadow-md">
+      <div class="rounded-md px-2 py-1.5 md:border border-muted shadow-sm">
         <div v-if="FileCount > 0" class="flex gap-1 items-center">
           <FileExplorerHeaderToolbar :items="selectedItems" />
           <USeparator
@@ -142,7 +142,7 @@ async function clearSelectionedFiles(explorerRef: any) {
           v-model:selectedCount="FileCount"
           v-model:selected-items="selectedItems"
           ref="explorerRef"
-          class="border border-muted rounded-md inset-shadow-sm/2"
+          class="border border-muted/20 rounded-md inset-shadow-sm/2"
         />
       </ClientOnly>
     </div>

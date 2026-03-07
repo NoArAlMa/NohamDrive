@@ -34,7 +34,7 @@ const currentIcon = computed(
     :items="items"
     value-key="value"
     :icon="currentIcon"
-    class="size-9"
+    class="size-9 shadow-sm"
     :content="{
       align: 'end',
       side: 'bottom',

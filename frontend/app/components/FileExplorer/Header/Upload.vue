@@ -61,7 +61,7 @@ const items = ref<DropdownMenuItem[]>([
         color="primary"
         variant="outline"
         size="lg"
-        class="shadow-md"
+        class="shadow-sm"
       />
     </UDropdownMenu>
   </LazyUTooltip>
