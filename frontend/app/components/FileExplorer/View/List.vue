@@ -60,6 +60,7 @@ function goBack() {
 
 function clearSelection() {
   rowSelection.value = {};
+  contextRow.value = null;
 }
 
 watch(fileTree, () => {
@@ -69,10 +70,20 @@ watch(fileTree, () => {
 defineExpose({
   clearSelection,
 });
+
+const contextOpen = ref(false);
 </script>
 
 <template>
-  <ExplorerContextMenu :row="contextRow">
+  <ExplorerContextMenu
+    :row="contextRow"
+    v-model:open="contextOpen"
+    @update:open="
+      (v: any) => {
+        if (!v) contextRow = null;
+      }
+    "
+  >
     <div class="h-full w-full overflow-y-hidden overflow-x-hidden">
       <LazyUTable
         ref="table"
@@ -94,9 +105,10 @@ defineExpose({
         }"
         class="w-full h-full overflow-x-hidden table-fixed"
         @contextmenu="
-          (e: any, row: Row<ApiFileItem>) => {
+          (e: MouseEvent, row: Row<ApiFileItem>) => {
             if (!isMobile) {
               contextRow = row ?? null;
+              contextOpen = true;
             }
           }
         "
