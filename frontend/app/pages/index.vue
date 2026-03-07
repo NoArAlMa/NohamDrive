@@ -1,6 +1,28 @@
 <script lang="ts" setup>
 import type { ButtonProps, PageFeatureProps } from "@nuxt/ui";
 
+useHead({
+  title: "Welcome - NohamDrive",
+  meta: [
+    {
+      name: "NohamDrive | Welcome Page",
+      content: "Discover the open-source alternative of Onedrive",
+    },
+  ],
+});
+
+useSeoMeta({
+  description: "Discover the open-source alternative of Onedrive",
+  ogTitle: "Welcome - NohamDrive",
+  ogDescription: "Discover the open-source alternative of Onedrive",
+  ogImage: "[og:image]",
+  ogUrl: "[og:url]",
+  twitterTitle: "Welcome - NohamDrive",
+  twitterDescription: "Discover the open-source alternative of Onedrive",
+  twitterImage: "[twitter:image]",
+  twitterCard: "summary",
+});
+
 definePageMeta({
   layout: "welcome",
 });
@@ -285,7 +307,7 @@ const PageTitle = "Stock, share & collaborate freely";
 
       <div
         class="flex-1 max-w-none md:max-w-2xl lg:max-w-3xl xl:max-w-4xl relative"
-      > 
+      >
         <div class="relative rounded-xl overflow-hidden shadow-2xl">
           <video
             autoplay

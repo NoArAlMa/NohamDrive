@@ -1,4 +1,30 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+useHead({
+  title: "File Explorer - NohamDrive",
+  meta: [
+    {
+      name: "NohamDrive | File Explorer",
+      content:
+        "Browse your file stored in the cloud directly in this file explorer",
+    },
+  ],
+});
+
+useSeoMeta({
+  description:
+    "Browse your file stored in the cloud directly in this file explorer",
+  ogTitle: "File Explorer - NohamDrive",
+  ogDescription:
+    "Browse your file stored in the cloud directly in this file explorer",
+  ogImage: "[og:image]",
+  ogUrl: "[og:url]",
+  twitterTitle: "File Explorer - NohamDrive",
+  twitterDescription:
+    "Browse your file stored in the cloud directly in this file explorer",
+  twitterImage: "[twitter:image]",
+  twitterCard: "summary",
+});
+</script>
 
 <template>
   <section
