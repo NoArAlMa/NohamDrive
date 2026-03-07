@@ -1,17 +1,25 @@
 <script lang="ts" setup>
-
 useHead({
-  title: "Home - NohamDrive ",
+  title: "Home - NohamDrive",
   meta: [
     {
       name: "NohamDrive | Home",
-      content:
-        "Browse your file stored in the cloud directly in this file explorer",
+      content: "Panel of your account",
     },
   ],
 });
 
-
+useSeoMeta({
+  description: "Panel of your account",
+  ogTitle: "Home - NohamDrive",
+  ogDescription: "Panel of your account",
+  ogImage: "[og:image]",
+  ogUrl: "[og:url]",
+  twitterTitle: "Home - NohamDrive",
+  twitterDescription: "Panel of your account",
+  twitterImage: "[twitter:image]",
+  twitterCard: "summary",
+});
 </script>
 
 <template>

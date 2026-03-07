@@ -11,6 +11,18 @@ useHead({
   ],
 });
 
+useSeoMeta({
+  description: "Discover the open-source alternative of Onedrive",
+  ogTitle: "Welcome - NohamDrive",
+  ogDescription: "Discover the open-source alternative of Onedrive",
+  ogImage: "[og:image]",
+  ogUrl: "[og:url]",
+  twitterTitle: "Welcome - NohamDrive",
+  twitterDescription: "Discover the open-source alternative of Onedrive",
+  twitterImage: "[twitter:image]",
+  twitterCard: "summary",
+});
+
 definePageMeta({
   layout: "welcome",
 });

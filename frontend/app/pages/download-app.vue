@@ -10,6 +10,18 @@ useHead({
   ],
 });
 
+useSeoMeta({
+  description: "Download the latest desktop version of NohamDrive",
+  ogTitle: "Download App - NohamDrive",
+  ogDescription: "Download the latest desktop version of NohamDrive",
+  ogImage: "[og:image]",
+  ogUrl: "[og:url]",
+  twitterTitle: "Download App - NohamDrive",
+  twitterDescription: "Download the latest desktop version of NohamDrive",
+  twitterImage: "[twitter:image]",
+  twitterCard: "summary",
+});
+
 import type { ButtonProps } from "@nuxt/ui";
 
 const links = ref<ButtonProps[]>([
