@@ -86,8 +86,6 @@ async function submitEditing() {
 onLongPress(
   rowRef,
   () => {
-    if (!isMobile.value) return;
-
     props.row.toggleSelected?.();
   },
   {

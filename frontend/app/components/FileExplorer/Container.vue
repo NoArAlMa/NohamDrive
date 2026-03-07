@@ -17,6 +17,7 @@ const { upload } = useFsActions();
 const { runBatch } = useBatchAction();
 const { isMobile } = useResponsive();
 const { viewMode } = useFileExplorerSettings();
+const { isRoot } = storeToRefs(useFSStore());
 const isList = computed(
   () => viewMode.value === "list" || viewMode.value === "compact",
 );
@@ -72,6 +73,8 @@ async function onDrop(e: DragEvent) {
   }
 }
 
+const showMobileToolbar = computed(() => FileCount.value > 0);
+
 async function clearSelectionedFiles(explorerRef: any) {
   await explorerRef?.clearSelection();
 }
@@ -81,19 +84,23 @@ async function clearSelectionedFiles(explorerRef: any) {
   <section
     class="flex flex-col relative rounded-md laptop:border border-muted px-0 py-0 laptop:px-2 laptop:py-2"
   >
-    <div class="shrink-0 pl-1 pr-1 mb-1 flex items-center justify-between h-12">
-      <div class="rounded-md px-2 py-1.5 md:border border-muted shadow-sm">
+    <div
+      class="shrink-0 pl-1 pr-1 flex items-center justify-between h-12 tablet:mb-1"
+      :class="isMobile ? 'mx-1 my-1' : ''"
+      v-if="showMobileToolbar || !isMobile || !isRoot"
+    >
+      <div class="rounded-md px-2 border border-muted py-1.5 shadow-sm">
         <div v-if="FileCount > 0" class="flex gap-1 items-center">
           <FileExplorerHeaderToolbar :items="selectedItems" />
           <USeparator
             :decorative="true"
             orientation="vertical"
-            class="h-6 mr-2"
+            class="h-6 mx-2"
           />
           <LazyUTooltip text="Unselect all" :delay-duration="200">
             <UButton
               variant="subtle"
-              size="sm"
+              :size="isMobile ? 'md' : 'sm'"
               color="error"
               leading-icon="material-symbols:close"
               @click="clearSelectionedFiles(explorerRef)"

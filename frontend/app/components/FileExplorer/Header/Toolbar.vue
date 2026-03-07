@@ -139,7 +139,7 @@ const DrawerItems = ref<NavigationMenuItem[]>([
       <section v-else>
         <UDrawer v-model:open="isDrawerOpen">
           <UButton
-            color="neutral"
+            color="secondary"
             variant="subtle"
             icon="material-symbols:tools-wrench-outline-rounded"
           />

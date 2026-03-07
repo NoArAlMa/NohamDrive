@@ -96,7 +96,7 @@ async function onDropCrumb(e: DragEvent, path: string) {
       <div v-else-if="isMobile && !isRoot">
         <UButton
           icon="material-symbols:keyboard-backspace-rounded"
-          variant="ghost"
+          variant="outline"
           color="neutral"
           @click="handleReturn"
         />

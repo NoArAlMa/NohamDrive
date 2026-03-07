@@ -2,6 +2,9 @@
 import type { TableRow } from "@nuxt/ui";
 import type { ApiFileItem } from "~~/shared/types/file_tree";
 import { UCheckbox, UButton, UDropdownMenu, UIcon } from "#components";
+import { LazyFileExplorerModalCreateFolder } from "#components";
+import type { DropdownMenuItem } from "@nuxt/ui";
+
 import type { TableMeta, Row } from "@tanstack/vue-table";
 const fileTreeStore = useFileTree();
 
@@ -11,6 +14,8 @@ const { fileTree, loading, hasError, errorMessage, errorStatus } =
 const table = useTemplateRef("table");
 const rowSelection = ref<Record<string, boolean>>({});
 const { viewMode } = useFileExplorerSettings();
+const overlay = useOverlay();
+const createFolderModal = overlay.create(LazyFileExplorerModalCreateFolder);
 
 const emit = defineEmits<{
   (e: "update:selectedCount", count: number): void;
@@ -44,6 +49,8 @@ const ExplorerLoader = defineAsyncComponent(() => import("../Loader/List.vue"));
 
 // Importation des components Nuxt UI pour pouvoir les utiliser en JS
 const contextRow = ref<TableRow<ApiFileItem> | null>(null);
+const contextOpen = ref(false);
+
 const ui = { UCheckbox, UButton, UDropdownMenu, UIcon };
 const { isMobile } = useResponsive();
 // Importation des colonnes et du système de sorting
@@ -71,7 +78,10 @@ defineExpose({
   clearSelection,
 });
 
-const contextOpen = ref(false);
+async function openCreateFolderModal() {
+  const modal = createFolderModal.open();
+  const result = await modal.result;
+}
 </script>
 
 <template>
@@ -106,10 +116,11 @@ const contextOpen = ref(false);
         class="w-full h-full overflow-x-hidden table-fixed"
         @contextmenu="
           (e: MouseEvent, row: Row<ApiFileItem>) => {
-            if (!isMobile) {
-              contextRow = row ?? null;
-              contextOpen = true;
+            if (isMobile) {
+              return;
             }
+            contextRow = row ?? null;
+            contextOpen = true;
           }
         "
       >
@@ -121,7 +132,7 @@ const contextOpen = ref(false);
         <template #empty>
           <div v-if="!hasError" class="flex items-center justify-center">
             <LazyUEmpty
-              class="min-w-125"
+              class="w-full h-full tablet:min-w-125"
               variant="soft"
               icon="material-symbols:sad-tab-outline-rounded"
               title="No files"
@@ -130,12 +141,21 @@ const contextOpen = ref(false);
               :actions="[
                 {
                   icon: 'material-symbols:keyboard-return-rounded',
-                  label: 'Retour',
+                  label: 'Return',
                   color: 'neutral',
-                  variant: 'subtle',
+                  variant: 'soft',
                   size: 'md',
                   loadingAuto: true,
                   onClick: goBack,
+                },
+                {
+                  icon: 'material-symbols:create-new-folder-outline-rounded',
+                  label: 'Create Folder',
+                  color: 'primary',
+                  variant: 'subtle',
+                  size: 'md',
+                  loadingAuto: true,
+                  onClick: openCreateFolderModal,
                 },
               ]"
             />
