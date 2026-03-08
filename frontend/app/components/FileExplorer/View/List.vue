@@ -82,17 +82,21 @@ async function openCreateFolderModal() {
   const modal = createFolderModal.open();
   const result = await modal.result;
 }
+
+function handleOpenChange(v: boolean) {
+  if (!v) {
+    setTimeout(() => {
+      contextRow.value = null;
+    }, 80);
+  }
+}
 </script>
 
 <template>
   <ExplorerContextMenu
     :row="contextRow"
     v-model:open="contextOpen"
-    @update:open="
-      (v: any) => {
-        if (!v) contextRow = null;
-      }
-    "
+    @update:open="handleOpenChange"
   >
     <div class="h-full w-full overflow-y-hidden overflow-x-hidden">
       <LazyUTable
@@ -132,7 +136,7 @@ async function openCreateFolderModal() {
         <template #empty>
           <div v-if="!hasError" class="flex items-center justify-center">
             <LazyUEmpty
-              class="w-full h-full tablet:min-w-125"
+              class="w-full tablet:w-fit min-w-125"
               variant="soft"
               icon="material-symbols:sad-tab-outline-rounded"
               title="No files"
