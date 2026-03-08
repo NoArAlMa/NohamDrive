@@ -2,29 +2,25 @@
 import type { TableRow } from "@nuxt/ui";
 import type { ApiFileItem } from "~~/shared/types/file_tree";
 import { UCheckbox, UButton, UDropdownMenu, UIcon } from "#components";
-import { LazyFileExplorerModalCreateFolder } from "#components";
-import type { DropdownMenuItem } from "@nuxt/ui";
+import type { Row } from "@tanstack/vue-table";
+const ExplorerContextMenu = defineAsyncComponent(
+  () => import("../ContextMenu.vue"),
+);
+const ExplorerError = defineAsyncComponent(() => import("../Error.vue"));
+const ExplorerLoader = defineAsyncComponent(() => import("../Loader/List.vue"));
 
-import type { TableMeta, Row } from "@tanstack/vue-table";
 const fileTreeStore = useFileTree();
-
 const { fileTree, loading, hasError, errorMessage, errorStatus } =
   storeToRefs(fileTreeStore);
 
-const table = useTemplateRef("table");
 const rowSelection = ref<Record<string, boolean>>({});
 const { viewMode } = useFileExplorerSettings();
-const overlay = useOverlay();
-const createFolderModal = overlay.create(LazyFileExplorerModalCreateFolder);
-
+const { isMobile } = useResponsive();
+const table = useTemplateRef("table");
 const emit = defineEmits<{
   (e: "update:selectedCount", count: number): void;
   (e: "update:selectedItems", items: ApiFileItem[]): void;
 }>();
-
-const selectedCount = computed(
-  () => Object.values(rowSelection.value).filter(Boolean).length,
-);
 
 const selectedItems = computed<ApiFileItem[]>(() => {
   return fileTree.value.filter((item, index) => rowSelection.value[index]);
@@ -41,29 +37,24 @@ onMounted(() => {
   );
 });
 
-const ExplorerContextMenu = defineAsyncComponent(
-  () => import("../ContextMenu.vue"),
-);
-const ExplorerError = defineAsyncComponent(() => import("../Error.vue"));
-const ExplorerLoader = defineAsyncComponent(() => import("../Loader/List.vue"));
-
-// Importation des components Nuxt UI pour pouvoir les utiliser en JS
 const contextRow = ref<TableRow<ApiFileItem> | null>(null);
 const contextOpen = ref(false);
+function handleOpenChange(v: boolean) {
+  if (!v) {
+    setTimeout(() => {
+      contextRow.value = null;
+    }, 80);
+  }
+}
 
 const ui = { UCheckbox, UButton, UDropdownMenu, UIcon };
-const { isMobile } = useResponsive();
+
 // Importation des colonnes et du système de sorting
 const { columns } = useFileExplorerColumns(ui, isMobile);
 const sorting = ref([]);
 
 // Variable "debounced" du loading
 const loading_debounced = refDebounced(loading, 100);
-
-function goBack() {
-  const fs = useFSStore();
-  fs.navigate("..");
-}
 
 function clearSelection() {
   rowSelection.value = {};
@@ -77,19 +68,6 @@ watch(fileTree, () => {
 defineExpose({
   clearSelection,
 });
-
-async function openCreateFolderModal() {
-  const modal = createFolderModal.open();
-  const result = await modal.result;
-}
-
-function handleOpenChange(v: boolean) {
-  if (!v) {
-    setTimeout(() => {
-      contextRow.value = null;
-    }, 80);
-  }
-}
 </script>
 
 <template>
@@ -135,34 +113,7 @@ function handleOpenChange(v: boolean) {
         <!-- Page lorsque l'explorateur est vide  -->
         <template #empty>
           <div v-if="!hasError" class="flex items-center justify-center">
-            <LazyUEmpty
-              class="w-full tablet:w-fit min-w-125"
-              variant="soft"
-              icon="material-symbols:sad-tab-outline-rounded"
-              title="No files"
-              description="It looks like you haven't added any files/folders. Create one to get started."
-              size="xl"
-              :actions="[
-                {
-                  icon: 'material-symbols:keyboard-return-rounded',
-                  label: 'Return',
-                  color: 'neutral',
-                  variant: 'soft',
-                  size: 'md',
-                  loadingAuto: true,
-                  onClick: goBack,
-                },
-                {
-                  icon: 'material-symbols:create-new-folder-outline-rounded',
-                  label: 'Create Folder',
-                  color: 'primary',
-                  variant: 'subtle',
-                  size: 'md',
-                  loadingAuto: true,
-                  onClick: openCreateFolderModal,
-                },
-              ]"
-            />
+            <FileExplorerEmpty />
           </div>
 
           <ExplorerError

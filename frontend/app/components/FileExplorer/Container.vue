@@ -75,8 +75,8 @@ async function onDrop(e: DragEvent) {
 
 const showMobileToolbar = computed(() => FileCount.value > 0);
 
-async function clearSelectionedFiles(explorerRef: any) {
-  await explorerRef?.clearSelection();
+function clearSelectionedFiles(explorerRef: any) {
+  explorerRef?.clearSelection();
 }
 </script>
 
@@ -127,14 +127,18 @@ async function clearSelectionedFiles(explorerRef: any) {
       <!-- Overlay -->
       <Transition name="drop-fade">
         <div
+          class="absolute inset-0 z-50 flex flex-col gap-3 items-center justify-center backdrop-blur-sm rounded-md bg-black/10 pointer-events-none"
           v-if="isDragging"
-          class="absolute inset-0 z-50 flex flex-col gap-3 items-center justify-center backdrop-blur-sm rounded-md border-2 border-white border-dashed bg-black/10 pointer-events-none"
         >
-          <LazyUIcon
-            name="material-symbols:file-copy-outline-rounded"
-            class="size-10"
+          <UFileUpload
+            multiple
+            :dropzone="true"
+            label="Drop your files here"
+            :highlight="true"
+            class="w-96 min-h-48"
+            size="xl"
+            :interactive="false"
           />
-          <p class="text-2xl font-semibold">Drop your file(s) here</p>
         </div>
       </Transition>
       <ClientOnly>

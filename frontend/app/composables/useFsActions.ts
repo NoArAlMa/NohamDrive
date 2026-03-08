@@ -316,7 +316,7 @@ export const useFsActions = () => {
       ? `${joinPath(FSStore.currentPath, item.name)}/`
       : joinPath(FSStore.currentPath, item.name);
 
-    const loadingToast = toast.add({
+    const loadingToast: Toast = toast.add({
       title: "Copie en cours...",
       color: "neutral",
       duration: 0,
@@ -337,11 +337,15 @@ export const useFsActions = () => {
           },
         },
       );
-      toast.remove(loadingToast.id);
-      toast.add({
+      toast.update(loadingToast.id, {
         title: "Fichier copié !",
         color: "success",
+        duration: 3000,
+        close: true,
         icon: "material-symbols:check-rounded",
+        ui: {
+          icon: "",
+        },
       });
 
       useFileTree().retryFetching();
@@ -350,8 +354,8 @@ export const useFsActions = () => {
     } catch (error: any) {
       const message =
         error.data?.statusMessage || "Impossible de copier le fichier/dossier.";
-      toast.remove(loadingToast.id);
-      toast.add({
+
+      toast.update(loadingToast.id, {
         title: "Erreur",
         icon: "material-symbols:error-outline-rounded",
         description: message,

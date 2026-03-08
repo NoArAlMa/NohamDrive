@@ -24,10 +24,7 @@ export const useFSStore = defineStore("fs", () => {
     if (fileTreeStore.loading) return;
 
     const newPath = resolvePath(inputPath, currentPath.value);
-
     if (newPath === currentPath.value) return;
-    console.log("NEWPATH :", newPath, "CURRENTPATH:", currentPath.value);
-
     currentPath.value = newPath;
   };
 

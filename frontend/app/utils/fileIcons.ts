@@ -13,6 +13,7 @@ export const fileIconMap: Record<string, string> = {
 
   // Images
   png: "explorer:image-icon",
+  ico: "explorer:image-icon",
   jpg: "explorer:image-icon",
   jpeg: "explorer:image-icon",
   webp: "explorer:image-icon",
@@ -32,7 +33,7 @@ export const fileIconMap: Record<string, string> = {
   css: "explorer:css-icon",
 
   // Par défaut
-  unknown: "explorer:folder-icon",
+  unknown: "explorer:unknown-icon",
 };
 
 // Fonction qui retourne le nom de l'icone en fonction de son extension

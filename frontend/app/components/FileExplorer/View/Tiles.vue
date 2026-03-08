@@ -1,7 +1,5 @@
 <script lang="ts" setup>
-import { useFSStore } from "#imports";
 const fileTreeStore = useFileTree();
-const fsstore = useFSStore();
 const { fileTree, loading, hasError, errorMessage, errorStatus } =
   storeToRefs(fileTreeStore);
 
@@ -20,10 +18,6 @@ const emitSelection = useDebounceFn(() => {
   emit("update:selectedCount", localSelection.value.size);
 }, 100);
 
-function goBack() {
-  fsstore.navigate("..");
-}
-
 const loading_debounced = refDebounced(loading, 100);
 
 const localSelection = ref<Set<ApiFileItem>>(new Set());
@@ -37,19 +31,9 @@ defineExpose({
   clearSelection,
 });
 
-const validSelection = computed(() => {
-  const validNames = new Set(fileTree.value.map((i) => i.name));
-  return Array.from(localSelection.value).filter((selected) =>
-    validNames.has(selected.name),
-  );
+watch(fileTree, () => {
+  clearSelection();
 });
-
-watch(
-  () => fsstore.currentPath,
-  () => {
-    clearSelection();
-  },
-);
 
 function updateSelection(item: ApiFileItem, checked: boolean) {
   if (checked) {
@@ -82,25 +66,7 @@ function updateSelection(item: ApiFileItem, checked: boolean) {
       class="flex items-center justify-center h-full"
       v-else-if="fileTree.length === 0"
     >
-      <LazyUEmpty
-        class="min-w-125"
-        variant="soft"
-        icon="material-symbols:sad-tab-outline-rounded"
-        title="No files"
-        description="It looks like you haven't added any files/folders. Create one to get started."
-        size="xl"
-        :actions="[
-          {
-            icon: 'material-symbols:keyboard-return-rounded',
-            label: 'Retour',
-            color: 'neutral',
-            variant: 'subtle',
-            size: 'md',
-            loadingAuto: true,
-            onClick: goBack,
-          },
-        ]"
-      />
+      <FileExplorerEmpty />
     </div>
 
     <div
