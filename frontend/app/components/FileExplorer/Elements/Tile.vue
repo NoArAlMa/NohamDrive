@@ -181,7 +181,7 @@ async function onDrop(e: DragEvent) {
       <div
         class="relative flex flex-col items-center justify-between p-4 w-full h-full rounded-lg cursor-pointer transition-all duration-150 select-none hover:bg-muted/50 hover:shadow-sm group"
         :class="{
-          'border-2 border-neutral ': isDragOver,
+          'outline-2 outline-neutral outline-dashed': isDragOver,
           'shadow-sm bg-muted/50': isChecked,
         }"
         @mouseenter="isHovered = true"

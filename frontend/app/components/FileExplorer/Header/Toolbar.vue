@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { DropdownMenuItem, NavigationMenuItem } from "@nuxt/ui";
+import { LazyFileExplorerModalMoveItems } from "#components";
 
 const props = defineProps<{
   items: ApiFileItem[];
@@ -36,9 +37,16 @@ const fileActions = computed<FileAction[]>(() => [
     key: "move",
     label: "Déplacer",
     icon: "material-symbols:drive-file-move-outline-rounded",
-    disabled: true,
-
-    handler: () => {},
+    handler: async () => {
+      const overlay = useOverlay();
+      const MoveModal = overlay.create(LazyFileExplorerModalMoveItems, {
+        props: {
+          items: props.items,
+        },
+      });
+      const modal = MoveModal.open();
+      const result = await modal.result;
+    },
   },
   {
     key: "share",
@@ -78,12 +86,6 @@ const DrawerItems = ref<NavigationMenuItem[]>([
       onSelect: () => {
         runBatch(props.items, action.download);
       },
-    },
-    {
-      label: "Déplacer",
-      icon: "material-symbols:drive-file-move-outline-rounded",
-      disabled: true,
-      onSelect: () => {},
     },
     {
       slot: "suppress",

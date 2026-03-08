@@ -166,7 +166,7 @@ async function onDrop(e: DragEvent) {
     return;
   }
 
-  await action.move(correct_path, destinationPath);
+  await action.move(data.path, destinationPath);
 
   isDragOver.value = false;
 }
@@ -178,7 +178,7 @@ async function onDrop(e: DragEvent) {
     :aria-hidden="false"
     @dblclick="!isMobile && onRowClick"
     ref="rowRef"
-    :class="{ 'border-2 border-neutral ': isDragOver }"
+    :class="{ 'outline-2 outline-neutral outline-dashed': isDragOver }"
     draggable="true"
     @dragstart="onDragStart"
     @dragover="onDragOver"

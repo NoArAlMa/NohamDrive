@@ -464,14 +464,16 @@ export const useFsActions = () => {
     };
     let loadingToast: Toast | undefined;
     try {
-      loadingToast = toast.add({
-        title: "Déplacement en cours...",
-        color: "neutral",
-        duration: 0,
-        close: false,
-        ui: { icon: "animate-spin" },
-        icon: "material-symbols:progress-activity",
-      });
+      if (!options?.silent) {
+        loadingToast = toast.add({
+          title: "Déplacement en cours...",
+          color: "neutral",
+          duration: 0,
+          close: false,
+          ui: { icon: "animate-spin" },
+          icon: "material-symbols:progress-activity",
+        });
+      }
 
       const req = await $fetch<GenericAPIResponse<CopyFilePayload>>(
         "/storage/move",
@@ -489,12 +491,14 @@ export const useFsActions = () => {
       const message =
         error.data?.data.message ||
         "Impossible de renommer le fichier/dossier.";
-      toast.add({
-        title: "Erreur",
-        icon: "material-symbols:error-outline-rounded",
-        description: message,
-        color: "error",
-      });
+      if (!options?.silent) {
+        toast.add({
+          title: "Erreur",
+          icon: "material-symbols:error-outline-rounded",
+          description: message,
+          color: "error",
+        });
+      }
       throw error;
     }
   };
