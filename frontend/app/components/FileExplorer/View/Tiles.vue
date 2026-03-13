@@ -22,26 +22,14 @@ const loading_debounced = refDebounced(loading, 100);
 
 const localSelection = ref<Set<ApiFileItem>>(new Set());
 
-function clearSelection() {
-  localSelection.value.clear();
-  emitSelection();
-}
-
-defineExpose({
-  clearSelection,
-});
+const selection = useFileExplorerSelection();
 
 watch(fileTree, () => {
-  clearSelection();
+  selection.clear();
 });
 
 function updateSelection(item: ApiFileItem, checked: boolean) {
-  if (checked) {
-    localSelection.value.add(item);
-  } else {
-    localSelection.value.delete(item);
-  }
-  emitSelection();
+  selection.toggle(item, checked);
 }
 </script>
 
@@ -77,7 +65,7 @@ function updateSelection(item: ApiFileItem, checked: boolean) {
         v-for="item in fileTree"
         :key="item.name"
         :item="item"
-        :selected="localSelection.has(item)"
+        :selected="selection.isSelected(item)"
         @update:selected="updateSelection"
       />
     </div>

@@ -13,6 +13,8 @@ const fileTreeStore = useFileTree();
 const { fileTree, loading, hasError, errorMessage, errorStatus } =
   storeToRefs(fileTreeStore);
 
+const selection = useFileExplorerSelection();
+
 const rowSelection = ref<Record<string, boolean>>({});
 const { viewMode } = useFileExplorerSettings();
 const { isMobile } = useResponsive();
@@ -26,17 +28,6 @@ const selectedItems = computed<ApiFileItem[]>(() => {
   return fileTree.value.filter((item, index) => rowSelection.value[index]);
 });
 
-onMounted(() => {
-  watch(
-    selectedItems,
-    (items) => {
-      emit("update:selectedItems", items);
-      emit("update:selectedCount", selectedItems.value.length);
-    },
-    { immediate: true },
-  );
-});
-
 const contextRow = ref<TableRow<ApiFileItem> | null>(null);
 const contextOpen = ref(false);
 function handleOpenChange(v: boolean) {
@@ -46,6 +37,21 @@ function handleOpenChange(v: boolean) {
     }, 80);
   }
 }
+
+onMounted(() => {
+  watch(
+    rowSelection,
+    (rows) => {
+      const items = Object.keys(rows)
+        .filter((k) => rows[k])
+        .map((index) => fileTree.value[Number(index)])
+        .filter((item): item is ApiFileItem => item !== undefined);
+
+      selection.set(items);
+    },
+    { deep: true },
+  );
+});
 
 const ui = { UCheckbox, UButton, UDropdownMenu, UIcon };
 
@@ -58,6 +64,7 @@ const loading_debounced = refDebounced(loading, 100);
 
 function clearSelection() {
   rowSelection.value = {};
+  selection.clear();
   contextRow.value = null;
 }
 

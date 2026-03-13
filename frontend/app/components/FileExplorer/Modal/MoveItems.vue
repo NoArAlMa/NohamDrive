@@ -176,7 +176,7 @@ async function moveItems() {
               class="w-full tablet:w-fit min-w-125"
               variant="soft"
               icon="material-symbols:sad-tab-outline-rounded"
-              title="No files"
+              title="No folders"
               description="It looks like you haven't added any files/folders. Create one to get started."
               size="xl"
               :actions="[

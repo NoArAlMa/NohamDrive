@@ -7,8 +7,9 @@ import {
   LazyFileExplorerHeaderUpload,
 } from "#components";
 
-const FileCount = ref(0);
-const selectedItems = ref<ApiFileItem[]>([]);
+const selection = useFileExplorerSelection();
+const FileCount = selection.count;
+const selectedItems = selection.items;
 const explorerRef = ref();
 const isDragging = ref(false);
 const dragCounter = ref(0);
@@ -76,6 +77,7 @@ async function onDrop(e: DragEvent) {
 const showMobileToolbar = computed(() => FileCount.value > 0);
 
 function clearSelectionedFiles(explorerRef: any) {
+  selection.clear();
   explorerRef?.clearSelection();
 }
 </script>
@@ -142,16 +144,9 @@ function clearSelectionedFiles(explorerRef: any) {
         </div>
       </Transition>
       <ClientOnly>
-        <LazyFileExplorerViewList
-          v-if="isList || isMobile"
-          v-model:selectedCount="FileCount"
-          v-model:selected-items="selectedItems"
-          ref="explorerRef"
-        />
+        <LazyFileExplorerViewList v-if="isList || isMobile" ref="explorerRef" />
         <LazyFileExplorerViewTiles
           v-else-if="viewMode === 'tiles' && !isMobile"
-          v-model:selectedCount="FileCount"
-          v-model:selected-items="selectedItems"
           ref="explorerRef"
           class="border border-muted/20 rounded-md inset-shadow-sm/2"
         />
