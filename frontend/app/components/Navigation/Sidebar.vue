@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from "@nuxt/ui";
 import type { DropdownMenuItem } from "@nuxt/ui";
+import Limiter from "./Limiter.vue";
 
 const { isMobile } = useResponsive();
 
@@ -141,7 +142,7 @@ const collapsed = ref(false);
       />
 
       <!-- Menu principal -->
-      <div class="overflow-y-auto">
+      <div class="overflow-y-auto mb-auto">
         <LazyUNavigationMenu
           tooltip
           :collapsed="collapsed"
@@ -164,17 +165,49 @@ const collapsed = ref(false);
             ].join(' '),
           }"
         >
-          <template #list-leading></template>
         </LazyUNavigationMenu>
       </div>
+      <div class="flex flex-row gap-1 m-0" v-if="!isMobile">
+        <UTooltip
+          text="Download app"
+          :content="{
+            side: 'top',
+          }"
+        >
+          <UButton
+            v-if="!isElectron"
+            icon="material-symbols:download-2-outline-rounded"
+            to="/download-app"
+            variant="ghost"
+            size="sm"
+            color="neutral"
+          />
+        </UTooltip>
+        <UTooltip
+          text="Report a bug"
+          :content="{
+            side: 'top',
+          }"
+        >
+          <UButton
+            icon="i-lucide-info"
+            target="_blank"
+            to="https://c.tenor.com/e3OI7DDT9i0AAAAd/tenor.gif"
+            variant="ghost"
+            size="sm"
+            color="neutral"
+            class="transition-all duration-200 hover:text-error"
+          />
+        </UTooltip>
+      </div>
+      <Limiter v-if="!collapsed" class="-mt-2.5" />
 
       <!-- Menu secondaire -->
-      <LazyUNavigationMenu
+      <!-- <LazyUNavigationMenu
         v-if="!isMobile"
         :collapsed="collapsed"
         :items="items[1]"
         orientation="vertical"
-        class="mt-auto pt-2"
         :ui="{
           link: [
             'group relative flex items-center rounded-lg',
@@ -191,7 +224,7 @@ const collapsed = ref(false);
             collapsed ? 'size-4' : 'size-3 tablet:size-4',
           ].join(' '),
         }"
-      />
+      /> -->
     </template>
 
     <template #footer>
