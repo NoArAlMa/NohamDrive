@@ -25,6 +25,7 @@ useSeoMeta({
 
 definePageMeta({
   layout: "welcome",
+  middleware: "app-middleware",
 });
 
 const features = [
