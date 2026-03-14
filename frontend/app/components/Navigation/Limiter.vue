@@ -6,7 +6,9 @@ const Percent = ref((used.value / max.value) * 100);
 </script>
 
 <template>
-  <section class="flex flex-col w-full py-3 px-2 rounded-md bg-neutral-800/50">
+  <section
+    class="flex flex-col w-full py-3 px-2 rounded-md bg-neutral-800/40 hover:bg-neutral-800/45"
+  >
     <div class="mb-2">
       <h1 class="text-sm font-bold">Storage</h1>
     </div>

@@ -136,7 +136,7 @@ const collapsed = ref(false);
             'text-sm tablet:text-base',
             collapsed
               ? 'px-2 py-1.5 justify-center'
-              : 'px-2 py-1.5 tablet:px-3 tablet:py-2',
+              : 'px-2 py-1.5 tablet:px-2 tablet:py-1.5',
           ].join(' '),
         }"
       />
@@ -167,12 +167,17 @@ const collapsed = ref(false);
         >
         </LazyUNavigationMenu>
       </div>
-      <div class="flex flex-row gap-1 m-0" v-if="!isMobile">
+      <div
+        class="flex gap-1 m-0"
+        :class="collapsed ? 'flex-col items-center' : 'flex-row'"
+        v-if="!isMobile"
+      >
         <UTooltip
           text="Download app"
           :content="{
             side: 'top',
           }"
+          :delay-duration="10"
         >
           <UButton
             v-if="!isElectron"
@@ -188,6 +193,7 @@ const collapsed = ref(false);
           :content="{
             side: 'top',
           }"
+          :delay-duration="10"
         >
           <UButton
             icon="i-lucide-info"
