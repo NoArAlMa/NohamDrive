@@ -1,4 +1,5 @@
 import { LazyFileExplorerModalPreview } from "#components";
+import { LazyFileExplorerModalPropertyDrawer } from "#components";
 import type { Toast } from "@nuxt/ui/runtime/composables/useToast.js";
 import type {
   CompressFilePayload,
@@ -288,18 +289,47 @@ export const useFsActions = () => {
     const full_path = item.is_dir
       ? `${joinPath(FSStore.currentPath, item.name)}/`
       : joinPath(FSStore.currentPath, item.name);
-
+    let loadingToast: Toast | undefined;
+    loadingToast = toast.add({
+      title: "En cours d'ouverture...",
+      color: "neutral",
+      duration: 0,
+      close: false,
+      ui: { icon: "animate-spin" },
+      icon: "material-symbols:progress-activity",
+    });
     try {
-      const req = await $fetch("/storage/stats", {
-        method: "GET",
-        query: {
-          object_path: full_path,
+      const req = await $fetch<GenericAPIResponse<FileMetadata>>(
+        "/storage/stats",
+        {
+          method: "GET",
+          query: {
+            object_path: full_path,
+          },
         },
-      });
+      );
+
+      const PropertyDrawer = overlay.create(
+        LazyFileExplorerModalPropertyDrawer,
+        {
+          props: {
+            file: item!,
+            metadata: req.data!,
+          },
+        },
+      );
+      if (loadingToast) toast.remove(loadingToast.id);
+      PropertyDrawer.open();
     } catch (error: any) {
-      const message =
-        error.data?.statusMessage || "Impossible de récupérer les stats.";
-      toast.add({ title: "Erreur", description: message, color: "error" });
+      if (loadingToast) toast.remove(loadingToast.id);
+      toast.add({
+        title: "Erreur",
+        description:
+          error.data?.statusMessage ??
+          "Impossible d'inspecter le fichier/dossier.",
+        color: "error",
+        icon: "material-symbols:error-outline-rounded",
+      });
       throw error;
     }
   };

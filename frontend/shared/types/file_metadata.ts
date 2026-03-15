@@ -1,11 +1,29 @@
 export interface FileMetadata {
-  nom: string;
-  taille_octets: number;
-  taille_ko: number;
-  type_mime: string;
-  date_modification: string;
-  chemin: string;
-  etag: number;
-  version_id: number;
-  nombre_fichiers: number;
+  // ----- Base -----
+  name: string;
+  path: string;
+  content_type: string;
+  last_modified?: string;
+
+  // ----- File -----
+  size_bytes?: number;
+  size_kb?: number;
+  etag?: string;
+  version_id?: string;
+
+  // ----- Image -----
+  width?: number;
+  height?: number;
+  format?: string;
+
+  // ----- Video -----
+  duration?: number;
+  codec?: string;
+  fps?: number;
+
+  // ----- Folder -----
+  file_count?: number;
+
+  // ----- Type discriminant -----
+  file_type: "file" | "image" | "video" | "folder";
 }

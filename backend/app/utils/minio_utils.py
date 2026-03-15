@@ -2,16 +2,113 @@ import re
 from typing import Literal
 from fastapi import HTTPException
 from minio import Minio, S3Error
+import mimetypes
+from pathlib import Path
+from PIL import Image
+import io
+import json
+
 
 WINDOWS_SUFFIX_RE = re.compile(r"^(.*?)(?: \((\d+)\))?$")
 
 
+EXTENSION_MAP = {
+    "png": "image",
+    "jpg": "image",
+    "jpeg": "image",
+    "gif": "image",
+    "webp": "image",
+    "mp4": "video",
+    "webm": "video",
+    "mkv": "video",
+    "mp3": "audio",
+    "wav": "audio",
+    "pdf": "pdf",
+    "doc": "document",
+    "docx": "document",
+    "odt": "document",
+    "xls": "spreadsheet",
+    "xlsx": "spreadsheet",
+    "ods": "spreadsheet",
+    "ppt": "presentation",
+    "pptx": "presentation",
+    "zip": "archive",
+    "rar": "archive",
+    "7z": "archive",
+    "txt": "text",
+    "md": "text",
+    "json": "code",
+    "js": "code",
+    "ts": "code",
+    "py": "code",
+    "html": "code",
+    "css": "code",
+}
+
+
 class MinioUtils:
+    @staticmethod
+    def detect_mime(filename: str, fallback: str | None = None) -> str:
+        mime, _ = mimetypes.guess_type(filename)
+
+        if mime:
+            return mime
+
+        if fallback:
+            return fallback
+
+        return "application/octet-stream"
+
+    @staticmethod
+    def get_file_type(filename: str, mime: str) -> str:
+        ext = Path(filename).suffix.lower().replace(".", "")
+
+        if ext in EXTENSION_MAP:
+            return EXTENSION_MAP[ext]
+
+        if mime.startswith("image/"):
+            return "image"
+
+        if mime.startswith("video/"):
+            return "video"
+
+        if mime.startswith("audio/"):
+            return "audio"
+
+        return "file"
+
+    @staticmethod
+    def extract_image_metadata(data: bytes):
+        with Image.open(io.BytesIO(data)) as img:
+            return {"width": img.width, "height": img.height, "format": img.format}
+
+    @staticmethod
+    def extract_video_metadata(media_info):
+        # media_info est une chaîne JSON, il faut la parser en dictionnaire
+        media_info_dict = json.loads(media_info)
+        tracks = media_info_dict.get("media", {}).get("track", [])
+
+        video_track = next((t for t in tracks if t.get("@type") == "Video"), {})
+        audio_track = next((t for t in tracks if t.get("@type") == "Audio"), {})
+
+        return {
+            "duration": round(float(video_track.get("Duration", 0)), 0)
+            if video_track
+            else 0,
+            "width": int(video_track.get("Width", 0)) if video_track else 0,
+            "height": int(video_track.get("Height", 0)) if video_track else 0,
+            "codec": video_track.get("Format", "Inconnu") if video_track else "Inconnu",
+            "audio_codec": audio_track.get("Format", "Inconnu")
+            if audio_track
+            else "Inconnu",
+            "fps": float(video_track.get("FrameRate", 0)) if video_track else 0,
+        }
+
     @staticmethod
     def get_parent_path(path: str) -> str:
         """
         Retourne le dossier parent d’un path
-        ex: dossier1/dossier2/file.txt → dossier1/dossier2/
+        ex: dossier1/dossier2/file.txt --> dossier1/dossier2/
         """
         parts = path.rstrip("/").split("/")
         if len(parts) <= 1:
