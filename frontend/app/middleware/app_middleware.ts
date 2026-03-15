@@ -1,6 +1,6 @@
 export default defineNuxtRouteMiddleware(() => {
   const { isElectron } = useElectron();
-  if (isElectron) {
+  if (isElectron.value) {
     return navigateTo("/home");
   }
 });

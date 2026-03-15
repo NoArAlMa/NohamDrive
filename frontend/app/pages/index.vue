@@ -88,171 +88,174 @@ const links = ref<ButtonProps[]>([
 const testimonials = ref([
   {
     user: {
-      name: "Thomas L.",
-      description: "CTO chez DevFlow",
+      name: "Eric Z.",
+      description: "CEO chez Reconquête",
       avatar: {
-        src: "https://randomuser.me/api/portraits/men/32.jpg",
-        alt: "Thomas L.",
+        src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQJR0X94RYBQIXn1m_-ZCiwPpiZZ8OQGhua-g&s",
+        alt: "Eric Z.",
       },
     },
     quote:
-      "NohamDrive a révolutionné notre gestion de fichiers en équipe. Le terminal intégré est un game-changer : enfin une alternative open-source à OneDrive qui répond à nos besoins techniques !",
+      "Eh ben voyons ! NohamDrive a révolutionné notre gestion des arabes à renvoyer dans leurs pays. Le terminal intégré est un game-changer : enfin une alternative open-source à OneDrive qui répond à nos besoins techniques !",
+    star: 4,
   },
   {
     user: {
-      name: "Clara M.",
-      description: "Cheffe de projet chez OpenTech",
-      avatar: {
-        src: "https://randomuser.me/api/portraits/women/44.jpg",
-        alt: "Clara M.",
-      },
-    },
-    quote:
-      "Passé de OneDrive à NohamDrive en une semaine, et nos équipes ne veulent plus revenir en arrière. La collaboration en temps réel et la transparence du code sont des atouts majeurs.",
-  },
-  {
-    user: {
-      name: "Lucas D.",
+      name: "Adolf H.",
       description: "Développeur full-stack freelance",
       avatar: {
-        src: "https://randomuser.me/api/portraits/men/65.jpg",
-        alt: "Lucas D.",
+        src: "https://ichef.bbci.co.uk/ace/ws/640/cpsprodpb/DD74/production/_126329665_fea34d36-80f3-4987-b7e2-509a67afecdd.jpg.webp",
+        alt: "Adolf H.",
       },
     },
     quote:
-      "J’ai déployé NohamDrive sur mon VPS en moins de 30 minutes. L’intégration avec Minio et le terminal Linux-like m’ont convaincu : c’est l’outil qu’il me manquait pour mes projets clients.",
+      "J’ai été rejeté des Beaux-arts étant plus jeune. L’intégration avec Minio et le terminal Linux-like m’ont convaincu : c’est l’outil qu’il me manquait pour mes projets.",
+    star: 3,
   },
   {
     user: {
-      name: "Amélie R.",
-      description: "Responsable IT chez GreenStart",
+      name: "Le minotaure",
+      description: "Responsable des Furry",
       avatar: {
-        src: "https://randomuser.me/api/portraits/women/68.jpg",
-        alt: "Amélie R.",
+        src: "https://m.media-amazon.com/images/S/amzn-author-media-prod/o7o0ubb64o29ardj4phsr3sfg3._SY450_CR0%2C0%2C450%2C450_.jpg",
+        alt: "Le minotaure",
       },
     },
     quote:
-      "Nos données sensibles sont enfin hébergées en interne, avec un contrôle total. L’interface est intuitive, et le support communautaire est réactif. Un sans-faute !",
+      "C'EST LE TRAIN DE LA HYYYYYPE !! Johan adore cette application ! Cela nous permet de nous organiser pour faire les vidéos dégustation",
+    star: 4,
   },
   {
     user: {
-      name: "Julien P.",
-      description: "Co-fondateur de CodeHub",
+      name: "Walter W.",
+      description: "Professeur de chimie",
       avatar: {
-        src: "https://randomuser.me/api/portraits/men/75.jpg",
-        alt: "Julien P.",
+        src: "https://upload.wikimedia.org/wikipedia/en/0/03/Walter_White_S5B.png",
+        alt: "Walter W.",
       },
     },
     quote:
-      "Le partage sécurisé et l’historique des modifications ont réduit nos erreurs de 40%. NohamDrive est devenu notre outil de référence pour la gestion de documents techniques.",
+      "Depuis que j'utilise NohamDrive, je suis le danger. Grâce à NohamDrive, Skyler gère mieux le blanchiment d'argent et surtout elle ouvre moins sa gueule",
+    star: 5,
   },
   {
     user: {
-      name: "Sophie T.",
-      description: "Design Lead chez UX Studio",
+      name: "Hugo H.",
+      description: "CEO exceptionnel de Roblox",
       avatar: {
-        src: "https://randomuser.me/api/portraits/women/28.jpg",
-        alt: "Sophie T.",
+        src: "https://media.routard.com/image/41/1/pt54785.1264411.jpg",
+        alt: "Hugo H.",
       },
     },
-    quote:
-      "Enfin un outil qui allie simplicité et puissance ! Mes équipes adorent l’explorateur de fichiers, et moi, je dors sur mes deux oreilles grâce au chiffrement intégré.",
+    quote: "Miaou",
+    star: 5,
   },
+
   {
     user: {
-      name: "Antoine B.",
-      description: "Sysadmin chez CloudInnov",
+      name: "Elizabeth II",
+      description: "Sysadmin au paradis",
       avatar: {
-        src: "https://randomuser.me/api/portraits/men/82.jpg",
-        alt: "Antoine B.",
+        src: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Elizabeth_II_in_Berlin_2015_%28cropped%29.JPG/250px-Elizabeth_II_in_Berlin_2015_%28cropped%29.JPG",
+        alt: "Elizabeth II",
       },
     },
     quote:
       "L’intégration avec notre infrastructure existante (PostgreSQL + Docker) a été un jeu d’enfant. Les performances sont au rendez-vous, même avec des fichiers volumineux.",
+    star: 4,
   },
   {
     user: {
-      name: "Camille L.",
-      description: "Product Manager chez StartUp Factory",
+      name: "Cémoi lebaigé.",
+      description: "Vendeur de Kebab",
       avatar: {
-        src: "https://randomuser.me/api/portraits/women/36.jpg",
-        alt: "Camille L.",
+        src: "https://i.pinimg.com/736x/41/18/04/411804a00535829a3e910e7ad2a1bf45.jpg",
+        alt: "Cémoi lebaigé.",
       },
     },
     quote:
-      "NohamDrive a accéléré nos workflows de 30%. Le terminal intégré permet à nos devs de gérer les fichiers sans quitter leur environnement préféré. Un gain de temps énorme !",
+      "Ahah ne trouvez vous pas ça magnifique, mon cher ! Cette application est vraiment très belle et je l'aime bien. Un gain de temps énorme !",
+    star: 4,
   },
   {
     user: {
-      name: "Marc S.",
+      name: "Christian R.",
+      description: "Joueur de sucker",
+      avatar: {
+        src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQLp39lxGZQV78_C3WuLpD7K9b1giOmPGtZCA&s",
+        alt: "Christian R.",
+      },
+    },
+    quote: "SIUUU… mes backups sont sécurisés.",
+    star: 3,
+  },
+  {
+    user: {
+      name: "Jeffrey E.",
+      description: "Design Lead chez Nickelodeon",
+      avatar: {
+        src: "https://media.lesechos.com/api/v1/images/view/5d5b7881d286c205b067c1e4/1280x720/0601738550212-web-tete.jpg",
+        alt: "Jeffrey E.",
+      },
+    },
+    quote:
+      "Enfin un outil qui allie simplicité et puissance ! Mes équipes adorent explorer les enfants... euh les fichiers, et moi, je dors sur mes deux oreilles grâce au chiffrement intégré ; ).",
+    star: 3,
+  },
+
+  {
+    user: {
+      name: "Monsieur Bride'o'neaut",
+      description: "CEO des graphes",
+      avatar: {
+        src: "https://pierrelacroix.com/wp-content/uploads/2009/07/coeur-de-dieu.jpg",
+        alt: "Monsieur Bride'o'neaut",
+      },
+    },
+    quote:
+      "Franchement j'ai bien aimé, c'est pas trop difficile à installer ! C'est mon mac qui m'a le plus ralenti. Je sais pas vraiment comment ça fonctionne mais j'imagine que c'est bien",
+    star: 3,
+  },
+  {
+    user: {
+      name: "Donald D.",
+      description: "CEO des Etats Unis",
+      avatar: {
+        src: "https://www.trumplibrary.gov/sites/default/files/styles/large/public/2021-01/President-Trump-Official-Portrait.jpg?itok=eReCLE7X",
+        alt: "Donald D.",
+      },
+    },
+    quote:
+      "J'adore NohamDrive ! Et j'adore la France, Macron est un nice guy. Make NohamDrive great again !!",
+    star: 4,
+  },
+  {
+    user: {
+      name: "Jay Lense",
       description: "Professeur en informatique",
       avatar: {
-        src: "https://randomuser.me/api/portraits/men/41.jpg",
-        alt: "Marc S.",
+        src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBcmfL2liSkvMLJ7KJE925MM7kSlBjx6sPRg&s",
+        alt: "Jay Lance",
       },
     },
     quote:
-      "J’utilise NohamDrive pour enseigner la gestion de fichiers à mes étudiants. L’outil est pédagogique, et le code open-source leur permet de comprendre ‘sous le capot’. Bravo !",
-  },
-  {
-    user: {
-      name: "Élodie F.",
-      description: "Freelance en cybersécurité",
-      avatar: {
-        src: "https://randomuser.me/api/portraits/women/55.jpg",
-        alt: "Élodie F.",
-      },
-    },
-    quote:
-      "La sécurité est au cœur de NohamDrive : permissions granulaires, chiffrement, et audits complets. Je le recommande à tous mes clients soucieux de protéger leurs données.",
-  },
-  {
-    user: {
-      name: "Nicolas K.",
-      description: "CEO de TechForGood",
-      avatar: {
-        src: "https://randomuser.me/api/portraits/men/12.jpg",
-        alt: "Nicolas K.",
-      },
-    },
-    quote:
-      "Nous avons migré 5 To de données vers NohamDrive sans aucun temps d’arrêt. L’équipe a été bluffée par la stabilité et la réactivité du support.",
-  },
-  {
-    user: {
-      name: "Laura V.",
-      description: "Cheffe de produit chez DataDrive",
-      avatar: {
-        src: "https://randomuser.me/api/portraits/women/79.jpg",
-        alt: "Laura V.",
-      },
-    },
-    quote:
-      "L’outil parfait pour les équipes techniques : léger, rapide, et sans dépendance à des solutions propriétaires. Nos coûts d’hébergement ont chuté de 50% !",
-  },
-  {
-    user: {
-      name: "Pierre M.",
-      description: "Développeur backend",
-      avatar: {
-        src: "https://randomuser.me/api/portraits/men/9.jpg",
-        alt: "Pierre M.",
-      },
-    },
-    quote:
-      "J’ai contribué au code de NohamDrive, et c’est un plaisir de voir un projet open-source aussi bien structuré. La documentation est claire, et la communauté est accueillante.",
+      "Windows c'est de la merde, tout le monde le sait ! C'est pour ça que j'ai décidé d'utiliser la meilleure alternative à Onedrive (cette merde) : NohamDrive ! J'apprécie cette app presque autant que Linux",
+    star: 5,
   },
 ]);
 
 const PageTitle = "Stock, share & collaborate freely";
+const PageDesc = ref(
+  "NohamDrive est une alternative open-source à OneDrive, conçue pour les équipes. Explorez, partagez et gérez vos fichiers directement depuis un terminal intégré et une interface intuitive, en toute sécurité.",
+);
 </script>
 
 <template>
-  <section class="flex flex-col">
+  <section class="flex flex-col scroll-smooth">
     <UPageSection
       :features="pageSection"
       :title="PageTitle"
-      description="NohamDrive est une alternative open-source à OneDrive, conçue pour les équipes. Explorez, partagez et gérez vos fichiers directement depuis un terminal intégré et une interface intuitive, en toute sécurité."
+      :description="PageDesc"
       :links="links"
       class="w-full h-[90vh] mb-10"
     />
@@ -283,7 +286,7 @@ const PageTitle = "Stock, share & collaborate freely";
 
     <div
       id="echo"
-      class="min-h-[70vh] w-full flex flex-col rounded-md md:flex-row items-center justify-center gap-12 px-4 sm:px-8 py-12 bg-gray-800"
+      class="min-h-[80vh] w-full flex flex-col rounded-md md:flex-row items-center justify-center gap-12 px-4 sm:px-8 py-12 bg-gray-800"
     >
       <div class="flex-1 max-w-md text-center md:text-left">
         <h1
@@ -322,11 +325,50 @@ const PageTitle = "Stock, share & collaborate freely";
         </div>
       </div>
     </div>
+    <div id="testimonials" class="py-16 px-4 sm:py-20 sm:px-6 lg:py-24 lg:px-8">
+      <div class="max-w-7xl mx-auto">
+        <h2
+          class="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-12 md:mb-16"
+        >
+          Ils nous font confiance
+        </h2>
+
+        <UPageColumns>
+          <UPageCard
+            v-for="(testimonial, index) in testimonials"
+            :key="index"
+            variant="subtle"
+            :description="testimonial.quote"
+            :ui="{
+              description:
+                'before:content-[open-quote] after:content-[close-quote]',
+            }"
+          >
+            <template #header>
+              <div class="w-full flex flex-row justify-between items-center">
+                <UIcon
+                  v-for="i in 5"
+                  :key="i"
+                  :name="
+                    i <= testimonial.star
+                      ? 'material-symbols:star-rate-rounded'
+                      : 'material-symbols:star-rate-outline-rounded'
+                  "
+                  class="size-5"
+                  :class="
+                    i <= testimonial.star
+                      ? 'text-amber-400'
+                      : 'text-neutral-500'
+                  "
+                />
+              </div>
+            </template>
+            <template #footer>
+              <UUser v-bind="testimonial.user" size="xl" />
+            </template>
+          </UPageCard>
+        </UPageColumns>
+      </div>
+    </div>
   </section>
 </template>
-
-<style>
-html {
-  scroll-behavior: smooth;
-}
-</style>
