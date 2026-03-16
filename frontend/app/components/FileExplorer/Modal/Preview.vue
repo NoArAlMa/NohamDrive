@@ -1,8 +1,14 @@
 <script lang="ts" setup>
+import { VueFilesPreview } from "vue-files-preview";
+
 const { fileName, file } = defineProps<{
-  file: File | null;
+  file: File;
   fileName: string;
 }>();
+
+const LazyVueFilesPreview = defineAsyncComponent(() =>
+  import("vue-files-preview").then((m) => m.VueFilesPreview),
+);
 
 const showPreview = ref(true);
 
@@ -12,7 +18,7 @@ function closeModal() {
 </script>
 
 <template>
-  <UModal
+  <LazyUModal
     dismissible
     fullscreen
     title="Prévisualisation du fichier"
@@ -33,12 +39,17 @@ function closeModal() {
           <div
             class="w-full h-full max-w-full max-h-full flex items-center justify-center"
           >
-            <VueFilesPreview :file="file" class="w-full h-full" />
+            <LazyVueFilesPreview
+              v-if="showPreview"
+              :file="file"
+              v-bind="$attrs"
+              class="w-full h-full"
+            />
           </div>
         </ClientOnly>
       </div>
     </template>
-  </UModal>
+  </LazyUModal>
 </template>
 
 <style scoped>
