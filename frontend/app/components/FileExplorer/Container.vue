@@ -113,8 +113,8 @@ function clearSelectionedFiles(explorerRef: any) {
       </div>
 
       <div class="flex flex-row gap-2 shrink-0" v-if="!isMobile">
-        <LazyFileExplorerHeaderSelectDisplay />
         <LazyFileExplorerHeaderSelectColumns v-if="isList" />
+        <LazyFileExplorerHeaderSelectDisplay />
         <LazyFileExplorerHeaderUpload />
       </div>
     </div>

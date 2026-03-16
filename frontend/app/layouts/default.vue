@@ -3,12 +3,12 @@ const { isMobile } = useResponsive();
 </script>
 
 <template>
-  <LazyUApp>
-    <LazyUDashboardGroup>
+  <UApp>
+    <UDashboardGroup>
       <ClientOnly>
         <LazyNavigationSidebar />
       </ClientOnly>
-      <LazyUDashboardPanel :ui="{ body: 'p-0 laptop:p-4' }">
+      <UDashboardPanel :ui="{ body: 'p-0 laptop:p-4' }">
         <template #header>
           <div class="lg:hidden">
             <div class="flex justify-between items-center p-3">
@@ -33,7 +33,7 @@ const { isMobile } = useResponsive();
           <LazyUDashboardSearch />
           <NuxtPage />
         </template>
-      </LazyUDashboardPanel>
-    </LazyUDashboardGroup>
-  </LazyUApp>
+      </UDashboardPanel>
+    </UDashboardGroup>
+  </UApp>
 </template>

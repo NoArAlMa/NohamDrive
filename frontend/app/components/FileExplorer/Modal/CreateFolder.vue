@@ -32,8 +32,14 @@ async function confirmCreateFolder() {
   >
     <template #content>
       <UCard class="flex flex-col gap-2 justify-between">
-        <h3 class="text-2xl font-semibold mb-10">Nouveau dossier</h3>
-        <UFormField class="space-y-2" label="Nom du fichier" :error="error">
+        <div class="w-full flex flex-row gap-2 items-center mb-10">
+          <UIcon
+            name="material-symbols:create-new-folder-outline"
+            class="size-6"
+          />
+          <h3 class="text-2xl font-semibold">Nouveau dossier</h3>
+        </div>
+        <UFormField class="space-y-2" label="Nom du dossier" :error="error">
           <UInput
             v-model="newFolderName"
             class=""
