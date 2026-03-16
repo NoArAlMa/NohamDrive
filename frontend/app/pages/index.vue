@@ -286,7 +286,7 @@ const PageDesc = ref(
 
     <div
       id="echo"
-      class="min-h-[80vh] w-full flex flex-col rounded-md md:flex-row items-center justify-center gap-12 px-4 sm:px-8 py-12 bg-gray-800"
+      class="min-h-[80vh] w-full flex flex-col rounded-md md:flex-row items-center justify-center gap-12 px-4 sm:px-8 py-12 bg-gray-200 dark:bg-gray-800"
     >
       <div class="flex-1 max-w-md text-center md:text-left">
         <h1
@@ -358,7 +358,7 @@ const PageDesc = ref(
                   :class="
                     i <= testimonial.star
                       ? 'text-amber-400'
-                      : 'text-neutral-500'
+                      : 'text-neutral-600'
                   "
                 />
               </div>

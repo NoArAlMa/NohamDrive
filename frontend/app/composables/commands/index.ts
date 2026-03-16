@@ -10,6 +10,8 @@ import { downloadCommand } from "./download";
 import { moveCommand } from "./move";
 import { renameCommand } from "./rename";
 import { copyCommand } from "./copy";
+import { openCommand } from "./open";
+import { propertyCommand } from "./property";
 
 export const commandRegistry = {
   help: helpCommand,
@@ -24,4 +26,6 @@ export const commandRegistry = {
   mv: moveCommand,
   rename: renameCommand,
   copy: copyCommand,
+  open: openCommand,
+  info: propertyCommand,
 };
