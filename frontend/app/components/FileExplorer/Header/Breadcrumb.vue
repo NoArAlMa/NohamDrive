@@ -1,10 +1,9 @@
 <script lang="ts" setup>
 const action = useFsActions();
 
-const { setCurrentPath, generateBreadcrumbItems, navigate, currentPath } =
-  useFSStore();
+const { setCurrentPath, generateBreadcrumbItems, navigate } = useFSStore();
 const { runBatch } = useBatchAction();
-const { isRoot } = storeToRefs(useFSStore());
+const { isRoot, currentPath } = storeToRefs(useFSStore());
 const { isMobile } = useResponsive();
 
 const items = computed(() => {
@@ -57,8 +56,8 @@ async function onDropCrumb(e: DragEvent, path: string) {
     data,
     async (item) => {
       const correct_name = item.is_dir
-        ? `${joinPath(currentPath, item.name)}/`
-        : joinPath(currentPath, item.name);
+        ? `${joinPath(currentPath.value, item.name)}/`
+        : joinPath(currentPath.value, item.name);
 
       if (correct_name === path) return;
 

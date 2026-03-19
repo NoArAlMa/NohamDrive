@@ -14,6 +14,9 @@ export const useFsActions = () => {
   const toast = useToast();
 
   const overlay = useOverlay();
+  function delay(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
 
   const open = async (item: ApiFileItem) => {
     if (item.is_dir) {
@@ -519,8 +522,7 @@ export const useFsActions = () => {
     } catch (error: any) {
       if (loadingToast) toast.remove(loadingToast.id);
       const message =
-        error.data?.data.message ||
-        "Impossible de renommer le fichier/dossier.";
+        error.data?.message || "Impossible de renommer le fichier/dossier.";
       if (!options?.silent) {
         toast.add({
           title: "Erreur",
@@ -529,7 +531,6 @@ export const useFsActions = () => {
           color: "error",
         });
       }
-      throw error;
     }
   };
 

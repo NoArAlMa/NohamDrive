@@ -50,11 +50,6 @@ function startEditing() {
     baseName.value = base;
     extension.value = ext;
   }
-
-  nextTick(() => {
-    inputRef.value?.focus();
-    inputRef.value?.select();
-  });
 }
 
 async function submitEditing() {
@@ -85,8 +80,16 @@ const cancelEditing = () => {
   isEditing.value = false;
 };
 
-function open() {
-  action.open(props.item);
+const Opening = ref(false);
+
+async function onTileOpening() {
+  if (!props.item) return;
+  if (Opening.value) return;
+
+  Opening.value = true;
+  await action.open(props.item);
+  Opening.value = false;
+
 }
 
 const isHovered = ref(false);
@@ -212,7 +215,7 @@ async function onDrop(e: DragEvent) {
         }"
         @mouseenter="isHovered = true"
         @mouseleave="isHovered = false"
-        @dblclick="open"
+        @dblclick="onTileOpening"
         draggable="true"
         @dragstart="onDragStart"
         @dragover="onDragOver"

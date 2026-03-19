@@ -105,12 +105,23 @@ function onRowClick() {
   props.row.toggleSelected?.();
 }
 
+const Opening = ref(false);
+
+async function onRowOpening() {
+  if (!props.row) return;
+  if (Opening.value) return;
+
+  Opening.value = true;
+  await action.open(props.row.original);
+  Opening.value = false;
+}
+
 function onDragStart(e: DragEvent) {
   if (!e.dataTransfer) return;
 
   let items: ApiFileItem[];
 
-  // Si l'item est sélectionné → drag toute la sélection
+  // Si l'item est sélectionné  drag toute la sélection
   if (selection.isSelected(props.row.original)) {
     items = selection.items.value;
   } else {
@@ -185,7 +196,7 @@ async function onDrop(e: DragEvent) {
       (v): v is { correct_path: string; item: (typeof data)[number] } =>
         v !== null,
     );
- 
+
   await runBatch(
     itemsToMove,
     async ({ correct_path }) => {
@@ -235,7 +246,7 @@ async function onDrop(e: DragEvent) {
       <span
         draggable="false"
         class="block truncate hover:underline underline-offset-2 cursor-pointer"
-        @click="action.open(props.row.original)"
+        @click="onRowOpening"
         :title="row.getValue('name')"
       >
         {{ row.getValue("name") }}
