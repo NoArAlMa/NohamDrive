@@ -1,63 +1,18 @@
 <script lang="ts" setup>
-import { useFSStore } from "#imports";
 const fileTreeStore = useFileTree();
-const fsstore = useFSStore();
 const { fileTree, loading, hasError, errorMessage, errorStatus } =
   storeToRefs(fileTreeStore);
 
-onMounted(() => {
-  emit("update:selectedCount", 0);
-  emit("update:selectedItems", []);
-});
-
-const emit = defineEmits<{
-  (e: "update:selectedItems", value: ApiFileItem[]): void;
-  (e: "update:selectedCount", value: number): void;
-}>();
-
-const emitSelection = useDebounceFn(() => {
-  emit("update:selectedItems", Array.from(localSelection.value));
-  emit("update:selectedCount", localSelection.value.size);
-}, 100);
-
-function goBack() {
-  fsstore.navigate("..");
-}
-
 const loading_debounced = refDebounced(loading, 100);
 
-const localSelection = ref<Set<ApiFileItem>>(new Set());
+const selection = useFileExplorerSelection();
 
-function clearSelection() {
-  localSelection.value.clear();
-  emitSelection();
-}
-
-defineExpose({
-  clearSelection,
+watch(fileTree, () => {
+  selection.clear();
 });
-
-const validSelection = computed(() => {
-  const validNames = new Set(fileTree.value.map((i) => i.name));
-  return Array.from(localSelection.value).filter((selected) =>
-    validNames.has(selected.name),
-  );
-});
-
-watch(
-  () => fsstore.currentPath,
-  () => {
-    clearSelection();
-  },
-);
 
 function updateSelection(item: ApiFileItem, checked: boolean) {
-  if (checked) {
-    localSelection.value.add(item);
-  } else {
-    localSelection.value.delete(item);
-  }
-  emitSelection();
+  selection.toggle(item, checked);
 }
 </script>
 
@@ -82,25 +37,7 @@ function updateSelection(item: ApiFileItem, checked: boolean) {
       class="flex items-center justify-center h-full"
       v-else-if="fileTree.length === 0"
     >
-      <LazyUEmpty
-        class="min-w-125"
-        variant="soft"
-        icon="material-symbols:sad-tab-outline-rounded"
-        title="No files"
-        description="It looks like you haven't added any files/folders. Create one to get started."
-        size="xl"
-        :actions="[
-          {
-            icon: 'material-symbols:keyboard-return-rounded',
-            label: 'Retour',
-            color: 'neutral',
-            variant: 'subtle',
-            size: 'md',
-            loadingAuto: true,
-            onClick: goBack,
-          },
-        ]"
-      />
+      <FileExplorerEmpty />
     </div>
 
     <div
@@ -111,7 +48,7 @@ function updateSelection(item: ApiFileItem, checked: boolean) {
         v-for="item in fileTree"
         :key="item.name"
         :item="item"
-        :selected="localSelection.has(item)"
+        :selected="selection.isSelected(item)"
         @update:selected="updateSelection"
       />
     </div>

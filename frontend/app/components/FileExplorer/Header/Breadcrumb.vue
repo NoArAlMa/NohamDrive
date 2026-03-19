@@ -2,8 +2,8 @@
 const action = useFsActions();
 
 const { setCurrentPath, generateBreadcrumbItems, navigate } = useFSStore();
-
-const { isRoot } = storeToRefs(useFSStore());
+const { runBatch } = useBatchAction();
+const { isRoot, currentPath } = storeToRefs(useFSStore());
 const { isMobile } = useResponsive();
 
 const items = computed(() => {
@@ -33,25 +33,42 @@ function onDragLeaveCrumb() {
 async function onDropCrumb(e: DragEvent, path: string) {
   e.preventDefault();
 
-  let data;
+  let data: { name: string; is_dir: boolean }[];
+
   try {
-    data = JSON.parse(e.dataTransfer?.getData("application/json") || "");
+    const parsed = JSON.parse(
+      e.dataTransfer?.getData("application/json") || "",
+    );
+
+    data = Array.isArray(parsed) ? parsed : [parsed];
   } catch {
     console.warn("Invalid breadcrumb drop data");
     dragOverPath.value = null;
     return;
   }
 
-  if (!data?.name) {
+  if (!data.length) {
     dragOverPath.value = null;
     return;
   }
 
-  const correct_name = data.is_dir
-    ? `${joinPath(useFSStore().currentPath, data.name)}/`
-    : joinPath(useFSStore().currentPath, data.name);
+  await runBatch(
+    data,
+    async (item) => {
+      const correct_name = item.is_dir
+        ? `${joinPath(currentPath.value, item.name)}/`
+        : joinPath(currentPath.value, item.name);
 
-  await action.move(correct_name, path);
+      if (correct_name === path) return;
+
+      await action.move(correct_name, path);
+    },
+    {
+      loading: "Déplacement...",
+      success: "Éléments déplacés",
+      error: "Erreur lors du déplacement",
+    },
+  );
 
   dragOverPath.value = null;
 }
@@ -69,7 +86,7 @@ async function onDropCrumb(e: DragEvent, path: string) {
             root: '',
             list: 'flex items-center gap-0.5 min-w-0',
             item: 'min-w-0',
-            link: 'group flex items-center gap-1 truncate',
+            link: 'group flex items-center gap-1 truncate ',
           }"
         >
           <template #separator>
@@ -79,7 +96,8 @@ async function onDropCrumb(e: DragEvent, path: string) {
             <LazyULink
               class="mx-0 px-2 py-0.5 rounded-md hover:bg-elevated truncate max-w-40"
               :class="{
-                'border-2 border-neutral': dragOverPath === item.path,
+                'border-2 border-neutral border-dashed':
+                  dragOverPath === item.path,
                 'hover:bg-elevated': dragOverPath !== item.path,
               }"
               :title="item.label"
@@ -96,7 +114,7 @@ async function onDropCrumb(e: DragEvent, path: string) {
       <div v-else-if="isMobile && !isRoot">
         <UButton
           icon="material-symbols:keyboard-backspace-rounded"
-          variant="ghost"
+          variant="outline"
           color="neutral"
           @click="handleReturn"
         />

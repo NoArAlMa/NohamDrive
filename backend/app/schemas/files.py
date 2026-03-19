@@ -1,16 +1,43 @@
+from datetime import datetime
+
 from pydantic import BaseModel
-from typing import Literal, Optional
+from typing import Literal, Optional, Union
 from app.utils.response import BaseResponse
 
 
-class FileMetadata(BaseModel):
-    filename: Optional[str]
-    size: Optional[int]
-    content_type: Optional[str] = "application/octet-stream"
-    upload_date: str
-    bucket: str
-    object_name: str
-    url: str | None = None
+class BaseMetadata(BaseModel):
+    name: str
+    path: str
+    content_type: str = "application/octet-stream"
+    last_modified: Optional[datetime]
+
+
+class FileMetadata(BaseMetadata):
+    size_bytes: int
+    size_kb: float
+    etag: Optional[str]
+    version_id: Optional[str]
+
+
+class ImageMetadata(FileMetadata):
+    width: int
+    height: int
+    format: str
+
+
+class VideoMetadata(FileMetadata):
+    width: int
+    height: int
+    duration: float
+    codec: Optional[str]
+    fps: Optional[float]
+
+
+class FolderMetadata(BaseMetadata):
+    file_count: int
+
+
+ObjectMetadata = Union[FileMetadata, FolderMetadata]
 
 
 class CreateFolder(BaseModel):

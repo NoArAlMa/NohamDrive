@@ -4,7 +4,7 @@ export default defineNuxtConfig({
   // Ignore le dossier electron
   ignore: ["electron"],
 
-  modules: ["@nuxt/ui", "@pinia/nuxt", "@vueuse/nuxt", "@nuxt/hints"],
+  modules: ["@nuxt/ui", "@pinia/nuxt", "@vueuse/nuxt"],
 
   // Importation des fichiers css principaux
 

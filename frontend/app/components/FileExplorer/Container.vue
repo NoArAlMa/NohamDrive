@@ -7,8 +7,9 @@ import {
   LazyFileExplorerHeaderUpload,
 } from "#components";
 
-const FileCount = ref(0);
-const selectedItems = ref<ApiFileItem[]>([]);
+const selection = useFileExplorerSelection();
+const FileCount = selection.count;
+const selectedItems = selection.items;
 const explorerRef = ref();
 const isDragging = ref(false);
 const dragCounter = ref(0);
@@ -17,6 +18,7 @@ const { upload } = useFsActions();
 const { runBatch } = useBatchAction();
 const { isMobile } = useResponsive();
 const { viewMode } = useFileExplorerSettings();
+const { isRoot } = storeToRefs(useFSStore());
 const isList = computed(
   () => viewMode.value === "list" || viewMode.value === "compact",
 );
@@ -72,8 +74,11 @@ async function onDrop(e: DragEvent) {
   }
 }
 
-async function clearSelectionedFiles(explorerRef: any) {
-  await explorerRef?.clearSelection();
+const showMobileToolbar = computed(() => FileCount.value > 0);
+
+function clearSelectionedFiles(explorerRef: any) {
+  selection.clear();
+  explorerRef?.clearSelection();
 }
 </script>
 
@@ -81,19 +86,23 @@ async function clearSelectionedFiles(explorerRef: any) {
   <section
     class="flex flex-col relative rounded-md laptop:border border-muted px-0 py-0 laptop:px-2 laptop:py-2"
   >
-    <div class="shrink-0 pl-1 pr-1 mb-1 flex items-center justify-between h-12">
-      <div class="rounded-md px-2 py-1.5 md:border border-muted shadow-md">
+    <div
+      class="shrink-0 pl-1 pr-1 flex items-center justify-between h-12 tablet:mb-1"
+      :class="isMobile ? 'mx-1 my-1' : ''"
+      v-if="showMobileToolbar || !isMobile || !isRoot"
+    >
+      <div class="rounded-md px-2 border border-muted py-1.5 shadow-sm">
         <div v-if="FileCount > 0" class="flex gap-1 items-center">
           <FileExplorerHeaderToolbar :items="selectedItems" />
           <USeparator
             :decorative="true"
             orientation="vertical"
-            class="h-6 mr-2"
+            class="h-6 mx-2"
           />
           <LazyUTooltip text="Unselect all" :delay-duration="200">
             <UButton
               variant="subtle"
-              size="sm"
+              :size="isMobile ? 'md' : 'sm'"
               color="error"
               leading-icon="material-symbols:close"
               @click="clearSelectionedFiles(explorerRef)"
@@ -104,8 +113,8 @@ async function clearSelectionedFiles(explorerRef: any) {
       </div>
 
       <div class="flex flex-row gap-2 shrink-0" v-if="!isMobile">
-        <LazyFileExplorerHeaderSelectDisplay />
         <LazyFileExplorerHeaderSelectColumns v-if="isList" />
+        <LazyFileExplorerHeaderSelectDisplay />
         <LazyFileExplorerHeaderUpload />
       </div>
     </div>
@@ -120,29 +129,26 @@ async function clearSelectionedFiles(explorerRef: any) {
       <!-- Overlay -->
       <Transition name="drop-fade">
         <div
+          class="absolute inset-0 z-50 flex flex-col gap-3 items-center justify-center backdrop-blur-sm rounded-md bg-black/10 pointer-events-none"
           v-if="isDragging"
-          class="absolute inset-0 z-50 flex flex-col gap-3 items-center justify-center backdrop-blur-sm rounded-md border-2 border-white border-dashed bg-black/10 pointer-events-none"
         >
-          <LazyUIcon
-            name="material-symbols:file-copy-outline-rounded"
-            class="size-10"
+          <UFileUpload
+            multiple
+            :dropzone="true"
+            label="Drop your files here"
+            :highlight="true"
+            class="w-96 min-h-48"
+            size="xl"
+            :interactive="false"
           />
-          <p class="text-2xl font-semibold">Drop your file(s) here</p>
         </div>
       </Transition>
       <ClientOnly>
-        <LazyFileExplorerViewList
-          v-if="isList || isMobile"
-          v-model:selectedCount="FileCount"
-          v-model:selected-items="selectedItems"
-          ref="explorerRef"
-        />
+        <LazyFileExplorerViewList v-if="isList || isMobile" ref="explorerRef" />
         <LazyFileExplorerViewTiles
           v-else-if="viewMode === 'tiles' && !isMobile"
-          v-model:selectedCount="FileCount"
-          v-model:selected-items="selectedItems"
           ref="explorerRef"
-          class="border border-muted rounded-md inset-shadow-sm/2"
+          class="border border-muted/20 rounded-md inset-shadow-sm/2"
         />
       </ClientOnly>
     </div>

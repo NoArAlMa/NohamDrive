@@ -34,7 +34,7 @@ const currentIcon = computed(
     :items="items"
     value-key="value"
     :icon="currentIcon"
-    class="size-9"
+    class="size-9 shadow-sm"
     :content="{
       align: 'end',
       side: 'bottom',
@@ -42,6 +42,8 @@ const currentIcon = computed(
     }"
     :ui="{
       content: 'w-fit',
+      trailingIcon:
+        'group-data-[state=open]:rotate-180 transition-transform duration-200',
     }"
   />
 </template>

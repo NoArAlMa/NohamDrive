@@ -8,10 +8,12 @@ import { onLongPress } from "@vueuse/core";
 const props = defineProps<{ row: TableRow<ApiFileItem> }>();
 
 const { isMobile } = useResponsive();
+const { runBatch } = useBatchAction();
 
 // On utilise un composable maison pour enregistrer/désenregistrer les fonctions de renommage.
 // Cela permet de déclencher l'édition depuis n'importe où (ex: menu contextuel).
 const { register, unregister } = useFileRenameRegistry();
+const selection = useFileExplorerSelection();
 
 const action = useFsActions();
 const FSStore = useFSStore();
@@ -86,8 +88,6 @@ async function submitEditing() {
 onLongPress(
   rowRef,
   () => {
-    if (!isMobile.value) return;
-
     props.row.toggleSelected?.();
   },
   {
@@ -105,14 +105,35 @@ function onRowClick() {
   props.row.toggleSelected?.();
 }
 
+const Opening = ref(false);
+
+async function onRowOpening() {
+  if (!props.row) return;
+  if (Opening.value) return;
+
+  Opening.value = true;
+  await action.open(props.row.original);
+  Opening.value = false;
+}
+
 function onDragStart(e: DragEvent) {
   if (!e.dataTransfer) return;
 
-  const payload = {
-    name: props.row.original.name,
-    is_dir: props.row.original.is_dir,
-    path: joinPath(FSStore.currentPath, props.row.original.name),
-  };
+  let items: ApiFileItem[];
+
+  // Si l'item est sélectionné  drag toute la sélection
+  if (selection.isSelected(props.row.original)) {
+    items = selection.items.value;
+  } else {
+    // Sinon on drag uniquement cet item
+    items = [props.row.original];
+  }
+
+  const payload = items.map((item) => ({
+    name: item.name,
+    is_dir: item.is_dir,
+    path: joinPath(FSStore.currentPath, item.name),
+  }));
 
   e.dataTransfer.effectAllowed = "move";
   e.dataTransfer.setData("application/json", JSON.stringify(payload));
@@ -140,7 +161,7 @@ async function onDrop(e: DragEvent) {
     name: string;
     path: string;
     is_dir: boolean;
-  } | null = null;
+  }[] = [];
 
   try {
     data = JSON.parse(e.dataTransfer.getData("application/json"));
@@ -150,25 +171,43 @@ async function onDrop(e: DragEvent) {
     return;
   }
 
-  if (!data?.path) {
+  if (!data.length) {
     isDragOver.value = false;
     return;
   }
 
-  const destinationPath = props.row.original.is_dir
-    ? joinPath(FSStore.currentPath, props.row.original.name) + "/"
-    : joinPath(FSStore.currentPath, props.row.original.name);
+  const destinationPath =
+    joinPath(FSStore.currentPath, props.row.original.name) + "/";
 
-  const correct_path = data.is_dir
-    ? joinPath(FSStore.currentPath, data.name) + "/"
-    : joinPath(FSStore.currentPath, data.name);
+  const itemsToMove = data
+    .map((item) => {
+      const correct_path = item.is_dir
+        ? joinPath(FSStore.currentPath, item.name) + "/"
+        : joinPath(FSStore.currentPath, item.name);
 
-  if (correct_path === destinationPath) {
-    isDragOver.value = false;
-    return;
-  }
+      if (correct_path === destinationPath) return null;
 
-  await action.move(correct_path, destinationPath);
+      return {
+        correct_path,
+        item,
+      };
+    })
+    .filter(
+      (v): v is { correct_path: string; item: (typeof data)[number] } =>
+        v !== null,
+    );
+
+  await runBatch(
+    itemsToMove,
+    async ({ correct_path }) => {
+      await action.move(correct_path, destinationPath);
+    },
+    {
+      loading: "Déplacement des fichiers...",
+      success: "Fichiers déplacés",
+      error: "Erreur lors du déplacement",
+    },
+  );
 
   isDragOver.value = false;
 }
@@ -180,7 +219,7 @@ async function onDrop(e: DragEvent) {
     :aria-hidden="false"
     @dblclick="!isMobile && onRowClick"
     ref="rowRef"
-    :class="{ 'border-2 border-neutral ': isDragOver }"
+    :class="{ 'outline-2 outline-neutral outline-dashed': isDragOver }"
     draggable="true"
     @dragstart="onDragStart"
     @dragover="onDragOver"
@@ -207,7 +246,7 @@ async function onDrop(e: DragEvent) {
       <span
         draggable="false"
         class="block truncate hover:underline underline-offset-2 cursor-pointer"
-        @click="action.open(props.row.original)"
+        @click="onRowOpening"
         :title="row.getValue('name')"
       >
         {{ row.getValue("name") }}

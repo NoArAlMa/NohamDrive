@@ -6,7 +6,15 @@ from fastapi import HTTPException, status
 from minio import Minio, S3Error
 from app.services.minio.bucket_service import BucketService
 from app.utils.minio_utils import MinioUtils
-from app.schemas.files import ResolvePathResponse
+from app.schemas.files import (
+    FileMetadata,
+    FolderMetadata,
+    ImageMetadata,
+    ObjectMetadata,
+    ResolvePathResponse,
+    VideoMetadata,
+)
+from pymediainfo import MediaInfo
 from core.logging import setup_logger
 from minio.deleteobjects import DeleteObject
 import io
@@ -672,78 +680,74 @@ class ObjectService:
             logger.error(f"Erreur MinIO lors de la compression: {str(e)}")
             raise HTTPException(500, f"Erreur lors de la compression: {str(e)}")
 
-    async def get_object_metadata(self, user_id: int, path: str) -> dict:
-        """
-        Récupère les métadonnées d'un fichier ou dossier dans MinIO.
-
-        Args:
-            user_id: ID de l'utilisateur (pour déterminer le bucket).
-            path: Chemin de l'objet (ex: "dossier/fichier.txt" ou "dossier/").
-
-        Returns:
-            Dict[str, str]: Dictionnaire contenant les métadonnées.
-
-        Raises:
-            HTTPException: 404 si l'objet n'existe pas, 500 en cas d'erreur MinIO.
-        """
-        bucket_name = await self.bucket_service.get_user_bucket(user_id)
-        path = MinioUtils.normalize_path(path, is_folder=path.endswith("/"))
-        is_folder = path.endswith("/")
-
+    async def get_object_metadata(self, user_id: int, path: str) -> ObjectMetadata:
         try:
-            if is_folder:
-                # Pour un dossier, on liste les objets avec ce préfixe
+            bucket_name = await self.bucket_service.get_user_bucket(user_id=user_id)
+            normalized_path = MinioUtils.normalize_path(
+                path, is_folder=path.endswith("/")
+            )
+            is_dir = normalized_path.endswith("/")
+
+            if is_dir:
+                # Logique pour les dossiers (inchangée)
+                folder_prefix = normalized_path.rstrip("/") + "/"
                 objects = list(
-                    self.minio.list_objects(bucket_name, prefix=path, recursive=False)
-                )
-                if not objects:
-                    raise HTTPException(
-                        status_code=404, detail="Dossier vide ou introuvable"
+                    self.minio.list_objects(
+                        bucket_name, prefix=folder_prefix, recursive=True
                     )
+                )
+                file_count = max(len(objects) - 1, 0)
+                try:
+                    stat = self.minio.stat_object(bucket_name, folder_prefix)
+                    last_modified = stat.last_modified
+                except Exception:
+                    last_modified = datetime.now()
+                return FolderMetadata(
+                    name=folder_prefix.rstrip("/").split("/")[-1],
+                    path="/" + folder_prefix,
+                    content_type="application/x-directory",
+                    last_modified=last_modified,
+                    file_count=file_count,
+                )
 
-                # Métadonnées "virtuelles" pour le dossier
-                metadata = {
-                    "nom": path.split("/")[-2],
-                    "taille_octets": None,
-                    "taille_ko": None,
-                    "type_mime": "application/x-directory",
-                    "date_modification": None,
-                    "chemin": path,
-                    "etag": None,
-                    "version_id": None,
-                    "nombre_fichiers": len(
-                        list(
-                            self.minio.list_objects(
-                                bucket_name, prefix=path, recursive=True
-                            )
-                        )
-                    ),
-                }
+            stat = self.minio.stat_object(bucket_name, normalized_path)
+            last_modified = stat.last_modified
+            mime_type = MinioUtils.detect_mime(normalized_path, stat.content_type)
+            content_type = MinioUtils.get_file_type(normalized_path, mime_type)
+
+            base_metadata = {
+                "name": normalized_path.split("/")[-1],
+                "path": "/" + normalized_path,
+                "content_type": content_type,
+                "last_modified": last_modified,
+                "size_bytes": stat.size or 0,
+                "size_kb": round((stat.size or 0) / 1024, 2),
+                "etag": stat.etag,
+                "version_id": stat.version_id,
+            }
+
+            if content_type == "image":
+                data = self.minio.get_object(bucket_name, normalized_path).read()
+                img_meta = MinioUtils.extract_image_metadata(data)
+                return ImageMetadata(**base_metadata, **img_meta)
+
+            elif content_type == "video":
+                video_data = self.minio.get_object(bucket_name, normalized_path).read()
+                media_info_json = MediaInfo.parse(io.BytesIO(video_data), output="JSON")
+                video_meta = MinioUtils.extract_video_metadata(media_info_json)
+                logger.info(video_meta)
+                return VideoMetadata(**base_metadata, **video_meta)
+
             else:
-                # Pour un fichier, on utilise stat_object
-                stat = self.minio.stat_object(bucket_name, path)
-                if stat.last_modified:
-                    last_modified = datetime.fromtimestamp(
-                        stat.last_modified.timestamp()
-                    ).strftime("%Y-%m-%d %H:%M:%S")
-                metadata = {
-                    "nom": path.split("/")[-1],
-                    "taille_octets": stat.size,
-                    "taille_ko": round(stat.size / 1024, 2) if stat.size else None,
-                    "type_mime": stat.content_type,
-                    "date_modification": last_modified,
-                    "chemin": path,
-                    "est_dossier": False,
-                    "etag": stat.etag,
-                    "version_id": stat.version_id,
-                }
-
-            return metadata
+                return FileMetadata(**base_metadata)
 
         except S3Error as e:
-            if e.code == "NoSuchKey":
-                raise HTTPException(status_code=404, detail="Objet non trouvé")
-            raise HTTPException(status_code=500, detail=f"Erreur MinIO: {str(e)}")
+            logger.error(f"Erreur récupération metadata {path}: {e}")
+            raise HTTPException(
+                status_code=404 if e.code == "NoSuchKey" else 500,
+                detail=f"Impossible de récupérer les métadonnées: {str(e)}",
+            )
+
 
     async def resolve_objet(self, user_id: int, path: str):
         try:

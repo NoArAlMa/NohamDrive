@@ -3,15 +3,29 @@ const { isMobile } = useResponsive();
 </script>
 
 <template>
-  <LazyUApp>
-    <LazyUDashboardGroup>
+  <UApp>
+    <UDashboardGroup>
       <ClientOnly>
         <LazyNavigationSidebar />
       </ClientOnly>
-      <LazyUDashboardPanel :ui="{ body: 'p-0 laptop:p-4' }">
+      <UDashboardPanel :ui="{ body: 'p-0 laptop:p-4' }">
         <template #header>
-          <div class="lg:hidden p-4 border-b">
-            <LazyUDashboardSidebarToggle variant="subtle" label="Menu" />
+          <div class="lg:hidden">
+            <div class="flex justify-between items-center p-3">
+              <h1
+                class="text-primary font-bold select-none whitespace-nowrap overflow-hidden text-ellipsis text-lg"
+              >
+                NohamDrive
+              </h1>
+
+              <LazyUDashboardSidebarToggle
+                size="lg"
+                variant="ghost"
+                icon="material-symbols:menu-rounded"
+              />
+            </div>
+
+            <div class="w-[95vw] mx-auto border-b border-muted/50"></div>
           </div>
         </template>
 
@@ -19,7 +33,7 @@ const { isMobile } = useResponsive();
           <LazyUDashboardSearch />
           <NuxtPage />
         </template>
-      </LazyUDashboardPanel>
-    </LazyUDashboardGroup>
-  </LazyUApp>
+      </UDashboardPanel>
+    </UDashboardGroup>
+  </UApp>
 </template>

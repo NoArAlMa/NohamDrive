@@ -1,57 +1,5 @@
-import type { Toast } from "@nuxt/ui/runtime/composables/useToast.js";
-
 export function useBatchAction() {
   const toast = useToast();
-
-  let total = 0;
-  let done = 0;
-  let toastRef: Toast | undefined;
-
-  function start(loadingTitle: string, count: number) {
-    total = count;
-    done = 0;
-
-    toastRef = toast.add({
-      title: loadingTitle,
-      description: `0 / ${total}`,
-      duration: 0,
-      close: false,
-      color: "neutral",
-      ui: { icon: "animate-spin" },
-      icon: "material-symbols:progress-activity",
-    });
-  }
-
-  function progress() {
-    done++;
-    if (toastRef) {
-      toast.update(toastRef.id, {
-        description: `${done} / ${total}`,
-      });
-    }
-  }
-
-  function success(successTitle: string) {
-    if (!toastRef) return;
-
-    toast.remove(toastRef.id);
-    toast.add({
-      title: successTitle,
-      color: "success",
-      icon: "material-symbols:check-rounded",
-    });
-  }
-
-  function error(message: string) {
-    if (toastRef) toast.remove(toastRef.id);
-
-    toast.add({
-      title: "Erreur",
-      description: message,
-      color: "error",
-      icon: "material-symbols:error-outline-rounded",
-    });
-  }
 
   async function runBatch<T>(
     items: T[],
@@ -62,26 +10,60 @@ export function useBatchAction() {
       error?: string;
     },
   ) {
+    if (!items.length) return;
+
     if (items.length === 1 || !feedback) {
-      if (items[0] !== undefined) {
-        await action(items[0]);
-      }
+      await action(items[0]!);
       return;
     }
 
-    start(feedback.loading, items.length);
+    let done = 0;
+
+    const toastRef = toast.add({
+      title: feedback.loading,
+      description: `0 / ${items.length}`,
+      icon: "material-symbols:progress-activity",
+      duration: 0,
+      progress: false,
+      close: false,
+      color: "neutral",
+      type: "foreground",
+      ui: { icon: "animate-spin" },
+    });
 
     for (const item of items) {
       try {
         await action(item, { silent: true });
-        progress();
+
+        done++;
+
+        toast.update(toastRef.id, {
+          description: `${done} / ${items.length}`,
+        });
       } catch (e) {
-        error(feedback.error ?? "Une erreur est survenue.");
+        toast.update(toastRef.id, {
+          title: "Erreur",
+          description: feedback.error ?? "Une erreur est survenue.",
+          color: "error",
+          icon: "material-symbols:error-outline-rounded",
+          duration: 5000,
+          close: true,
+          ui: { icon: "" },
+        });
+
         return;
       }
     }
 
-    success(feedback.success);
+    toast.update(toastRef.id, {
+      title: feedback.success,
+      description: "",
+      color: "success",
+      icon: "material-symbols:check-rounded",
+      duration: 4000,
+      close: true,
+      ui: { icon: "" },
+    });
   }
 
   return { runBatch };

@@ -4,6 +4,8 @@ import { useFileRenameRegistry } from "~/composables/file/RenameRegistry";
 
 const { register, unregister } = useFileRenameRegistry();
 const FSStore = useFSStore();
+const selection = useFileExplorerSelection();
+const { runBatch } = useBatchAction();
 
 const props = defineProps<{
   item: ApiFileItem;
@@ -48,11 +50,6 @@ function startEditing() {
     baseName.value = base;
     extension.value = ext;
   }
-
-  nextTick(() => {
-    inputRef.value?.focus();
-    inputRef.value?.select();
-  });
 }
 
 async function submitEditing() {
@@ -83,8 +80,16 @@ const cancelEditing = () => {
   isEditing.value = false;
 };
 
-function open() {
-  action.open(props.item);
+const Opening = ref(false);
+
+async function onTileOpening() {
+  if (!props.item) return;
+  if (Opening.value) return;
+
+  Opening.value = true;
+  await action.open(props.item);
+  Opening.value = false;
+
 }
 
 const isHovered = ref(false);
@@ -109,11 +114,19 @@ onLongPress(
 function onDragStart(e: DragEvent) {
   if (!e.dataTransfer) return;
 
-  const payload = {
-    name: props.item.name,
-    is_dir: props.item.is_dir,
-    path: joinPath(FSStore.currentPath, props.item.name),
-  };
+  let items: ApiFileItem[];
+
+  if (selection.isSelected(props.item)) {
+    items = selection.items.value;
+  } else {
+    items = [props.item];
+  }
+
+  const payload = items.map((item) => ({
+    name: item.name,
+    is_dir: item.is_dir,
+    path: joinPath(FSStore.currentPath, item.name),
+  }));
 
   e.dataTransfer.effectAllowed = "move";
   e.dataTransfer.setData("application/json", JSON.stringify(payload));
@@ -141,7 +154,7 @@ async function onDrop(e: DragEvent) {
     name: string;
     path: string;
     is_dir: boolean;
-  } | null = null;
+  }[] = [];
 
   try {
     data = JSON.parse(e.dataTransfer.getData("application/json"));
@@ -151,25 +164,41 @@ async function onDrop(e: DragEvent) {
     return;
   }
 
-  if (!data?.path) {
+  if (!data.length) {
     isDragOver.value = false;
     return;
   }
 
-  const destinationPath = props.item.is_dir
-    ? joinPath(FSStore.currentPath, props.item.name) + "/"
-    : joinPath(FSStore.currentPath, props.item.name);
+  const destinationPath = joinPath(FSStore.currentPath, props.item.name) + "/";
 
-  const correct_path = data.is_dir
-    ? joinPath(FSStore.currentPath, data.name) + "/"
-    : joinPath(FSStore.currentPath, data.name);
+  const itemsToMove = data
+    .map((item) => {
+      const correct_path = item.is_dir
+        ? joinPath(FSStore.currentPath, item.name) + "/"
+        : joinPath(FSStore.currentPath, item.name);
 
-  if (correct_path === destinationPath) {
-    isDragOver.value = false;
-    return;
-  }
+      if (correct_path === destinationPath) return null;
 
-  await action.move(correct_path, destinationPath);
+      return {
+        correct_path,
+        item,
+      };
+    })
+    .filter(
+      (v): v is { correct_path: string; item: (typeof data)[number] } =>
+        v !== null,
+    );
+  await runBatch(
+    itemsToMove,
+    async ({ correct_path }) => {
+      await action.move(correct_path, destinationPath);
+    },
+    {
+      loading: "Déplacement des fichiers...",
+      success: "Fichiers déplacés",
+      error: "Erreur lors du déplacement",
+    },
+  );
 
   isDragOver.value = false;
 }
@@ -181,12 +210,12 @@ async function onDrop(e: DragEvent) {
       <div
         class="relative flex flex-col items-center justify-between p-4 w-full h-full rounded-lg cursor-pointer transition-all duration-150 select-none hover:bg-muted/50 hover:shadow-sm group"
         :class="{
-          'border-2 border-neutral ': isDragOver,
+          'outline-2 outline-neutral outline-dashed': isDragOver,
           'shadow-sm bg-muted/50': isChecked,
         }"
         @mouseenter="isHovered = true"
         @mouseleave="isHovered = false"
-        @dblclick="open"
+        @dblclick="onTileOpening"
         draggable="true"
         @dragstart="onDragStart"
         @dragover="onDragOver"

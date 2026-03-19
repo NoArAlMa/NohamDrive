@@ -75,7 +75,7 @@
   /* --breakpoint-*: initial; */
   --breakpoint-tablet: 40rem;
   --breakpoint-laptop: 64rem;
-  --breakpoint-desktop: 80rem;
+  --breakpoint-desktop: 90rem;
 }
 
 :root {
@@ -137,7 +137,7 @@
   --ui-text-inverted: var(--ui-color-neutral-900);
 
   /* Couleur de background */
-  --ui-bg: #111927;
+  --ui-bg: #141a27;
   --ui-bg-muted: var(--ui-color-neutral-800);
   --ui-bg-elevated: var(--ui-color-neutral-800);
   --ui-bg-accented: var(--ui-color-neutral-500);
@@ -154,4 +154,8 @@
   body {
     @apply transition-colors duration-100;
   }
+}
+
+html {
+  scroll-behavior: smooth;
 }

@@ -2,64 +2,67 @@
 import type { TableRow } from "@nuxt/ui";
 import type { ApiFileItem } from "~~/shared/types/file_tree";
 import { UCheckbox, UButton, UDropdownMenu, UIcon } from "#components";
-import type { TableMeta, Row } from "@tanstack/vue-table";
-const fileTreeStore = useFileTree();
-
-const { fileTree, loading, hasError, errorMessage, errorStatus } =
-  storeToRefs(fileTreeStore);
-
-const table = useTemplateRef("table");
-const rowSelection = ref<Record<string, boolean>>({});
-const { viewMode } = useFileExplorerSettings();
-
-const emit = defineEmits<{
-  (e: "update:selectedCount", count: number): void;
-  (e: "update:selectedItems", items: ApiFileItem[]): void;
-}>();
-
-const selectedCount = computed(
-  () => Object.values(rowSelection.value).filter(Boolean).length,
-);
-
-const selectedItems = computed<ApiFileItem[]>(() => {
-  return fileTree.value.filter((item, index) => rowSelection.value[index]);
-});
-
-onMounted(() => {
-  watch(
-    selectedItems,
-    (items) => {
-      emit("update:selectedItems", items);
-      emit("update:selectedCount", selectedItems.value.length);
-    },
-    { immediate: true },
-  );
-});
-
+import type { Row } from "@tanstack/vue-table";
 const ExplorerContextMenu = defineAsyncComponent(
   () => import("../ContextMenu.vue"),
 );
 const ExplorerError = defineAsyncComponent(() => import("../Error.vue"));
 const ExplorerLoader = defineAsyncComponent(() => import("../Loader/List.vue"));
 
-// Importation des components Nuxt UI pour pouvoir les utiliser en JS
-const contextRow = ref<TableRow<ApiFileItem> | null>(null);
-const ui = { UCheckbox, UButton, UDropdownMenu, UIcon };
-const { isMobile } = useResponsive();
-// Importation des colonnes et du système de sorting
-const { columns } = useFileExplorerColumns(ui, isMobile);
-const sorting = ref([]);
+const fileTreeStore = useFileTree();
+const { fileTree, loading, hasError, errorMessage, errorStatus } =
+  storeToRefs(fileTreeStore);
 
 // Variable "debounced" du loading
 const loading_debounced = refDebounced(loading, 100);
 
-function goBack() {
-  const fs = useFSStore();
-  fs.navigate("..");
+const selection = useFileExplorerSelection();
+const { viewMode } = useFileExplorerSettings();
+const { isMobile } = useResponsive();
+
+const rowSelection = ref<Record<string, boolean>>({});
+const sorting = ref([]);
+
+const contextRow = ref<TableRow<ApiFileItem> | null>(null);
+const contextOpen = ref(false);
+
+const table = useTemplateRef("table");
+
+function handleOpenChange(v: boolean) {
+  if (!v) {
+    setTimeout(() => {
+      contextRow.value = null;
+    }, 80);
+  }
 }
+
+watch(
+  rowSelection,
+  (rows) => {
+    const items = Object.keys(rows)
+      .filter((k) => rows[k])
+      .map((index) => fileTree.value[Number(index)])
+      .filter((item): item is ApiFileItem => item !== undefined);
+
+    selection.set(items);
+  },
+  { deep: true },
+);
+
+const { columns } = useFileExplorerColumns(
+  {
+    UCheckbox,
+    UButton,
+    UDropdownMenu,
+    UIcon,
+  },
+  isMobile,
+);
 
 function clearSelection() {
   rowSelection.value = {};
+  selection.clear();
+  contextRow.value = null;
 }
 
 watch(fileTree, () => {
@@ -72,7 +75,11 @@ defineExpose({
 </script>
 
 <template>
-  <ExplorerContextMenu :row="contextRow">
+  <ExplorerContextMenu
+    :row="contextRow"
+    v-model:open="contextOpen"
+    @update:open="handleOpenChange"
+  >
     <div class="h-full w-full overflow-y-hidden overflow-x-hidden">
       <LazyUTable
         ref="table"
@@ -94,10 +101,12 @@ defineExpose({
         }"
         class="w-full h-full overflow-x-hidden table-fixed"
         @contextmenu="
-          (e: any, row: Row<ApiFileItem>) => {
-            if (!isMobile) {
-              contextRow = row ?? null;
+          (e: MouseEvent, row: Row<ApiFileItem>) => {
+            if (isMobile) {
+              return;
             }
+            contextRow = row ?? null;
+            contextOpen = true;
           }
         "
       >
@@ -108,25 +117,7 @@ defineExpose({
         <!-- Page lorsque l'explorateur est vide  -->
         <template #empty>
           <div v-if="!hasError" class="flex items-center justify-center">
-            <LazyUEmpty
-              class="min-w-125"
-              variant="soft"
-              icon="material-symbols:sad-tab-outline-rounded"
-              title="No files"
-              description="It looks like you haven't added any files/folders. Create one to get started."
-              size="xl"
-              :actions="[
-                {
-                  icon: 'material-symbols:keyboard-return-rounded',
-                  label: 'Retour',
-                  color: 'neutral',
-                  variant: 'subtle',
-                  size: 'md',
-                  loadingAuto: true,
-                  onClick: goBack,
-                },
-              ]"
-            />
+            <FileExplorerEmpty />
           </div>
 
           <ExplorerError

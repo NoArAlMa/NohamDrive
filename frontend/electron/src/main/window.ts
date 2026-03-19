@@ -1,31 +1,26 @@
-import electron from "electron";
+import { BrowserWindow, app, shell, Menu } from "electron";
 import path from "node:path";
-import type { BrowserWindow as BrowserWindowType } from "electron";
-const { app, BrowserWindow } = electron;
 import { fileURLToPath } from "node:url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-let mainWindow: BrowserWindowType | null = null;
-
 const isDev = !app.isPackaged;
+
 const preloadPath = isDev
   ? path.join(process.cwd(), "dist-electron/preload.js")
   : path.join(__dirname, "../../preload.js");
 
-const NITRO_URL = "http://localhost:3000";
-const RETRY_INTERVAL = 200; // ms entre chaque tentative
-const MAX_RETRIES = 50; // sécurité → 50 * 200ms = 10s max
+const url = isDev ? "http://localhost:3000" : "https://nsi.alexandre-larue.fr";
 
-/**
- * Crée et configure la fenêtre principale
- */
 export function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 1280,
+  const win = new BrowserWindow({
+    width: 1200,
+    minHeight: 600,
+    minWidth: 1100,
     height: 800,
     autoHideMenuBar: true,
+    show: false,
     webPreferences: {
       contextIsolation: true,
       webSecurity: true,
@@ -34,43 +29,88 @@ export function createWindow() {
     },
   });
 
-  let retries = 0;
+  Menu.setApplicationMenu(null);
 
-  function tryLoadURL() {
-    if (!mainWindow) return;
+  // Pour les fenêtres _blank => Vers le navigateur
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url);
+    return { action: "deny" };
+  });
 
-    mainWindow.loadURL(NITRO_URL).catch(() => {
-      // si ça échoue, on retry après RETRY_INTERVAL
-      retries++;
-      if (retries <= MAX_RETRIES) {
-        setTimeout(tryLoadURL, RETRY_INTERVAL);
-      } else {
-        console.error("Impossible de charger Nitro après plusieurs tentatives");
-        // fallback : afficher une page locale
-        mainWindow?.loadFile(path.join(__dirname, "offline.html"));
-      }
-    });
-  }
+  // Eviter d'aller sur d'autres sites
+  win.webContents.on("will-navigate", (event, url) => {
+    const allowed = ["http://localhost:3000", "https://nsi.alexandre-larue.fr"];
 
-  // Événement si la page ne peut pas charger (ex: serveur pas encore prêt)
-  mainWindow.webContents.on("did-fail-load", () => {
-    retries++;
-    if (retries <= MAX_RETRIES) {
-      setTimeout(tryLoadURL, RETRY_INTERVAL);
-    } else {
-      console.error("Impossible de charger Nitro après plusieurs tentatives");
-      mainWindow?.loadFile(path.join(__dirname, "offline.html"));
+    if (!allowed.some((domain) => url.startsWith(domain))) {
+      event.preventDefault();
     }
   });
 
-  // Premier essai immédiat
-  tryLoadURL();
-  return mainWindow;
+  win.loadURL(url + "/home");
+
+  win.webContents.once("did-finish-load", () => {
+    win.show();
+  });
+  return win;
 }
 
-/**
- * Retourne la fenêtre principale actuelle
- */
-export function getMainWindow() {
-  return mainWindow;
+let loadingWindow: BrowserWindow | null = null;
+
+export function createSplashWindow() {
+  loadingWindow = new BrowserWindow({
+    width: 400,
+    height: 300,
+    frame: false,
+    alwaysOnTop: true,
+    resizable: false,
+    show: true,
+    modal: false,
+
+    webPreferences: {
+      preload: preloadPath,
+      partition: "persist:splash", // Utilise une partition dédiée
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+  });
+  loadingWindow.loadFile(path.join(__dirname, "../html/loading.html"));
+
+  return loadingWindow;
+}
+
+let trayWindow: BrowserWindow | null = null;
+
+export function createTrayWindow() {
+  trayWindow = new BrowserWindow({
+    width: 300,
+    height: 400,
+    show: false,
+    frame: false, // pas de barre Windows
+    resizable: false,
+    movable: false,
+    fullscreenable: false,
+    skipTaskbar: true,
+    alwaysOnTop: true,
+    webPreferences: {
+      preload: preloadPath,
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  trayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  trayWindow.setAlwaysOnTop(true, "screen-saver");
+
+  trayWindow.loadURL(url + "/tray?electron=true");
+
+  // Cache quand on clique ailleurs
+  trayWindow.on("blur", () => {
+    trayWindow?.hide();
+  });
+
+  trayWindow.on("show", () => {
+    trayWindow?.focus();
+  });
+
+  return trayWindow;
 }

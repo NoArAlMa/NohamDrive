@@ -61,6 +61,7 @@ const registerFields: AuthFormField[] = [
     type: "password",
     label: "Password",
     placeholder: "Choose a password",
+
     required: true,
   },
   {
@@ -152,7 +153,7 @@ async function onSubmit(payload: FormSubmitEvent<any>) {
 
 <template>
   <div class="flex flex-col items-center justify-center gap-4 p-4">
-    <UPageCard class="w-full max-w-md">
+    <UPageCard class="w-full max-w-md shadow-md">
       <Transition name="auth" mode="out-in">
         <UAuthForm
           ref="authForm"
@@ -180,6 +181,11 @@ async function onSubmit(payload: FormSubmitEvent<any>) {
               icon="i-lucide-info"
               :title="generalError"
             />
+          </template>
+          <template #password-hint>
+            <div v-if="mode === 'login'">
+              <ULink active to="/">Forgot your password ?</ULink>
+            </div>
           </template>
           <template #footer>
             <UButton

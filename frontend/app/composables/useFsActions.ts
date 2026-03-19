@@ -1,4 +1,5 @@
 import { LazyFileExplorerModalPreview } from "#components";
+import { LazyFileExplorerModalPropertyDrawer } from "#components";
 import type { Toast } from "@nuxt/ui/runtime/composables/useToast.js";
 import type {
   CompressFilePayload,
@@ -13,6 +14,9 @@ export const useFsActions = () => {
   const toast = useToast();
 
   const overlay = useOverlay();
+  function delay(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
 
   const open = async (item: ApiFileItem) => {
     if (item.is_dir) {
@@ -288,18 +292,47 @@ export const useFsActions = () => {
     const full_path = item.is_dir
       ? `${joinPath(FSStore.currentPath, item.name)}/`
       : joinPath(FSStore.currentPath, item.name);
-
+    let loadingToast: Toast | undefined;
+    loadingToast = toast.add({
+      title: "En cours d'ouverture...",
+      color: "neutral",
+      duration: 0,
+      close: false,
+      ui: { icon: "animate-spin" },
+      icon: "material-symbols:progress-activity",
+    });
     try {
-      const req = await $fetch("/storage/stats", {
-        method: "GET",
-        query: {
-          object_path: full_path,
+      const req = await $fetch<GenericAPIResponse<FileMetadata>>(
+        "/storage/stats",
+        {
+          method: "GET",
+          query: {
+            object_path: full_path,
+          },
         },
-      });
+      );
+
+      const PropertyDrawer = overlay.create(
+        LazyFileExplorerModalPropertyDrawer,
+        {
+          props: {
+            file: item!,
+            metadata: req.data!,
+          },
+        },
+      );
+      if (loadingToast) toast.remove(loadingToast.id);
+      PropertyDrawer.open();
     } catch (error: any) {
-      const message =
-        error.data?.statusMessage || "Impossible de récupérer les stats.";
-      toast.add({ title: "Erreur", description: message, color: "error" });
+      if (loadingToast) toast.remove(loadingToast.id);
+      toast.add({
+        title: "Erreur",
+        description:
+          error.data?.statusMessage ??
+          "Impossible d'inspecter le fichier/dossier.",
+        color: "error",
+        icon: "material-symbols:error-outline-rounded",
+      });
       throw error;
     }
   };
@@ -316,7 +349,7 @@ export const useFsActions = () => {
       ? `${joinPath(FSStore.currentPath, item.name)}/`
       : joinPath(FSStore.currentPath, item.name);
 
-    const loadingToast = toast.add({
+    const loadingToast: Toast = toast.add({
       title: "Copie en cours...",
       color: "neutral",
       duration: 0,
@@ -337,11 +370,15 @@ export const useFsActions = () => {
           },
         },
       );
-      toast.remove(loadingToast.id);
-      toast.add({
+      toast.update(loadingToast.id, {
         title: "Fichier copié !",
         color: "success",
+        duration: 3000,
+        close: true,
         icon: "material-symbols:check-rounded",
+        ui: {
+          icon: "",
+        },
       });
 
       useFileTree().retryFetching();
@@ -350,8 +387,8 @@ export const useFsActions = () => {
     } catch (error: any) {
       const message =
         error.data?.statusMessage || "Impossible de copier le fichier/dossier.";
-      toast.remove(loadingToast.id);
-      toast.add({
+
+      toast.update(loadingToast.id, {
         title: "Erreur",
         icon: "material-symbols:error-outline-rounded",
         description: message,
@@ -460,14 +497,16 @@ export const useFsActions = () => {
     };
     let loadingToast: Toast | undefined;
     try {
-      loadingToast = toast.add({
-        title: "Déplacement en cours...",
-        color: "neutral",
-        duration: 0,
-        close: false,
-        ui: { icon: "animate-spin" },
-        icon: "material-symbols:progress-activity",
-      });
+      if (!options?.silent) {
+        loadingToast = toast.add({
+          title: "Déplacement en cours...",
+          color: "neutral",
+          duration: 0,
+          close: false,
+          ui: { icon: "animate-spin" },
+          icon: "material-symbols:progress-activity",
+        });
+      }
 
       const req = await $fetch<GenericAPIResponse<CopyFilePayload>>(
         "/storage/move",
@@ -483,15 +522,15 @@ export const useFsActions = () => {
     } catch (error: any) {
       if (loadingToast) toast.remove(loadingToast.id);
       const message =
-        error.data?.data.message ||
-        "Impossible de renommer le fichier/dossier.";
-      toast.add({
-        title: "Erreur",
-        icon: "material-symbols:error-outline-rounded",
-        description: message,
-        color: "error",
-      });
-      throw error;
+        error.data?.message || "Impossible de renommer le fichier/dossier.";
+      if (!options?.silent) {
+        toast.add({
+          title: "Erreur",
+          icon: "material-symbols:error-outline-rounded",
+          description: message,
+          color: "error",
+        });
+      }
     }
   };
 

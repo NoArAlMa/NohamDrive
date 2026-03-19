@@ -49,7 +49,7 @@ const links = ref<ButtonProps[]>([
     class="w-full h-full flex items-center justify-center"
     title="Télécharge notre application !!"
     description="On fait une app alors pourquoi pas la télécharger hein ?"
-    variant="soft"
+    variant="subtle"
     :links="links"
     orientation="horizontal"
   >

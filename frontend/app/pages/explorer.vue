@@ -28,10 +28,10 @@ useSeoMeta({
 
 <template>
   <section
-    class="flex flex-1 overflow-hidden md:items-center md:justify-center md:px-4 md:py-6"
+    class="flex flex-1 overflow-hidden desktop:items-center desktop:justify-center desktop:px-4 desktop:py-6"
   >
     <div
-      class="w-full h-full flex flex-col overflow-hidden md:max-w-7xl md:h-[80vh] md:rounded-md md:shadow-lg desktop:max-h-9/12"
+      class="w-full h-full flex flex-col overflow-hidden desktop:max-w-7xl desktop:h-[80vh] desktop:rounded-md desktop:shadow-lg desktop:max-h-9/12"
     >
       <FileExplorerContainer class="flex-1 overflow-auto" />
     </div>
