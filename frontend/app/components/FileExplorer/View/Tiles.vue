@@ -3,24 +3,7 @@ const fileTreeStore = useFileTree();
 const { fileTree, loading, hasError, errorMessage, errorStatus } =
   storeToRefs(fileTreeStore);
 
-onMounted(() => {
-  emit("update:selectedCount", 0);
-  emit("update:selectedItems", []);
-});
-
-const emit = defineEmits<{
-  (e: "update:selectedItems", value: ApiFileItem[]): void;
-  (e: "update:selectedCount", value: number): void;
-}>();
-
-const emitSelection = useDebounceFn(() => {
-  emit("update:selectedItems", Array.from(localSelection.value));
-  emit("update:selectedCount", localSelection.value.size);
-}, 100);
-
 const loading_debounced = refDebounced(loading, 100);
-
-const localSelection = ref<Set<ApiFileItem>>(new Set());
 
 const selection = useFileExplorerSelection();
 

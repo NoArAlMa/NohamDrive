@@ -13,23 +13,21 @@ const fileTreeStore = useFileTree();
 const { fileTree, loading, hasError, errorMessage, errorStatus } =
   storeToRefs(fileTreeStore);
 
-const selection = useFileExplorerSelection();
+// Variable "debounced" du loading
+const loading_debounced = refDebounced(loading, 100);
 
-const rowSelection = ref<Record<string, boolean>>({});
+const selection = useFileExplorerSelection();
 const { viewMode } = useFileExplorerSettings();
 const { isMobile } = useResponsive();
-const table = useTemplateRef("table");
-const emit = defineEmits<{
-  (e: "update:selectedCount", count: number): void;
-  (e: "update:selectedItems", items: ApiFileItem[]): void;
-}>();
 
-const selectedItems = computed<ApiFileItem[]>(() => {
-  return fileTree.value.filter((item, index) => rowSelection.value[index]);
-});
+const rowSelection = ref<Record<string, boolean>>({});
+const sorting = ref([]);
 
 const contextRow = ref<TableRow<ApiFileItem> | null>(null);
 const contextOpen = ref(false);
+
+const table = useTemplateRef("table");
+
 function handleOpenChange(v: boolean) {
   if (!v) {
     setTimeout(() => {
@@ -38,29 +36,28 @@ function handleOpenChange(v: boolean) {
   }
 }
 
-onMounted(() => {
-  watch(
-    rowSelection,
-    (rows) => {
-      const items = Object.keys(rows)
-        .filter((k) => rows[k])
-        .map((index) => fileTree.value[Number(index)])
-        .filter((item): item is ApiFileItem => item !== undefined);
+watch(
+  rowSelection,
+  (rows) => {
+    const items = Object.keys(rows)
+      .filter((k) => rows[k])
+      .map((index) => fileTree.value[Number(index)])
+      .filter((item): item is ApiFileItem => item !== undefined);
 
-      selection.set(items);
-    },
-    { deep: true },
-  );
-});
+    selection.set(items);
+  },
+  { deep: true },
+);
 
-const ui = { UCheckbox, UButton, UDropdownMenu, UIcon };
-
-// Importation des colonnes et du système de sorting
-const { columns } = useFileExplorerColumns(ui, isMobile);
-const sorting = ref([]);
-
-// Variable "debounced" du loading
-const loading_debounced = refDebounced(loading, 100);
+const { columns } = useFileExplorerColumns(
+  {
+    UCheckbox,
+    UButton,
+    UDropdownMenu,
+    UIcon,
+  },
+  isMobile,
+);
 
 function clearSelection() {
   rowSelection.value = {};
