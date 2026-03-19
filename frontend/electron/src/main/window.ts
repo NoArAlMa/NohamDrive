@@ -11,9 +11,7 @@ const preloadPath = isDev
   ? path.join(process.cwd(), "dist-electron/preload.js")
   : path.join(__dirname, "../../preload.js");
 
-const url = !app.isPackaged
-  ? "http://localhost:3000"
-  : "https://nsi.alexandre-larue.fr";
+const url = isDev ? "http://localhost:3000" : "https://nsi.alexandre-larue.fr";
 
 export function createWindow() {
   const win = new BrowserWindow({
@@ -22,6 +20,7 @@ export function createWindow() {
     minWidth: 1100,
     height: 800,
     autoHideMenuBar: true,
+    show: false,
     webPreferences: {
       contextIsolation: true,
       webSecurity: true,
@@ -47,8 +46,11 @@ export function createWindow() {
     }
   });
 
-  win.loadURL(url);
+  win.loadURL(url + "/home");
 
+  win.webContents.once("did-finish-load", () => {
+    win.show();
+  });
   return win;
 }
 
@@ -65,7 +67,7 @@ export function createSplashWindow() {
     modal: false,
 
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: preloadPath,
       partition: "persist:splash", // Utilise une partition dédiée
       nodeIntegration: false,
       contextIsolation: true,
@@ -99,7 +101,7 @@ export function createTrayWindow() {
   trayWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   trayWindow.setAlwaysOnTop(true, "screen-saver");
 
-  trayWindow.loadURL(url + "/tray");
+  trayWindow.loadURL(url + "/tray?electron=true");
 
   // Cache quand on clique ailleurs
   trayWindow.on("blur", () => {
