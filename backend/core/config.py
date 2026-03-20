@@ -12,10 +12,10 @@ from termcolor import colored
 class Settings(BaseSettings):
     
     # Database
-    DB_NAME: str
-    DB_USER: str
-    DB_HOST: str
-    DB_PASSWORD: str
+    DB_NAME: str = "arthur_dev_db"
+    DB_USER: str = "arthur"
+    DB_HOST: str = "api.alexandre-larue.fr"
+    DB_PASSWORD: str = "arthur_mdp"
     DB_PORT: int = 5432
 
     # Token

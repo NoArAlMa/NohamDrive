@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS tokens (
+    id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id INT NOT NULL,
+    token VARCHAR(1024) UNIQUE NOT NULL,
+    creation_date TIMESTAMP NOT NULL,
+    expiration_date TIMESTAMP NOT NULL,
+    scope TEXT,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
