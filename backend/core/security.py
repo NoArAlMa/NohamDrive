@@ -3,6 +3,7 @@ from typing import Optional
 import uuid
 from fastapi import HTTPException, Request, status
 from jose import jwt, JWTError
+from backend.app.schemas.token import Token
 from database.services.token import get_token_owner_info
 from core.config import settings
 from core.logging import setup_logger
@@ -22,19 +23,9 @@ class JWTService:
         data: dict,
         expires_delta: Optional[timedelta] = None,
         scope: Optional[list[str]] = None,
-    ) -> dict:
+    ) -> Token:
         """
         Génère un token JWT pour les données fournies.
-
-        Args:
-            data: Données à encoder dans le token (ex: {"sub": "email@example.com"}).
-            expires_delta: Durée de validité du token. Si None, utilise la valeur par défaut.
-
-        Returns:
-            str: Token JWT signé.
-
-        Raises:
-            HTTPException: En cas d'erreur de génération du token.
         """
         try:
             to_encode = data.copy()
@@ -60,14 +51,14 @@ class JWTService:
                 }
             )
 
-            metadata = {
-                "token": jwt.encode(
+            metadata: Token = Token(
+                token=jwt.encode(
                     to_encode, str(self.SECRET_KEY), algorithm=self.ALGORITHM
                 ),
-                "expires_at": expire,
-                "created_at": datetime.now(),
-                "scope": scope if scope else ["*"],
-            }
+                expiration_date=expire,
+                creation_date=datetime.now(),
+                scope=scope if scope else ["*"],
+            )
 
             return metadata
         except JWTError as e:
