@@ -1,5 +1,5 @@
-from backend.database.tools.sql_reader import sql_reader
-from backend.database.config import SQL_PATH
+from database.tools.sql_reader import sql_reader
+from database.config import SQL_PATH
 import psycopg2.errors as errors
 
 # Function creating a token

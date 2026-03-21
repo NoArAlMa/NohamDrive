@@ -1,10 +1,11 @@
 from psycopg2 import errors
 from psycopg2.pool import ThreadedConnectionPool
-from backend.database.config import MIN_CONN, MAX_CONN
-from backend.core.config import Settings
+from database.config import MIN_CONN, MAX_CONN
+from core.config import settings
 
-class ConnectionManager():
-    _pool = None # the pool, global to all instances of the class
+
+class ConnectionManager:
+    _pool = None  # the pool, global to all instances of the class
 
     # Initialising the pool if it doesn't already exist
     def __init__(self):
@@ -17,13 +18,16 @@ class ConnectionManager():
                 ConnectionManager._pool = ThreadedConnectionPool(
                     minconn=self.min_conn,
                     maxconn=self.max_conn,
-                    dsn=Settings.get_db_dsn()
+                    dsn=settings.get_db_dsn,
                 )
-            except errors.ConnectionException as error: # not 100% sure it's the right error
-                print(error)
-    
+            except (
+                errors.ConnectionException
+            ) as error:  # not 100% sure it's the right error
+                print("JE SUIS UNE ERREUR DE ARTHUR", error)
+
     # Function borrowing a connection from the pool (if it exists, which it should) and returning it
-    def request_conn(self):
+    @classmethod
+    def request_conn(cls):
         if ConnectionManager._pool is not None:
             return ConnectionManager._pool.getconn()
         else:

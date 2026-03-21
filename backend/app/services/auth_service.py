@@ -1,11 +1,20 @@
+from datetime import datetime, timedelta
+
 from fastapi import HTTPException, status
+from fastapi import Request
 from passlib.context import CryptContext
 
 
-from app.schemas.auth import UserCreate
+from app.schemas.auth import UserCreate, UserLogin
+# from app.services.minio.bucket_service import BucketService
+
+
 from core.config import settings
 from core.logging import setup_logger
 from core.security import JWTService
+
+from database.services.user import create_user, get_email_owner
+# from database.services.token import create_token
 
 
 logger = setup_logger(__name__)
@@ -17,8 +26,8 @@ class AuthService:
     Utilise bcrypt pour le hachage et JWT pour les tokens.
     """
 
-    def __init__(self):
-        """Initialise le service avec les paramètres de sécurité depuis la configuration."""
+    def __init__(self, connection_manager):
+        self.connection_manager = connection_manager
         self.pwd_context = CryptContext(
             schemes=["argon2"],
             deprecated="auto",
@@ -28,7 +37,7 @@ class AuthService:
         )
         self.SECRET_KEY: str = settings.SECRET_KEY
         self.ALGORITHM: str = settings.ALGORITHM
-        self.jwt_service: JWTService = JWTService()
+        self.jwt_service: JWTService = JWTService(self.connection_manager)
 
     async def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         """
@@ -69,9 +78,9 @@ class AuthService:
                 detail="Erreur lors du hachage du mot de passe",
             )
 
-    async def create_user(self, request: UserCreate):
+    async def auth_create_user(self, payload: UserCreate):
         """
-        Crée un nouvel utilisateur => Le stock en BDD, lui créer un bucket minio, lui créer un avatar ect... .
+        Crée un nouvel utilisateur => Le stock en BDD, lui créer un bucket minio ect... .
 
         Args:
             request : sur le modèle de UserCreate
@@ -83,39 +92,99 @@ class AuthService:
             HTTPException: Si l'email existe déjà ou en cas d'erreur DB.
         """
 
-        # TODO : Vérifier si l'email existe déjà
+        existing_user = get_email_owner(self.connection_manager, payload.email)
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="Un utilisateur avec cet email existe déjà.",
+            )
 
-        # if existing_user:
+        password_hash = await self.get_password_hash(payload.password)
+
+        payload_data = {
+            "username": payload.username,
+            "email": payload.email,
+            "password": password_hash,
+            "full_name": payload.name,
+        }
+
+        now = str(datetime.now())
+
+        user = create_user(self.connection_manager, **payload_data, creation_date=now)
+
+        # await BucketService().create_user_bucket()
+
+        # token = self.jwt_service.create_access_token(
+        #     {
+        #         "sub": payload.email,
+        #         "user_id": user.id,
+        #         "username": user.username,
+        #     }
+        # )
+
+
+        # token = create_token(
+        #     self.connection_manager,
+        #     token=token,
+        #     scope="['*']",
+        #     user_id=43,
+        #     expiration_date=token.expires_at,
+        #     creation_date=token.created_at,
+        # )
+
+        return {"user": user}
+
+    async def login_user(self, payload: UserLogin):
+        # user = get_user_by_email(self.connection_manager, payload.email)
+
+        # if not user:
         #     raise HTTPException(
-        #         status_code=status.HTTP_400_BAD_REQUEST,
-        #         detail="Un utilisateur avec cet email existe déjà.",
+        #         status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        #         detail="Email ou mot de passe incorrect",
         #     )
 
-        # password_hash = self.get_password_hash(request.password)
+        # is_valid_password = await self.verify_password(payload.password, user.password)
 
-        # TODO: Créer l'utilisateur et l'ajouter dans la BDD
+        # if not is_valid_password:
+        #     raise HTTPException(
+        #         status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        #         detail="Email ou mot de passe incorrect"
+        #     )
 
-        # TODO : Créer le bucket du user pour MinIO
+        # token = self.jwt_service.create_access_token(
+        #     {
+        #         "sub": payload.email,
+        #         "user_id": user.id,
+        #         "username": user.username,
+        #         "role": user.role,
+        #     }
+        # )
 
-        token = self.jwt_service.create_access_token(
-            {
-                "sub": request.email,
-            }
-        )  # + qlq infos du modele User
+        # expire = str(
+        #     (
+        #         datetime.now() + timedelta(days=settings.ACCESS_TOKEN_EXPIRE_DAY)
+        #     ).timestamp()
+        # )
 
-        # TODO : Ajouter le token en BDD
+        # token = create_token(
+        #     self.connection_manager,
+        #     token=token,
+        #     scope="['*']",
+        #     user_id=user.id,
+        #     expiration_date=expire,
+        #     creation_date=str(datetime.now()),
+        # )
 
-        return {"user": {}, "token": token}
+        # return {
+        #     user : user,
+        #     token : token,
+        # }
 
-    async def login_user(self):
         pass
 
     async def logout_user(self):
         pass
 
 
-def get_auth_service() -> AuthService:
-    """
-    Fournit une instance du service d'authentification.
-    """
-    return AuthService()
+def get_auth_service(request: Request) -> AuthService:
+    return AuthService(connection_manager=request.app.state.database)

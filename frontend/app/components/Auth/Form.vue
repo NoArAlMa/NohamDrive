@@ -43,6 +43,13 @@ const loginFields: AuthFormField[] = [
 
 const registerFields: AuthFormField[] = [
   {
+    name: "name",
+    type: "text",
+    label: "Full name",
+    placeholder: "Enter your name",
+    required: true,
+  },
+  {
     name: "username",
     type: "text",
     label: "Username",
@@ -86,6 +93,7 @@ const loginSchema = z.object({
 
 const createSchema = z
   .object({
+    name: z.string("Name is required"),
     username: z
       .string("Username required")
       .min(3, "Must be at least 3 characters"),
