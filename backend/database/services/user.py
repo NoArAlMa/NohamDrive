@@ -29,6 +29,7 @@ def create_user(
         with conn.cursor() as cur:
             try:
                 cur.execute(query, parameters)
+                user = cur.fetchone()
             except errors.UniqueViolation as e:
                 # Ici, tu sais qu'il y a une contrainte unique violée
                 if "users_username_key" in str(e):
@@ -49,6 +50,9 @@ def create_user(
 
     # Dropping the conn
     connection_manager.drop_conn(conn)
+    if user:
+        return user
+    return None
 
 
 # Function removing a user
@@ -97,7 +101,7 @@ def update_user(connection_manager, user_id: int, column: str, new_value):
 
 
 # Function returning the id of the owner of the asked email (if taken)
-def get_email_owner(connection_manager, email: str) -> int | None:
+def get_user_through_email(connection_manager, email: str) -> tuple | None:
     # Requestion a connection from the pool
     conn = connection_manager.request_conn()
     parameters = [email]
@@ -113,6 +117,4 @@ def get_email_owner(connection_manager, email: str) -> int | None:
 
     # Dropping the conn and returning the data
     connection_manager.drop_conn(conn)
-    if data:
-        return data[0]
-    return None
+    return data

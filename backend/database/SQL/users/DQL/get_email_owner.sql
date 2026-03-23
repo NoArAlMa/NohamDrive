@@ -1,3 +1,3 @@
-SELECT id 
+SELECT * 
 FROM users
 WHERE email = %s;
