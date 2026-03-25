@@ -4,6 +4,9 @@ import type { DropdownMenuItem } from "@nuxt/ui";
 import Limiter from "./Limiter.vue";
 
 const { isMobile } = useResponsive();
+const { user } = useAuthStore();
+
+const name_user = user?.full_name;
 
 const { isElectron } = useElectron();
 
@@ -207,30 +210,6 @@ const collapsed = ref(false);
         </UTooltip>
       </div>
       <Limiter v-if="!collapsed" class="-mt-2.5" />
-
-      <!-- Menu secondaire -->
-      <!-- <LazyUNavigationMenu
-        v-if="!isMobile"
-        :collapsed="collapsed"
-        :items="items[1]"
-        orientation="vertical"
-        :ui="{
-          link: [
-            'group relative flex items-center rounded-lg',
-            'whitespace-nowrap overflow-hidden',
-            'transition-all duration-200',
-            collapsed
-              ? 'justify-center px-2 py-1.5'
-              : 'px-2 py-1.5 tablet:px-4 tablet:py-3',
-            'text-sm tablet:text-base',
-          ].join(' '),
-
-          linkLeadingIcon: [
-            'shrink-0 transition-all duration-200',
-            collapsed ? 'size-4' : 'size-3 tablet:size-4',
-          ].join(' '),
-        }"
-      /> -->
     </template>
 
     <template #footer>
@@ -249,7 +228,7 @@ const collapsed = ref(false);
             src: 'https://i.pinimg.com/736x/be/a3/49/bea3491915571d34a026753f4a872000.jpg',
             size: 'md',
           }"
-          :label="collapsed ? undefined : 'Username'"
+          :label="collapsed ? undefined : name_user"
           color="neutral"
           variant="ghost"
           :square="false"

@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-
+from app.schemas.user import CompleteUser, User
 from database.tools.sql_reader import sql_reader
 from database.config import SQL_PATH
 import psycopg2.errors as errors
@@ -13,7 +13,7 @@ def create_user(
     email: str,
     full_name: str,
     creation_date: str,
-):
+) -> User:
     """
     creation date : 'yyyy-mm-dd hh:mm:ss'
     """
@@ -25,34 +25,44 @@ def create_user(
     query = sql_reader(SQL_PATH["create_user"])
 
     # Executing the query on the database
-    with conn:
+    try:
         with conn.cursor() as cur:
-            try:
-                cur.execute(query, parameters)
-                user = cur.fetchone()
-            except errors.UniqueViolation as e:
-                # Ici, tu sais qu'il y a une contrainte unique violée
-                if "users_username_key" in str(e):
-                    raise HTTPException(
-                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                        detail=f"Le nom d'utilisateur '{username}' est déjà utilisé.",
-                    )
-                elif "users_email_key" in str(e):
-                    raise HTTPException(
-                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                        detail=f"L'email '{email}' est déjà utilisé.",
-                    )
-                else:
-                    raise HTTPException(
-                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                        detail="Erreur lors de la création de l'utilisateur.",
-                    )
+            cur.execute(query, parameters)
+            user = cur.fetchone()
+        conn.commit()
+    except errors.UniqueViolation as e:
+        conn.rollback()
+        if "users_username_key" in str(e):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Le nom d'utilisateur '{username}' est déjà utilisé.",
+            )
+        elif "users_email_key" in str(e):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"L'email '{email}' est déjà utilisé.",
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Erreur lors de la création de l'utilisateur.",
+            )
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erreur inattendue : {str(e)}",
+        )
+    finally:
+        connection_manager.drop_conn(conn)
 
-    # Dropping the conn
-    connection_manager.drop_conn(conn)
-    if user:
-        return user
-    return None
+    return User(
+        id=user[0],
+        username=user[1],
+        email=user[2],
+        full_name=user[3],
+        creation_date=user[4],
+    )
 
 
 # Function removing a user
@@ -101,7 +111,7 @@ def update_user(connection_manager, user_id: int, column: str, new_value):
 
 
 # Function returning the id of the owner of the asked email (if taken)
-def get_user_through_email(connection_manager, email: str) -> tuple | None:
+def get_user_through_email(connection_manager, email: str) -> CompleteUser | None:
     # Requestion a connection from the pool
     conn = connection_manager.request_conn()
     parameters = [email]
@@ -110,11 +120,23 @@ def get_user_through_email(connection_manager, email: str) -> tuple | None:
     query = sql_reader(SQL_PATH["get_email_owner"])
 
     # Executing the query on the database
-    with conn:
-        with conn.cursor() as cur:
-            cur.execute(query, parameters)
-            data = cur.fetchone()
+    try:
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(query, parameters)
+                data = cur.fetchone()
 
-    # Dropping the conn and returning the data
-    connection_manager.drop_conn(conn)
-    return data
+        # Dropping the conn and returning the data
+        if data:
+            return CompleteUser(
+                id=data[0],
+                username=data[1],
+                password=data[2],
+                email=data[3],
+                full_name=data[4],
+                creation_date=data[5],
+            )
+        return None
+
+    finally:
+        connection_manager.drop_conn(conn)

@@ -21,7 +21,9 @@ from datetime import datetime
 from app.utils.response import BaseResponse
 from app.services.sse_service import SSEManager, get_sse_manager
 from app.schemas.sse import SSEMessage
+from app.schemas.user import User
 from core.limiter import limiter
+from core.security import current_user
 
 router = APIRouter(prefix="/storage", tags=["Storage"])
 
@@ -117,7 +119,7 @@ async def upload_file_endpoint(
 async def list_path(
     request: Request,
     path: str = Query(default="/", description="Chemin du dossier"),
-    user_id: int = 1,
+    user: User = Depends(current_user),
     page: int = Query(default=1, description="Numéro de page"),
     per_page: int = Query(default=30, description="Nombre d'items par page"),
     minio_service: MinioService = Depends(get_minio_service),
@@ -129,9 +131,9 @@ async def list_path(
     Returns:
         TreeResponse: Arborescence du chemin.
     """
-
+ 
     tree: SimpleFileTreeResponse = await minio_service.simple_list_path(
-        user_id=user_id, path=path, per_page=per_page, page=page
+        user_id=user.id, path=path, per_page=per_page, page=page
     )
 
     return BaseResponse(

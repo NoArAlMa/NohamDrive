@@ -1,6 +1,6 @@
 # POOL
 MIN_CONN = 1
-MAX_CONN = 3
+MAX_CONN = 10
 
 # PATH
 SQL_PATH = {

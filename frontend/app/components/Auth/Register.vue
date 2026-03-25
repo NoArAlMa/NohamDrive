@@ -103,34 +103,25 @@ const stepSchemas = [
 
 const fullData = reactive<any>({});
 
+const { registerUser } = useAuth();
+
 async function onSubmit() {
   generalError.value = null;
 
-  const { password_confirmation, ...cleanedData } = fullData;
+  const result = await registerUser(fullData);
 
-  try {
-    await $fetch("/auth/register", {
-      method: "POST",
-      body: cleanedData,
-    });
-  } catch (error: any) {
-    const backend = error?.data;
-
-    if (backend?.statusCode === 422 && backend?.data) {
-      const formattedErrors = Object.entries(backend.data).map(
-        ([name, message]) => ({
-          name,
-          message: String(message),
-        }),
-      );
-
-      authForm.value?.formRef?.setErrors(formattedErrors);
-      generalError.value = backend.message;
-    } else {
-      generalError.value =
-        backend?.message ?? "Une erreur inattendue est survenue";
-    }
+  if (result?.fieldErrors) {
+    authForm.value?.formRef?.setErrors(result.fieldErrors);
   }
+  if (result?.statusCode === 422 && result?.message) {
+    generalError.value = result.message;
+    return;
+  }
+  if (result?.success) {
+    await navigateTo("/home");
+  }
+
+  return result;
 }
 
 async function handleNext(payload: FormSubmitEvent<any>) {
@@ -178,9 +169,9 @@ async function handleNext(payload: FormSubmitEvent<any>) {
         :schema="stepSchemas[step]"
         :fields="currentFields"
         @submit="handleNext"
+        loading-auto
         :submit="{
           label: isLastStep ? 'Create account' : 'Next',
-          loadingAuto: true,
           color: 'primary',
         }"
       >

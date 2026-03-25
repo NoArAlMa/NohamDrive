@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
 from typing import Optional
 import uuid
-from fastapi import HTTPException, Request, status
+from fastapi import Depends, HTTPException, Request, status
 from jose import jwt, JWTError
-from backend.app.schemas.token import Token
+from app.schemas.token import Token
+from app.schemas.user import User
 from database.services.token import get_token_owner_info
 from core.config import settings
 from core.logging import setup_logger
@@ -30,16 +31,13 @@ class JWTService:
         try:
             to_encode = data.copy()
 
-            now = int(datetime.now().timestamp())
+            now = datetime.now()
 
             if expires_delta:
-                expire = int((datetime.now() + expires_delta).timestamp())
+                expire = datetime.now() + expires_delta
             else:
-                expire = int(
-                    (
-                        datetime.now()
-                        + timedelta(days=settings.ACCESS_TOKEN_EXPIRE_DAY)
-                    ).timestamp()
+                expire = datetime.now() + timedelta(
+                    days=settings.ACCESS_TOKEN_EXPIRE_DAY
                 )
 
             to_encode.update(
@@ -95,7 +93,13 @@ class JWTService:
                 detail="Utilisateur introuvable",
             )
 
-        return token_data
+        return User(
+            id=token_data[0],
+            username=token_data[1],
+            email=token_data[3],
+            full_name=token_data[4],
+            creation_date=token_data[5],
+        )
 
     def get_token_from_request(self, request: Request) -> str:
         token = request.cookies.get("access_token")
@@ -150,3 +154,15 @@ class JWTService:
 
 def get_token_service(request: Request) -> JWTService:
     return JWTService(request.app.state.database)
+
+
+async def current_user(
+    request: Request,
+    token_service: JWTService = Depends(get_token_service),
+):
+    """
+    Renvoie l'utilisateur courant à partir du JWT.
+    Utilisable dans les routes via Depends(current_user)
+    """
+    user = await token_service.get_current_user(request)
+    return user

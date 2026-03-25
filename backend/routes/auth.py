@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, status
 from app.services.auth_service import get_auth_service, AuthService
 from app.schemas.auth import UserCreate, UserLogin
 from app.utils.response import BaseResponse
@@ -22,7 +22,12 @@ async def create_user_endpoint(
     auth_service: AuthService = Depends(get_auth_service),
 ):
     created_user = await auth_service.auth_create_user(payload)
-    return BaseResponse(success=True, data=created_user)
+    return BaseResponse(
+        success=True,
+        data=created_user,
+        status_code=status.HTTP_200_OK,
+        message="Sign up successfully",
+    )
 
 
 @router.post("/login", status_code=200, response_model=BaseResponse)
@@ -32,7 +37,13 @@ async def login_user_endpoint(
     payload: UserLogin,
     auth_service: AuthService = Depends(get_auth_service),
 ):
-    return BaseResponse(success=True, data=payload)
+    login_user = await auth_service.auth_login_user(payload)
+    return BaseResponse(
+        success=True,
+        data=login_user,
+        status_code=status.HTTP_200_OK,
+        message="Login successfully",
+    )
 
 
 @router.post("/init-db")

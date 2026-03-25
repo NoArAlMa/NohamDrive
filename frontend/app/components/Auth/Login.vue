@@ -3,6 +3,7 @@ import type { AuthFormField, FormSubmitEvent } from "@nuxt/ui";
 import * as z from "zod";
 
 const authForm = useTemplateRef("authForm");
+const { loginUser } = useAuth();
 
 const generalError = ref<string | null>(null);
 
@@ -37,20 +38,19 @@ const loginSchema = z.object({
 
 async function onSubmit(payload: FormSubmitEvent<any>) {
   generalError.value = null;
-  try {
-    await $fetch("/auth/login", {
-      method: "POST",
-      body: payload.data,
-    });
-  } catch (error: any) {
-    if (error.data?.fieldErrors) {
-      authForm.value?.formRef?.setErrors(error.data.fieldErrors);
-    }
 
-    // Handle general error message
-    if (error.data?.message) {
-      generalError.value = error.data.message;
-    }
+  const result = await loginUser(payload.data);
+
+  if (result?.fieldErrors) {
+    authForm.value?.formRef?.setErrors(result.fieldErrors);
+  }
+  if (result?.statusCode === 422 && result?.message) {
+    generalError.value = result.message;
+    return;
+  }
+
+  if (result?.success) {
+    await navigateTo("/home");
   }
 }
 </script>
@@ -65,9 +65,9 @@ async function onSubmit(payload: FormSubmitEvent<any>) {
         icon="i-lucide-user"
         :fields="loginFields"
         @submit="onSubmit"
+        loading-auto
         :submit="{
           label: 'Login',
-          loadingAuto: true,
           color: 'primary',
         }"
       >
