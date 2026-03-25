@@ -50,7 +50,7 @@ export const useAuth = () => {
         icon: "material-symbols:check-rounded",
       });
 
-      navigateTo("/");
+      navigateTo("/home");
 
       return { success: true, data: response.data!, message: response.message };
     } catch (error: any) {
