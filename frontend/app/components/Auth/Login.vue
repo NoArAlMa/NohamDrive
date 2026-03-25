@@ -48,10 +48,6 @@ async function onSubmit(payload: FormSubmitEvent<any>) {
     generalError.value = result.message;
     return;
   }
-
-  if (result?.success) {
-    await navigateTo("/home");
-  }
 }
 </script>
 

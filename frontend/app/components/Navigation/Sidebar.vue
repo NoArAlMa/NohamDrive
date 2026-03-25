@@ -5,6 +5,7 @@ import Limiter from "./Limiter.vue";
 
 const { isMobile } = useResponsive();
 const { user } = useAuthStore();
+const { logoutUser } = useAuth();
 
 const name_user = user?.full_name;
 
@@ -15,7 +16,7 @@ const itemsDropDown = ref<DropdownMenuItem[]>([
     label: "Log out",
     icon: "material-symbols:logout-rounded",
     color: "error",
-    click: () => {},
+    onSelect: () => logoutUser(),
   },
   {
     type: "separator",
@@ -228,7 +229,7 @@ const collapsed = ref(false);
             src: 'https://i.pinimg.com/736x/be/a3/49/bea3491915571d34a026753f4a872000.jpg',
             size: 'md',
           }"
-          :label="collapsed ? undefined : name_user"
+          :label="collapsed ? 'undefined' : name_user ? name_user : 'Salut nom'"
           color="neutral"
           variant="ghost"
           :square="false"

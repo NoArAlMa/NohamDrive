@@ -31,11 +31,11 @@ router = APIRouter(prefix="/storage", tags=["Storage"])
 @router.get("/explorer-info")
 async def sse_endpoint(
     request: Request,
-    user_id: int = 1,
+    user: User = Depends(current_user),
     sse_manager: SSEManager = Depends(get_sse_manager),
 ):  # TODO: Récupérer user_id via auth
     return StreamingResponse(
-        sse_manager.add_client(user_id),
+        sse_manager.add_client(user.id),
         media_type="text/event-stream; charset=utf-8",
     )
 
@@ -51,14 +51,14 @@ async def sse_endpoint(
 async def full_tree_endpoint(
     request: Request,
     path: str = Query("", description="Chemin relatif (ex: 'dossier/')"),
-    user_id: int = Query(1, description="ID de l'utilisateur"),
+    user: User = Depends(current_user),
     recursive: bool = Query(
         False, description="Inclure les sous-dossiers récursivement"
     ),
     minio_service: MinioService = Depends(get_minio_service),
 ):
     metadata = await minio_service.full_list_path(
-        path=path, user_id=user_id, recursive=recursive
+        path=path, user_id=user.id, recursive=recursive
     )
     return BaseResponse(
         data=metadata,
@@ -75,7 +75,7 @@ async def upload_file_endpoint(
     request: Request,
     file: UploadFile,
     minio_service: MinioService = Depends(get_minio_service),
-    user_id: int = 1,  # TODO : À remplacer par l'ID réel (via auth)
+    user: User = Depends(current_user),
     path: str = "",
     sse_manager: SSEManager = Depends(get_sse_manager),
 ) -> BaseResponse:
@@ -94,18 +94,18 @@ async def upload_file_endpoint(
         raise HTTPException(status_code=400, detail="Nom de fichier vide.")
 
     message, metadata = await minio_service.download_service.upload_file(
-        user_id, file, path
+        user.id, file, path
     )
 
     sse_message = SSEMessage(
         event="upload",
-        user_id=user_id,
+        user_id=user.id,
         payload=metadata.model_dump(),
         message=message,
         timestamp=datetime.now().isoformat(),
     )
 
-    await sse_manager.notify_user(user_id, sse_message.model_dump())
+    await sse_manager.notify_user(user.id, sse_message.model_dump())
     return BaseResponse(
         data=metadata, message=message, status_code=status.HTTP_201_CREATED
     )
@@ -131,7 +131,7 @@ async def list_path(
     Returns:
         TreeResponse: Arborescence du chemin.
     """
- 
+
     tree: SimpleFileTreeResponse = await minio_service.simple_list_path(
         user_id=user.id, path=path, per_page=per_page, page=page
     )
@@ -152,7 +152,7 @@ async def list_path(
 async def download_file_endpoint(
     request: Request,
     object_name: str,
-    user_id: int = 1,  # TODO: Remplacer par l'ID réel (via auth)
+    user: User = Depends(current_user),
     minio_service: MinioService = Depends(get_minio_service),
 ) -> StreamingResponse:
     """
@@ -163,7 +163,7 @@ async def download_file_endpoint(
          **user_id** : ID de l'utilisateur (injecté par l'auth)
 
     """
-    return await minio_service.download_service.download_object(user_id, object_name)
+    return await minio_service.download_service.download_object(user.id, object_name)
 
 
 @router.get("/preview/{object_name:path}", response_class=StreamingResponse)
@@ -171,10 +171,10 @@ async def download_file_endpoint(
 async def preview_file_endpoint(
     request: Request,
     object_name: str,
-    user_id: int = 1,  # TODO: Remplacer par l'ID réel (via auth)
+    user: User = Depends(current_user),
     minio_service: MinioService = Depends(get_minio_service),
 ):
-    return await minio_service.download_service.preview_object(user_id, object_name)
+    return await minio_service.download_service.preview_object(user.id, object_name)
 
 
 @router.post(
@@ -186,7 +186,7 @@ async def preview_file_endpoint(
 async def create_folder_endpoint(
     request: Request,
     payload: CreateFolder,
-    user_id: int = 1,  # ID de l'utilisateur (via auth),
+    user: User = Depends(current_user),
     minio_service: MinioService = Depends(get_minio_service),
     sse_manager: SSEManager = Depends(get_sse_manager),
 ) -> BaseResponse[str]:
@@ -209,19 +209,19 @@ async def create_folder_endpoint(
     """
     # TODO : Return en tuple
     folder_path = await minio_service.object_service.create_folder(
-        user_id=user_id,
+        user_id=user.id,
         current_path=payload.currentPath,
         folder_path=payload.folderPath,
     )
 
     sse_message = SSEMessage(
         event="folder_created",
-        user_id=user_id,
+        user_id=user.id,
         payload=payload.model_dump(),
         message=f"Fichier {payload.folderPath} créer",
         timestamp=datetime.now().isoformat(),
     )
-    await sse_manager.notify_user(user_id, sse_message.model_dump())
+    await sse_manager.notify_user(user.id, sse_message.model_dump())
 
     return BaseResponse(
         success=True,
@@ -242,20 +242,20 @@ async def delete_object_endpoint(
     folder_path: str = Query(description="Chemin de l'objet à supprimer"),
     minio_service: MinioService = Depends(get_minio_service),
     sse_manager: SSEManager = Depends(get_sse_manager),
-    user_id: int = 1,
+    user: User = Depends(current_user),
 ):
     message, data = await minio_service.object_service.delete_object(
-        user_id, folder_path
+        user.id, folder_path
     )
 
     sse_message = SSEMessage(
         event="delete",
-        user_id=user_id,
+        user_id=user.id,
         payload=data,
         message=message,
         timestamp=datetime.now().isoformat(),
     )
-    await sse_manager.notify_user(user_id, sse_message.model_dump())
+    await sse_manager.notify_user(user.id, sse_message.model_dump())
 
     return BaseResponse(
         success=True,
@@ -273,11 +273,11 @@ async def delete_object_endpoint(
 @limiter.limit("45/minute")
 async def stats_endpoint(
     request: Request,
-    user_id: int = 1,
+    user: User = Depends(current_user),
     object_path: str = Query(description="Salut toi"),
     minio_service: MinioService = Depends(get_minio_service),
 ) -> BaseResponse:
-    data = await minio_service.object_service.get_object_metadata(user_id, object_path)
+    data = await minio_service.object_service.get_object_metadata(user.id, object_path)
     return BaseResponse(
         message="Metadatas du fichier récupérées",
         data=data,
@@ -297,23 +297,23 @@ async def rename_endpoint(
     payload: RenameItem,
     sse_manager: SSEManager = Depends(get_sse_manager),
     minio_service: MinioService = Depends(get_minio_service),
-    user_id: int = 1,
+    user: User = Depends(current_user),
 ):
     message, data = await minio_service.object_service.rename(
-        user_id=user_id,
+        user_id=user.id,
         path=payload.path,
         new_name=payload.new_name,
     )
 
     sse_message = SSEMessage(
         event="rename",
-        user_id=user_id,
+        user_id=user.id,
         payload=data,
         message=message,
-        timestamp=datetime.utcnow().isoformat(),
+        timestamp=datetime.now().isoformat(),
     )
 
-    await sse_manager.notify_user(user_id, sse_message.model_dump())
+    await sse_manager.notify_user(user.id, sse_message.model_dump())
     return BaseResponse(
         success=True, data=data, message=message, status_code=status.HTTP_200_OK
     )
@@ -330,7 +330,7 @@ async def move_endpoint(
     payload: MoveItem,
     sse_manager: SSEManager = Depends(get_sse_manager),
     minio_service: MinioService = Depends(get_minio_service),
-    user_id: int = 1,  # TODO: Remplacer par l'ID réel (via auth)
+    user: User = Depends(current_user),
 ) -> BaseResponse:
     """
     Déplace un fichier ou un dossier dans le bucket utilisateur.
@@ -349,20 +349,20 @@ async def move_endpoint(
     """
 
     message, data = await minio_service.object_service.move(
-        user_id=user_id,
+        user_id=user.id,
         source_path=payload.source_path,
         destination_folder=payload.destination_folder,
     )
 
     sse_message = SSEMessage(
         event="move",
-        user_id=user_id,
+        user_id=user.id,
         payload=data,
         message=message,
         timestamp=datetime.now().isoformat(),
     )
-    await sse_manager.notify_user(user_id, sse_message.model_dump())
-    await sse_manager.notify_user(user_id, sse_message.model_dump())
+    await sse_manager.notify_user(user.id, sse_message.model_dump())
+    await sse_manager.notify_user(user.id, sse_message.model_dump())
     return BaseResponse(
         success=True,
         data=data,
@@ -377,21 +377,21 @@ async def copy_endpoint(
     payload: CopyItem,
     minio_service: MinioService = Depends(get_minio_service),
     sse_manager: SSEManager = Depends(get_sse_manager),
-    user_id: int = 1,  # TODO: Remplacer par l'ID réel (via auth)
+    user: User = Depends(current_user),
 ):
     message, data = await minio_service.object_service.copy(
-        user_id, payload.source_path, payload.destination_folder
+        user.id, payload.source_path, payload.destination_folder
     )
     # TODO : Rajouter le nom du dossier (pas assez d'info)
 
     sse_message = SSEMessage(
         event="copy",
-        user_id=user_id,
+        user_id=user.id,
         payload=data,
         message=message,
         timestamp=datetime.now().isoformat(),
     )
-    await sse_manager.notify_user(user_id, sse_message.model_dump())
+    await sse_manager.notify_user(user.id, sse_message.model_dump())
     return BaseResponse(
         success=True, message=message, data=data, status_code=status.HTTP_200_OK
     )
@@ -405,7 +405,7 @@ async def compress_files_endpoint(
     request: Request,
     payload: CompressItems,
     minio_service: MinioService = Depends(get_minio_service),
-    user_id: int = 1,  # TODO : À remplacer par l'ID réel (via auth)
+    user: User = Depends(current_user),
 ) -> BaseResponse:
     """
     Compresses des fichiers dans le bucket utilisateur.
@@ -419,7 +419,7 @@ async def compress_files_endpoint(
     """
 
     message, metadata = await minio_service.object_service.compress_objects(
-        "user-1", payload.objects, payload.destination_folder
+        user.id, payload.objects, payload.destination_folder
     )
     return BaseResponse(
         data=metadata, message=message, status_code=status.HTTP_201_CREATED
@@ -432,7 +432,7 @@ async def resolve_path(
     request: Request,
     path: str = Query(default="/", description="Chemin du dossier"),
     minio_service: MinioService = Depends(get_minio_service),
-    user_id: int = 1,
+    user: User = Depends(current_user),
 ):
-    data = await minio_service.object_service.resolve_objet(user_id=user_id, path=path)
+    data = await minio_service.object_service.resolve_objet(user_id=user.id, path=path)
     return BaseResponse(data=data, message="message", status_code=status.HTTP_200_OK)

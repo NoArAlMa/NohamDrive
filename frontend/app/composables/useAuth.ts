@@ -7,12 +7,14 @@ export const useAuth = () => {
 
   const handleBackendError = (backend: any): AuthResponse => {
     if (backend?.statusCode === 422 && backend?.data) {
+      console.log(backend.data);
       return {
         success: false,
         fieldErrors: Object.entries(backend.data).map(([name, message]) => ({
           name,
           message: String(message),
         })),
+
         message: backend.message,
         statusCode: backend.statusCode,
       };
@@ -48,9 +50,11 @@ export const useAuth = () => {
         icon: "material-symbols:check-rounded",
       });
 
+      navigateTo("/");
+
       return { success: true, data: response.data!, message: response.message };
     } catch (error: any) {
-      return handleBackendError(error?.data);
+      return handleBackendError(error);
     }
   }
 
@@ -80,13 +84,39 @@ export const useAuth = () => {
         icon: "material-symbols:check-rounded",
       });
 
+      navigateTo("/home");
+
       return { success: true, data: response.data!, message: response.message };
     } catch (error: any) {
       return handleBackendError(error?.data);
     }
   }
 
+  async function logoutUser() {
+    try {
+      // const response = await $fetch<GenericAPIResponse<AuthUserResponse>>(
+      //   "/auth/register",
+      //   {
+      //     method: "POST",
+      //   },
+      // );
+
+      logout();
+
+      toast.add({
+        title: "Log out successfully !",
+        color: "success",
+        icon: "material-symbols:check-rounded",
+      });
+
+      navigateTo("/");
+    } catch (error: any) {
+      return handleBackendError(error?.data);
+    }
+  }
+
   return {
+    logoutUser,
     loginUser,
     registerUser,
   };

@@ -105,6 +105,11 @@ const fullData = reactive<any>({});
 
 const { registerUser } = useAuth();
 
+const stepErrors = ref<Record<number, boolean>>({
+  0: false,
+  1: false,
+});
+
 async function onSubmit() {
   generalError.value = null;
 
@@ -133,6 +138,8 @@ async function handleNext(payload: FormSubmitEvent<any>) {
     // validation du step actuel
     await stepSchemas[step.value]!.parseAsync(payload.data);
 
+    stepErrors.value[step.value] = false;
+
     if (!isLastStep.value) {
       step.value++;
       return;
@@ -147,6 +154,8 @@ async function handleNext(payload: FormSubmitEvent<any>) {
       }));
 
       authForm.value?.formRef?.setErrors(formattedErrors);
+
+      stepErrors.value[step.value] = true;
     }
   }
 }
@@ -201,7 +210,15 @@ async function handleNext(payload: FormSubmitEvent<any>) {
               @click="step--"
               variant="ghost"
               icon="material-symbols:arrow-back-rounded"
-            />
+            >
+              <template #trailing>
+                <UIcon
+                  v-if="stepErrors[step - 1]"
+                  name="material-symbols:info-outline-rounded"
+                  class="text-error"
+                />
+              </template>
+            </UButton>
           </div>
         </template>
       </UAuthForm>

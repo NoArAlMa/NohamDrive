@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, Request, status
 from app.services.auth_service import get_auth_service, AuthService
 from app.schemas.auth import UserCreate, UserLogin
 from app.utils.response import BaseResponse
+from app.schemas.user import User
+from core.security import current_user
 from core.limiter import limiter
 from database.services.setup import (
     create_tokens_table,
@@ -15,7 +17,7 @@ router = APIRouter(prefix="/auth", tags=["Authentification"])
 
 
 @router.post("/register", status_code=201, response_model=BaseResponse)
-@limiter.limit("1/minute")
+@limiter.limit("3/minute")
 async def create_user_endpoint(
     request: Request,
     payload: UserCreate,
@@ -31,7 +33,7 @@ async def create_user_endpoint(
 
 
 @router.post("/login", status_code=200, response_model=BaseResponse)
-@limiter.limit("10/minute")
+@limiter.limit("5/minute")
 async def login_user_endpoint(
     request: Request,
     payload: UserLogin,
@@ -43,6 +45,19 @@ async def login_user_endpoint(
         data=login_user,
         status_code=status.HTTP_200_OK,
         message="Login successfully",
+    )
+
+
+@router.post("/logout", status_code=200, response_model=BaseResponse)
+@limiter.limit("2/minute")
+async def logout_user_endpoint(
+    request: Request,
+    user: User = Depends(current_user),
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    await auth_service.logout_user(user)
+    return BaseResponse(
+        success=True, data=None, message="Logout successful", status_code=200
     )
 
 

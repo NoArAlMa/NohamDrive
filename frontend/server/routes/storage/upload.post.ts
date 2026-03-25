@@ -8,6 +8,7 @@ interface MultipartFile {
 
 export default defineEventHandler(async (event) => {
   const API_URL = useRuntimeConfig().public.apiBaseUrl;
+  const token = getCookie(event, "auth_token");
 
   try {
     const formData: MultipartFile[] =
@@ -25,7 +26,7 @@ export default defineEventHandler(async (event) => {
         uploadFormData.append(
           file.name,
           new Blob([file.data]), // Blob obligatoire en Node
-          file.filename
+          file.filename,
         );
       }
     }
@@ -35,7 +36,10 @@ export default defineEventHandler(async (event) => {
       {
         method: "POST",
         body: uploadFormData,
-      }
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
     );
 
     return await res.json();

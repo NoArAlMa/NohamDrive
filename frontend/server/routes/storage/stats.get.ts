@@ -4,6 +4,7 @@ import { GenericAPIResponse } from "../../../shared/types/API";
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const object_path = query.object_path as string;
+  const token = getCookie(event, "auth_token");
 
   const API_URL = useRuntimeConfig().public.apiBaseUrl;
   try {
@@ -14,6 +15,9 @@ export default defineEventHandler(async (event) => {
         query: {
           object_path: object_path,
         },
+        headers: {
+        Authorization: `Bearer ${token}`,
+      },
       }
     );
     return data;

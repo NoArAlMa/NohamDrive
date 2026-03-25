@@ -524,7 +524,7 @@ class ObjectService:
 
     async def compress_objects(
         self,
-        bucket_name: str,
+        user_id: int,
         object_names: list[str],
         destination_folder: str,
         output_base_name: str = "compressed_folder",
@@ -546,6 +546,7 @@ class ObjectService:
             HTTPException: En cas d'erreur lors de la lecture ou de l'écriture dans MinIO.
         """
         try:
+            bucket_name = await self.bucket_service.get_user_bucket(user_id)
             destination_folder = MinioUtils.normalize_path(
                 destination_folder, is_folder=True
             )
@@ -747,7 +748,6 @@ class ObjectService:
                 status_code=404 if e.code == "NoSuchKey" else 500,
                 detail=f"Impossible de récupérer les métadonnées: {str(e)}",
             )
-
 
     async def resolve_objet(self, user_id: int, path: str):
         try:

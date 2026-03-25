@@ -190,7 +190,7 @@ class AuthService:
             "token": token,
         }
 
-    async def logout_user(self):
+    async def logout_user(self, user: User):
         pass
 
 
