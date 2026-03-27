@@ -17,13 +17,6 @@ const items: StepperItem[] = [
   },
 ];
 
-const stepperItems = computed(() =>
-  items.map((item: StepperItem, i: number) => ({
-    ...item,
-    color: i === 0 && hasStep1Errors.value ? "error" : undefined,
-  })),
-);
-
 const steps = [
   {
     id: 0,
@@ -176,7 +169,7 @@ async function handleNext(payload: FormSubmitEvent<any>): Promise<void> {
     <UPageCard class="w-full max-w-md shadow-md">
       <UStepper
         v-model="step"
-        :items="stepperItems"
+        :items="items"
         :disabled="true"
         class="w-full"
         size="sm"
