@@ -118,6 +118,7 @@ class JWTService:
         return token
 
     def decode_token(self, token: str) -> dict:
+        logger.info(f"Voici ton token : {token}")
         try:
             payload = jwt.decode(
                 token, str(self.SECRET_KEY), algorithms=[self.ALGORITHM]

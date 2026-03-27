@@ -7,7 +7,7 @@ export const useAuth = () => {
 
   const handleBackendError = (backend: any): AuthResponse => {
     if (backend?.statusCode === 422 && backend?.data) {
-      console.log(backend.data);
+
       return {
         success: false,
         fieldErrors: Object.entries(backend.data).map(([name, message]) => ({

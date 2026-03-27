@@ -17,6 +17,13 @@ const items: StepperItem[] = [
   },
 ];
 
+const stepperItems = computed(() =>
+  items.map((item: StepperItem, i: number) => ({
+    ...item,
+    color: i === 0 && hasStep1Errors.value ? "error" : undefined,
+  })),
+);
+
 const steps = [
   {
     id: 0,
@@ -101,63 +108,66 @@ const stepSchemas = [
     }),
 ];
 
+const step1Fields = ["name", "username", "email"];
+const hasStep1Errors = ref(false);
+
 const fullData = reactive<any>({});
 
 const { registerUser } = useAuth();
 
-const stepErrors = ref<Record<number, boolean>>({
-  0: false,
-  1: false,
-});
+function buildGeneralError(
+  errors: { name?: string; message: string }[],
+): string | null {
+  const fieldsInError = errors
+    .map((err) => err.name)
+    .filter((name): name is string => !!name && step1Fields.includes(name));
+
+  if (fieldsInError.length === 0) return null;
+
+  const uniqueFields = [...new Set(fieldsInError)];
+
+  return `Error on ${uniqueFields.join(", ")}`;
+}
 
 async function onSubmit() {
   generalError.value = null;
+  hasStep1Errors.value = false;
 
   const result = await registerUser(fullData);
+  if (!result) return;
 
-  if (result?.fieldErrors) {
+  if (result.statusCode === 422) {
+    hasStep1Errors.value = true;
+    generalError.value =
+      result.message || buildGeneralError(result.fieldErrors || []);
+  }
+
+  if (result.fieldErrors?.length) {
+    hasStep1Errors.value = true;
+
+    generalError.value = buildGeneralError(result.fieldErrors);
     authForm.value?.formRef?.setErrors(result.fieldErrors);
   }
-  if (result?.statusCode === 422 && result?.message) {
-    generalError.value = result.message;
-    return;
-  }
-  if (result?.success) {
+
+  if (result.success) {
     await navigateTo("/home");
   }
 
   return result;
 }
+async function handleNext(payload: FormSubmitEvent<any>): Promise<void> {
+  Object.assign(fullData, payload.data);
 
-async function handleNext(payload: FormSubmitEvent<any>) {
-  generalError.value = null;
+  await stepSchemas[step.value]!.parseAsync(payload.data);
 
-  try {
-    Object.assign(fullData, payload.data);
+  hasStep1Errors.value = false;
 
-    // validation du step actuel
-    await stepSchemas[step.value]!.parseAsync(payload.data);
-
-    stepErrors.value[step.value] = false;
-
-    if (!isLastStep.value) {
-      step.value++;
-      return;
-    }
-
-    await onSubmit();
-  } catch (error: any) {
-    if (error?.issues) {
-      const formattedErrors = error.issues.map((err: any) => ({
-        name: err.path[0],
-        message: err.message,
-      }));
-
-      authForm.value?.formRef?.setErrors(formattedErrors);
-
-      stepErrors.value[step.value] = true;
-    }
+  if (!isLastStep.value) {
+    step.value++;
+    return;
   }
+
+  await onSubmit();
 }
 </script>
 
@@ -166,7 +176,7 @@ async function handleNext(payload: FormSubmitEvent<any>) {
     <UPageCard class="w-full max-w-md shadow-md">
       <UStepper
         v-model="step"
-        :items="items"
+        :items="stepperItems"
         :disabled="true"
         class="w-full"
         size="sm"
@@ -213,7 +223,7 @@ async function handleNext(payload: FormSubmitEvent<any>) {
             >
               <template #trailing>
                 <UIcon
-                  v-if="stepErrors[step - 1]"
+                  v-if="hasStep1Errors"
                   name="material-symbols:info-outline-rounded"
                   class="text-error"
                 />

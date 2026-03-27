@@ -25,12 +25,11 @@ const items = ref<DropdownMenuItem[]>([
     label: "Import file",
     icon: "material-symbols:file-open-outline-rounded",
     onSelect: async () => {
-      console.log("Début de la sélection de fichiers...");
+
       const files = await openFilePicker(true);
-      console.log("Fichiers sélectionnés :", files);
+
 
       if (!files.length) {
-        console.log("Aucun fichier sélectionné.");
         return;
       }
 
