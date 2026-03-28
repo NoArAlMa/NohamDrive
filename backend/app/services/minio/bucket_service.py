@@ -31,25 +31,22 @@ class BucketService:
         """
         Supprime définitivement et intégralement le bucket d'un utilisateur.
         """
-
         bucket_name = await self.get_user_bucket(user_id)
 
         try:
-            # 1️⃣ Vérification existence bucket
+      
             if not self.minio.bucket_exists(bucket_name):
                 logger.warning(f"[DELETE_BUCKET] Bucket {bucket_name} inexistant.")
                 return
 
             logger.info(f"[DELETE_BUCKET] Suppression du bucket {bucket_name}...")
 
-            # 2️⃣ Récupération de tous les objets
             objects = self.minio.list_objects(bucket_name, recursive=True)
 
             delete_objects: List[DeleteObject] = [
                 DeleteObject(obj.object_name) for obj in objects if obj.object_name
             ]
 
-            # 3️⃣ Suppression batch (gros buckets supportés)
             if delete_objects:
                 errors = self.minio.remove_objects(bucket_name, delete_objects)
 
@@ -64,8 +61,6 @@ class BucketService:
                         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                         detail="Erreur lors de la suppression complète du stockage utilisateur.",
                     )
-
-            # 4️⃣ Suppression finale du bucket (vide)
             self.minio.remove_bucket(bucket_name)
 
             logger.info(
