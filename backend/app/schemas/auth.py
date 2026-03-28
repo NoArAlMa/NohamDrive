@@ -8,7 +8,6 @@ class UserCreate(BaseModel):
     username: str
     name: str
 
-    # 🔹 Validator pour le mot de passe
     @field_validator("password")
     def password_complexity(cls, value: str) -> str:
         if len(value) < 8:
@@ -23,7 +22,6 @@ class UserCreate(BaseModel):
             raise ValueError("The password must contain one special letter")
         return value
 
-    # 🔹 Validator pour le username
     @field_validator("username")
     def username_valid(cls, value: str) -> str:
         if not 3 <= len(value) <= 20:
@@ -34,7 +32,6 @@ class UserCreate(BaseModel):
             )
         return value
 
-    # 🔹 Validator pour le name
     @field_validator("name")
     def name_valid(cls, value: str) -> str:
         if not value.strip():

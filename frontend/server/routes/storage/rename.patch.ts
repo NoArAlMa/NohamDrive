@@ -5,13 +5,17 @@ export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
 
   const API_URL = useRuntimeConfig().public.apiBaseUrl;
+  const token = getCookie(event, "auth_token");
   try {
     const data = (await $fetch)<GenericAPIResponse<RenameFilePayload>>(
       `${API_URL}/storage/rename`,
       {
         method: "PATCH",
         body: payload,
-      }
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
     );
     return data;
   } catch (error: any) {

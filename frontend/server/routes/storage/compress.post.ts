@@ -4,12 +4,16 @@ import { CompressFilePayload } from "~~/shared/types/file_request";
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
   const API_URL = useRuntimeConfig().public.apiBaseUrl;
+  const token = getCookie(event, "auth_token");
   try {
     const data = await $fetch<GenericAPIResponse<CompressFilePayload>>(
       `${API_URL}/storage/compress`,
       {
         method: "POST",
         body: payload,
+        headers: {
+        Authorization: `Bearer ${token}`,
+      },
       }
     );
     return data;

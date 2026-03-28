@@ -39,9 +39,7 @@ const items = ref<NavigationMenuItem[][]>([
         <template #header>
           <UDashboardNavbar toggle>
             <template #title>
-              <NuxtLink to="/home" class="">
-                <h1 class="text-primary font-bold text-2xl">NohamDrive</h1>
-              </NuxtLink>
+              <h1 class="text-primary font-bold text-2xl">NohamDrive</h1>
             </template>
 
             <UNavigationMenu :items="items" />

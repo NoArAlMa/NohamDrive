@@ -101,63 +101,66 @@ const stepSchemas = [
     }),
 ];
 
+const step1Fields = ["name", "username", "email"];
+const hasStep1Errors = ref(false);
+
 const fullData = reactive<any>({});
+
+const { registerUser } = useAuth();
+
+function buildGeneralError(
+  errors: { name?: string; message: string }[],
+): string | null {
+  const fieldsInError = errors
+    .map((err) => err.name)
+    .filter((name): name is string => !!name && step1Fields.includes(name));
+
+  if (fieldsInError.length === 0) return null;
+
+  const uniqueFields = [...new Set(fieldsInError)];
+
+  return `Error on ${uniqueFields.join(", ")}`;
+}
 
 async function onSubmit() {
   generalError.value = null;
+  hasStep1Errors.value = false;
 
-  const { password_confirmation, ...cleanedData } = fullData;
+  const result = await registerUser(fullData);
+  if (!result) return;
 
-  try {
-    await $fetch("/auth/register", {
-      method: "POST",
-      body: cleanedData,
-    });
-  } catch (error: any) {
-    const backend = error?.data;
-
-    if (backend?.statusCode === 422 && backend?.data) {
-      const formattedErrors = Object.entries(backend.data).map(
-        ([name, message]) => ({
-          name,
-          message: String(message),
-        }),
-      );
-
-      authForm.value?.formRef?.setErrors(formattedErrors);
-      generalError.value = backend.message;
-    } else {
-      generalError.value =
-        backend?.message ?? "Une erreur inattendue est survenue";
-    }
+  if (result.statusCode === 422) {
+    hasStep1Errors.value = true;
+    generalError.value =
+      result.message || buildGeneralError(result.fieldErrors || []);
   }
+
+  if (result.fieldErrors?.length) {
+    hasStep1Errors.value = true;
+
+    generalError.value = buildGeneralError(result.fieldErrors);
+    authForm.value?.formRef?.setErrors(result.fieldErrors);
+  }
+
+  if (result.success) {
+    await navigateTo("/home");
+  }
+
+  return result;
 }
+async function handleNext(payload: FormSubmitEvent<any>): Promise<void> {
+  Object.assign(fullData, payload.data);
 
-async function handleNext(payload: FormSubmitEvent<any>) {
-  generalError.value = null;
+  await stepSchemas[step.value]!.parseAsync(payload.data);
 
-  try {
-    Object.assign(fullData, payload.data);
+  hasStep1Errors.value = false;
 
-    // validation du step actuel
-    await stepSchemas[step.value]!.parseAsync(payload.data);
-
-    if (!isLastStep.value) {
-      step.value++;
-      return;
-    }
-
-    await onSubmit();
-  } catch (error: any) {
-    if (error?.issues) {
-      const formattedErrors = error.issues.map((err: any) => ({
-        name: err.path[0],
-        message: err.message,
-      }));
-
-      authForm.value?.formRef?.setErrors(formattedErrors);
-    }
+  if (!isLastStep.value) {
+    step.value++;
+    return;
   }
+
+  await onSubmit();
 }
 </script>
 
@@ -178,9 +181,9 @@ async function handleNext(payload: FormSubmitEvent<any>) {
         :schema="stepSchemas[step]"
         :fields="currentFields"
         @submit="handleNext"
+        loading-auto
         :submit="{
           label: isLastStep ? 'Create account' : 'Next',
-          loadingAuto: true,
           color: 'primary',
         }"
       >
@@ -210,7 +213,15 @@ async function handleNext(payload: FormSubmitEvent<any>) {
               @click="step--"
               variant="ghost"
               icon="material-symbols:arrow-back-rounded"
-            />
+            >
+              <template #trailing>
+                <UIcon
+                  v-if="hasStep1Errors"
+                  name="material-symbols:info-outline-rounded"
+                  class="text-error"
+                />
+              </template>
+            </UButton>
           </div>
         </template>
       </UAuthForm>

@@ -4,6 +4,8 @@ const router = useRouter();
 
 definePageMeta({
   layout: false,
+  middleware: "auth-middleware",
+  invertAuth: true,
 });
 
 useHead({
@@ -28,11 +30,6 @@ watch(
     mode.value = newMode === "register" ? "register" : "login";
   },
 );
-
-// Fonction pour naviguer en changeant le mode
-function goToMode(newMode: "login" | "register") {
-  router.push({ path: "/auth", query: { mode: newMode } });
-}
 </script>
 
 <template>
@@ -74,7 +71,7 @@ function goToMode(newMode: "login" | "register") {
   );
   animation: rotate var(--speed) var(--easing) alternate infinite;
   border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-  z-index: -1; /* derrière le contenu */
+  z-index: -1;
 }
 
 @keyframes rotate {

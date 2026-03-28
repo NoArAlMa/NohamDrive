@@ -4,12 +4,16 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const path = (query.path as string) || "/";
   const API_URL = useRuntimeConfig().public.apiBaseUrl;
+  const token = getCookie(event, "auth_token");
 
   try {
     const data = await $fetch<ApiFileTreeResponse>(`${API_URL}/storage/tree`, {
       method: "GET",
       query: {
         path: path,
+      },
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
     });
     return data;

@@ -13,6 +13,8 @@ from datetime import datetime
 from slowapi.errors import RateLimitExceeded
 from core.limiter import limiter
 from core.logging import setup_logger
+from database.connection_management import ConnectionManager
+from database.tools.db_utils import test_db_connection
 
 logger = setup_logger(__name__)
 
@@ -43,7 +45,14 @@ async def lifespan(app: FastAPI):
 
     app.state.sse_manager = sse_manager or None
 
+    app.state.database = ConnectionManager()
+    if not test_db_connection(app.state.database):
+        logger.critical("Échec de la connexion à la base de données. Arrêt de l'application.")
+        raise RuntimeError("Impossible de se connecter à la base de données.")
+
     yield
+
+    app.state.database = None
     if app.state.redis:
         await sse_manager.shutdown()
 

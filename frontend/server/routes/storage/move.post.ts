@@ -5,6 +5,7 @@ export default defineEventHandler(async (event) => {
   const payload = await readBody<MoveFilePayload>(event);
 
   const API_URL = useRuntimeConfig().public.apiBaseUrl;
+  const token = getCookie(event, "auth_token");
 
   try {
     const data = await $fetch<GenericAPIResponse<string>>(
@@ -12,6 +13,9 @@ export default defineEventHandler(async (event) => {
       {
         method: "POST",
         body: payload,
+        headers: {
+        Authorization: `Bearer ${token}`,
+      },
       },
     );
 

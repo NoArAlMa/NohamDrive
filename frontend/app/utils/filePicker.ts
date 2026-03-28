@@ -17,7 +17,7 @@ export function openFilePicker(multiple = true): Promise<File[]> {
         if (!resolved) {
           resolved = true;
           cleanup();
-          console.log("Sélection annulée par l'utilisateur.");
+
           resolve([]);
         }
       }, 500);
@@ -29,7 +29,7 @@ export function openFilePicker(multiple = true): Promise<File[]> {
       resolved = true;
       cleanup();
       const files = input.files ? Array.from(input.files) : [];
-      console.log("Fichiers sélectionnés :", files);
+
       resolve(files);
     };
 
@@ -42,7 +42,6 @@ export function openFilePicker(multiple = true): Promise<File[]> {
       if (!resolved) {
         resolved = true;
         cleanup();
-        console.log("Timeout : sélection annulée.");
         resolve([]);
       }
     }, 10000);

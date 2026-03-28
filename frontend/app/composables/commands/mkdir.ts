@@ -34,8 +34,6 @@ export const makeDirectoryCommand: TerminalCommand = {
       const { createFolder } = useFsActions();
 
       try {
-        console.log(parentPath);
-        console.log(folderName);
         const result = await createFolder(folderName!, parentPath);
         if (!result.success) {
           return {
