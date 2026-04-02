@@ -1,5 +1,6 @@
 import datetime
 from fastapi import HTTPException, Query, Request
+from fastapi.concurrency import run_in_threadpool
 from minio import Minio
 from minio.error import S3Error
 
@@ -12,8 +13,6 @@ from app.schemas.file_tree import (
 from app.services.minio.bucket_service import BucketService
 from app.services.minio.object_service import ObjectService
 from app.services.minio.download_service import DownloadService
-
-from app.utils.minio_utils import MinioUtils
 from core.logging import setup_logger
 
 
@@ -44,70 +43,62 @@ class MinioService:
             if ".." in normalized_path.split("/"):
                 raise HTTPException(status_code=400, detail="Invalid path")
 
-            path_type = await MinioUtils.resolve_path_type(
-                minio_client=self.minio,
-                bucket_name=bucket_name,
-                path=normalized_path,
-            )
-
-            if path_type == "not_found":
-                raise HTTPException(status_code=404, detail="Path not found")
-
-            if path_type == "file":
-                raise HTTPException(status_code=400, detail="Not a directory")
-
-            objects = self.minio.list_objects(
-                bucket_name,
-                prefix=normalized_path,
-                recursive=False,
-            )
-
-            items: list[SimpleFileItem] = []
-
-            for obj in objects:
-                # Ignore le dossier courant
-                if obj.object_name == normalized_path:
-                    continue
-
-                # Nom affiché (sans le chemin parent)
-                if obj.object_name:
-                    name = obj.object_name.removeprefix(normalized_path).rstrip("/")
-                    is_dir = obj.object_name.endswith("/")
-
-                last_modified = obj.last_modified
-
-                if is_dir:
-                    try:
-                        if obj.object_name:
-                            stat = self.minio.stat_object(bucket_name, obj.object_name)
-                            lm = None
-                            if stat.metadata is not None:
-                                lm = stat.metadata.get("x-amz-meta-last_modified")
-                        if lm:
-                            last_modified = datetime.datetime.fromisoformat(lm)
-                    except Exception:
-                        last_modified = None
-
-                items.append(
-                    SimpleFileItem(
-                        name=name,
-                        size=None if is_dir else obj.size,
-                        is_dir=is_dir,
-                        last_modified=last_modified or datetime.datetime.now(),
-                    )
-                )
-
-            items.sort(key=lambda x: (not x.is_dir, (x.name or "").lower()))
-
-            total_items = len(items)
-            total_pages = (total_items + per_page - 1) // per_page
             start = (page - 1) * per_page
             end = start + per_page
-            paginated_items = items[start:end]
+
+            def list_objects_paginated() -> tuple[list[SimpleFileItem], int]:
+                result = []
+                count = 0
+
+                for obj in self.minio.list_objects(
+                    bucket_name,
+                    prefix=normalized_path,
+                    recursive=False,
+                ):
+                    if obj.object_name == normalized_path:
+                        continue
+
+                    if count >= end:
+                        break
+                    if count >= start:
+                        if obj.object_name:
+                            name = obj.object_name.removeprefix(normalized_path).rstrip(
+                                "/"
+                            )
+                            is_dir = obj.object_name.endswith("/")
+
+                        last_modified = None
+                        if obj.last_modified:
+                            last_modified = obj.last_modified
+
+                        if is_dir:
+                            lm = None
+                            if obj.metadata:
+                                lm = obj.metadata.get("x-amz-meta-last_modified")
+                            if lm:
+                                last_modified = datetime.datetime.fromisoformat(lm)
+
+                        result.append(
+                            SimpleFileItem(
+                                name=name,
+                                size=None if is_dir else obj.size,
+                                is_dir=is_dir,
+                                last_modified=last_modified or datetime.datetime.now(),
+                            )
+                        )
+
+                    count += 1
+
+                return result, count
+
+            objects, total_items = await run_in_threadpool(list_objects_paginated)
+
+            objects.sort(key=lambda x: (not x.is_dir, (x.name or "").lower()))
+            total_pages = (total_items + per_page - 1) // per_page
 
             return SimpleFileTreeResponse(
                 path="/" + normalized_path if normalized_path else "/",
-                items=paginated_items,
+                items=objects,
                 total_pages=total_pages,
                 total_items=total_items,
                 per_page=per_page,
@@ -121,13 +112,11 @@ class MinioService:
                 detail="Impossible de lister le chemin",
             )
 
-    # Dans MinioService (à ajouter)
-
     async def full_list_path(
         self,
         path: str = "",
         user_id: int = 1,
-        recursive: bool = False,
+        recursive: bool = True,
     ) -> FullFileTreeResponse:
         """
         Liste TOUS les objets dans un bucket Minio, avec métadonnées complètes.
@@ -147,22 +136,12 @@ class MinioService:
             if ".." in normalized_path.split("/"):
                 raise HTTPException(status_code=400, detail="Chemin invalide")
 
-            # Vérifie que le chemin existe et est un dossier
-            path_type = await MinioUtils.resolve_path_type(
-                self.minio, bucket_name, normalized_path
-            )
-            if path_type == "not_found":
-                raise HTTPException(status_code=404, detail="Chemin introuvable")
-            if path_type == "file":
-                raise HTTPException(status_code=400, detail="Ce n'est pas un dossier")
-
             objects = self.minio.list_objects(
                 bucket_name, prefix=normalized_path, recursive=recursive
             )
-            items = []
+            items: list[FullFileItem] = []
 
             for obj in objects:
-                # Ignore le dossier courant
                 if obj.object_name == normalized_path:
                     continue
 
@@ -174,26 +153,19 @@ class MinioService:
                 )
                 is_dir = obj.object_name.endswith("/") if obj.object_name else False
 
-                # Récupère les métadonnées étendues
-                if obj.object_name:
-                    stat = self.minio.stat_object(bucket_name, obj.object_name)
-                last_modified = stat.last_modified
-                etag = stat.etag  # Hash du contenu
-                content_type = stat.content_type
-                size = stat.size if not is_dir else None
+                etag = obj.etag
+                content_type = obj.content_type
+                size = obj.size if not is_dir else None
 
-                # Pour les dossiers, essaye de récupérer last_modified depuis les métadonnées
+                last_modified = None
+                if obj.last_modified:
+                    last_modified = obj.last_modified
                 if is_dir:
-                    try:
-                        if (
-                            stat.metadata
-                            and "x-amz-meta-last_modified" in stat.metadata
-                        ):
-                            last_modified = datetime.datetime.fromisoformat(
-                                stat.metadata["x-amz-meta-last_modified"]
-                            )
-                    except Exception:
-                        last_modified = datetime.datetime.now()
+                    lm = None
+                    if obj.metadata:
+                        lm = obj.metadata.get("x-amz-meta-last_modified")
+                    if lm:
+                        last_modified = datetime.datetime.fromisoformat(lm)
 
                 items.append(
                     FullFileItem(

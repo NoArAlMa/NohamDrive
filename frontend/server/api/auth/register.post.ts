@@ -1,4 +1,4 @@
-import { UserCreatePayload } from "./../../../shared/types/auth";
+import { UserCreatePayload } from "../../../shared/types/auth";
 import { GenericAPIResponse } from "~~/shared/types/API";
 
 export default defineEventHandler(async (event) => {

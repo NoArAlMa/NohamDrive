@@ -29,7 +29,7 @@ export const downloadCommand: TerminalCommand = {
 
       try {
         const response = await fetch(
-          `/storage/download/${encodeURIComponent(correct_path)}`,
+          `api/storage/download/${encodeURIComponent(correct_path)}`,
         );
 
         if (!response.ok) {

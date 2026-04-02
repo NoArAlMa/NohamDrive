@@ -5,7 +5,8 @@ export const useAuthStore = defineStore("auth", () => {
     maxAge: 60 * 60 * 24 * 30,
     path: "/",
     sameSite: "lax",
-    secure: true,
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: false,
   });
 
   watch(token, (newVal) => {

@@ -33,7 +33,7 @@ export const copyCommand: TerminalCommand = {
       };
 
       try {
-        await $fetch<GenericAPIResponse<CopyFilePayload>>("/storage/copy", {
+        await $fetch<GenericAPIResponse<CopyFilePayload>>("api/storage/copy", {
           method: "POST",
           body: payload,
         });

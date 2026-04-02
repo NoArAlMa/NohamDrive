@@ -45,7 +45,7 @@ export const propertyCommand: TerminalCommand = {
       try {
         // Effectue le fetch directement
         const req = await $fetch<GenericAPIResponse<FileMetadata>>(
-          "/storage/stats",
+          "api/storage/stats",
           {
             method: "GET",
             query: {
