@@ -4,7 +4,8 @@ import { useFSStore } from "./fs";
 
 export const useFileTree = defineStore("fileTree", () => {
   const FSStore = useFSStore();
-  const { token } = storeToRefs(useAuthStore());
+  const AuthStore = useAuthStore();
+
   const data = ref<GenericAPIResponse<ApiFileTreeData> | null>(null);
   const loading = ref(false);
   const error = ref<Error | null>(null);
@@ -15,7 +16,7 @@ export const useFileTree = defineStore("fileTree", () => {
       loading.value = true;
       error.value = null;
       const response = await $fetch<GenericAPIResponse<ApiFileTreeData>>(
-        "/storage/tree",
+        "/api/storage/tree",
         {
           params: { path: FSStore.currentPath },
         },
@@ -27,17 +28,21 @@ export const useFileTree = defineStore("fileTree", () => {
       loading.value = false;
     }
   };
+  
+  const reset = () => {
+    data.value = null;
+    error.value = null;
+    loading.value = false;
+  };
 
-  // Charger les données au montage et quand currentPath change
   watch(
-    [() => FSStore.currentPath, () => token.value],
+    [() => FSStore.currentPath, () => AuthStore.token],
     ([path, tokenVal]) => {
       if (!tokenVal) {
         reset();
         return;
       }
-
-      fetchFileTree(); // connecté → on recharge
+      fetchFileTree();
     },
     { immediate: true },
   );
@@ -59,11 +64,7 @@ export const useFileTree = defineStore("fileTree", () => {
     await fetchFileTree();
   };
 
-  const reset = () => {
-    data.value = null;
-    error.value = null;
-    loading.value = false;
-  };
+  
 
   return {
     fileTree,

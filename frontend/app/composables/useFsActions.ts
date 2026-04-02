@@ -34,7 +34,7 @@ export const useFsActions = () => {
         icon: "material-symbols:progress-activity",
       });
       try {
-        const response = await $fetch(`/storage/preview/${cleanPath}`, {
+        const response = await $fetch(`api/storage/preview/${cleanPath}`, {
           responseType: "blob",
         });
         const blob = new Blob([response], { type: response.type });
@@ -78,7 +78,7 @@ export const useFsActions = () => {
 
     try {
       const req = await $fetch<GenericAPIResponse<RenameFilePayload>>(
-        "/storage/rename",
+        "api/storage/rename",
         {
           method: "PATCH",
           body: {
@@ -127,7 +127,7 @@ export const useFsActions = () => {
       });
     }
     try {
-      await $fetch("/storage/object", {
+      await $fetch("api/storage/object", {
         method: "DELETE",
         query: { folder_path: full_path },
       });
@@ -183,7 +183,7 @@ export const useFsActions = () => {
     }
 
     try {
-      const response = await fetch(`/storage/download/${cleanPath}`);
+      const response = await fetch(`api/storage/download/${cleanPath}`);
 
       if (!response.ok) {
         if (loadingToast) toast.remove(loadingToast.id);
@@ -256,7 +256,7 @@ export const useFsActions = () => {
     }
 
     try {
-      await $fetch<GenericAPIResponse<null>>("/storage/upload", {
+      await $fetch<GenericAPIResponse<null>>("api/storage/upload", {
         method: "POST",
         body: formData,
       });
@@ -303,7 +303,7 @@ export const useFsActions = () => {
     });
     try {
       const req = await $fetch<GenericAPIResponse<FileMetadata>>(
-        "/storage/stats",
+        "api/storage/stats",
         {
           method: "GET",
           query: {
@@ -361,7 +361,7 @@ export const useFsActions = () => {
     });
     try {
       const req = await $fetch<GenericAPIResponse<CopyFilePayload>>(
-        "/storage/copy",
+        "api/storage/copy",
         {
           method: "POST",
           body: {
@@ -422,7 +422,7 @@ export const useFsActions = () => {
     });
     try {
       const req = await $fetch<GenericAPIResponse<CompressFileResponse>>(
-        "/storage/compress",
+        "api/storage/compress",
         {
           method: "POST",
           body: {
@@ -460,7 +460,7 @@ export const useFsActions = () => {
     currentPath: string = FSStore.currentPath,
   ): Promise<{ success: boolean; message?: string }> => {
     try {
-      const req = await $fetch<GenericAPIResponse<string>>("/storage/folder", {
+      const req = await $fetch<GenericAPIResponse<string>>("api/storage/folder", {
         method: "POST",
         body: {
           currentPath,
@@ -509,7 +509,7 @@ export const useFsActions = () => {
       }
 
       const req = await $fetch<GenericAPIResponse<CopyFilePayload>>(
-        "/storage/move",
+        "api/storage/move",
         {
           method: "POST",
           body: payload,

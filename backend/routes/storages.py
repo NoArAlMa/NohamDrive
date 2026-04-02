@@ -59,7 +59,7 @@ async def sse_endpoint(
     summary="Liste complète de l'arborescence avec métadonnées",
     response_description="Retourne les fichiers/dossiers avec hashs, tailles et timestamps.",
 )
-# @limiter.limit("2/minute")
+@limiter.limit("2/minute")
 async def full_tree_endpoint(
     request: Request,
     path: str = Query("", description="Chemin relatif (ex: 'dossier/')"),
