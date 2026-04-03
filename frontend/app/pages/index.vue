@@ -85,164 +85,164 @@ const links = ref<ButtonProps[]>([
   },
 ]);
 
-const testimonials = ref([
-  {
-    user: {
-      name: "Eric Z.",
-      description: "CEO chez Reconquête",
-      avatar: {
-        src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQJR0X94RYBQIXn1m_-ZCiwPpiZZ8OQGhua-g&s",
-        alt: "Eric Z.",
-      },
-    },
-    quote:
-      "Eh ben voyons ! NohamDrive a révolutionné notre gestion des arabes à renvoyer dans leurs pays. Le terminal intégré est un game-changer : enfin une alternative open-source à OneDrive qui répond à nos besoins techniques !",
-    star: 4,
-  },
-  {
-    user: {
-      name: "Adolf H.",
-      description: "Développeur full-stack freelance",
-      avatar: {
-        src: "https://ichef.bbci.co.uk/ace/ws/640/cpsprodpb/DD74/production/_126329665_fea34d36-80f3-4987-b7e2-509a67afecdd.jpg.webp",
-        alt: "Adolf H.",
-      },
-    },
-    quote:
-      "J’ai été rejeté des Beaux-arts étant plus jeune. L’intégration avec Minio et le terminal Linux-like m’ont convaincu : c’est l’outil qu’il me manquait pour mes projets.",
-    star: 3,
-  },
-  {
-    user: {
-      name: "Le minotaure",
-      description: "Responsable des Furry",
-      avatar: {
-        src: "https://m.media-amazon.com/images/S/amzn-author-media-prod/o7o0ubb64o29ardj4phsr3sfg3._SY450_CR0%2C0%2C450%2C450_.jpg",
-        alt: "Le minotaure",
-      },
-    },
-    quote:
-      "C'EST LE TRAIN DE LA HYYYYYPE !! Johan adore cette application ! Cela nous permet de nous organiser pour faire les vidéos dégustation",
-    star: 4,
-  },
-  {
-    user: {
-      name: "Walter W.",
-      description: "Professeur de chimie",
-      avatar: {
-        src: "https://upload.wikimedia.org/wikipedia/en/0/03/Walter_White_S5B.png",
-        alt: "Walter W.",
-      },
-    },
-    quote:
-      "Depuis que j'utilise NohamDrive, je suis le danger. Grâce à NohamDrive, Skyler gère mieux le blanchiment d'argent et surtout elle ouvre moins sa gueule",
-    star: 5,
-  },
-  {
-    user: {
-      name: "Hugo H.",
-      description: "CEO exceptionnel de Roblox",
-      avatar: {
-        src: "https://media.routard.com/image/41/1/pt54785.1264411.jpg",
-        alt: "Hugo H.",
-      },
-    },
-    quote: "Miaou",
-    star: 5,
-  },
+// const testimonials = ref([
+//   {
+//     user: {
+//       name: "Eric Z.",
+//       description: "CEO chez Reconquête",
+//       avatar: {
+//         src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQJR0X94RYBQIXn1m_-ZCiwPpiZZ8OQGhua-g&s",
+//         alt: "Eric Z.",
+//       },
+//     },
+//     quote:
+//       "Eh ben voyons ! NohamDrive a révolutionné notre gestion des arabes à renvoyer dans leurs pays. Le terminal intégré est un game-changer : enfin une alternative open-source à OneDrive qui répond à nos besoins techniques !",
+//     star: 4,
+//   },
+//   {
+//     user: {
+//       name: "Adolf H.",
+//       description: "Développeur full-stack freelance",
+//       avatar: {
+//         src: "https://ichef.bbci.co.uk/ace/ws/640/cpsprodpb/DD74/production/_126329665_fea34d36-80f3-4987-b7e2-509a67afecdd.jpg.webp",
+//         alt: "Adolf H.",
+//       },
+//     },
+//     quote:
+//       "J’ai été rejeté des Beaux-arts étant plus jeune. L’intégration avec Minio et le terminal Linux-like m’ont convaincu : c’est l’outil qu’il me manquait pour mes projets.",
+//     star: 3,
+//   },
+//   {
+//     user: {
+//       name: "Le minotaure",
+//       description: "Responsable des Furry",
+//       avatar: {
+//         src: "https://m.media-amazon.com/images/S/amzn-author-media-prod/o7o0ubb64o29ardj4phsr3sfg3._SY450_CR0%2C0%2C450%2C450_.jpg",
+//         alt: "Le minotaure",
+//       },
+//     },
+//     quote:
+//       "C'EST LE TRAIN DE LA HYYYYYPE !! Johan adore cette application ! Cela nous permet de nous organiser pour faire les vidéos dégustation",
+//     star: 4,
+//   },
+//   {
+//     user: {
+//       name: "Walter W.",
+//       description: "Professeur de chimie",
+//       avatar: {
+//         src: "https://upload.wikimedia.org/wikipedia/en/0/03/Walter_White_S5B.png",
+//         alt: "Walter W.",
+//       },
+//     },
+//     quote:
+//       "Depuis que j'utilise NohamDrive, je suis le danger. Grâce à NohamDrive, Skyler gère mieux le blanchiment d'argent et surtout elle ouvre moins sa gueule",
+//     star: 5,
+//   },
+//   {
+//     user: {
+//       name: "Hugo H.",
+//       description: "CEO exceptionnel de Roblox",
+//       avatar: {
+//         src: "https://media.routard.com/image/41/1/pt54785.1264411.jpg",
+//         alt: "Hugo H.",
+//       },
+//     },
+//     quote: "Miaou",
+//     star: 5,
+//   },
 
-  {
-    user: {
-      name: "Elizabeth II",
-      description: "Sysadmin au paradis",
-      avatar: {
-        src: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Elizabeth_II_in_Berlin_2015_%28cropped%29.JPG/250px-Elizabeth_II_in_Berlin_2015_%28cropped%29.JPG",
-        alt: "Elizabeth II",
-      },
-    },
-    quote:
-      "L’intégration avec notre infrastructure existante (PostgreSQL + Docker) a été un jeu d’enfant. Les performances sont au rendez-vous, même avec des fichiers volumineux.",
-    star: 4,
-  },
-  {
-    user: {
-      name: "Cémoi lebaigé.",
-      description: "Vendeur de Kebab",
-      avatar: {
-        src: "https://i.pinimg.com/736x/41/18/04/411804a00535829a3e910e7ad2a1bf45.jpg",
-        alt: "Cémoi lebaigé.",
-      },
-    },
-    quote:
-      "Ahah ne trouvez vous pas ça magnifique, mon cher ! Cette application est vraiment très belle et je l'aime bien. Un gain de temps énorme !",
-    star: 4,
-  },
-  {
-    user: {
-      name: "Christian R.",
-      description: "Joueur de sucker",
-      avatar: {
-        src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQLp39lxGZQV78_C3WuLpD7K9b1giOmPGtZCA&s",
-        alt: "Christian R.",
-      },
-    },
-    quote: "SIUUU… mes backups sont sécurisés.",
-    star: 3,
-  },
-  {
-    user: {
-      name: "Jeffrey E.",
-      description: "Design Lead chez Nickelodeon",
-      avatar: {
-        src: "https://media.lesechos.com/api/v1/images/view/5d5b7881d286c205b067c1e4/1280x720/0601738550212-web-tete.jpg",
-        alt: "Jeffrey E.",
-      },
-    },
-    quote:
-      "Enfin un outil qui allie simplicité et puissance ! Mes équipes adorent explorer les enfants... euh les fichiers, et moi, je dors sur mes deux oreilles grâce au chiffrement intégré ; ).",
-    star: 3,
-  },
+//   {
+//     user: {
+//       name: "Elizabeth II",
+//       description: "Sysadmin au paradis",
+//       avatar: {
+//         src: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Elizabeth_II_in_Berlin_2015_%28cropped%29.JPG/250px-Elizabeth_II_in_Berlin_2015_%28cropped%29.JPG",
+//         alt: "Elizabeth II",
+//       },
+//     },
+//     quote:
+//       "L’intégration avec notre infrastructure existante (PostgreSQL + Docker) a été un jeu d’enfant. Les performances sont au rendez-vous, même avec des fichiers volumineux.",
+//     star: 4,
+//   },
+//   {
+//     user: {
+//       name: "Cémoi lebaigé.",
+//       description: "Vendeur de Kebab",
+//       avatar: {
+//         src: "https://i.pinimg.com/736x/41/18/04/411804a00535829a3e910e7ad2a1bf45.jpg",
+//         alt: "Cémoi lebaigé.",
+//       },
+//     },
+//     quote:
+//       "Ahah ne trouvez vous pas ça magnifique, mon cher ! Cette application est vraiment très belle et je l'aime bien. Un gain de temps énorme !",
+//     star: 4,
+//   },
+//   {
+//     user: {
+//       name: "Christian R.",
+//       description: "Joueur de sucker",
+//       avatar: {
+//         src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQLp39lxGZQV78_C3WuLpD7K9b1giOmPGtZCA&s",
+//         alt: "Christian R.",
+//       },
+//     },
+//     quote: "SIUUU… mes backups sont sécurisés.",
+//     star: 3,
+//   },
+//   {
+//     user: {
+//       name: "Jeffrey E.",
+//       description: "Design Lead chez Nickelodeon",
+//       avatar: {
+//         src: "https://media.lesechos.com/api/v1/images/view/5d5b7881d286c205b067c1e4/1280x720/0601738550212-web-tete.jpg",
+//         alt: "Jeffrey E.",
+//       },
+//     },
+//     quote:
+//       "Enfin un outil qui allie simplicité et puissance ! Mes équipes adorent explorer les enfants... euh les fichiers, et moi, je dors sur mes deux oreilles grâce au chiffrement intégré ; ).",
+//     star: 3,
+//   },
 
-  {
-    user: {
-      name: "Monsieur Bride'o'neaut",
-      description: "CEO des graphes",
-      avatar: {
-        src: "https://pierrelacroix.com/wp-content/uploads/2009/07/coeur-de-dieu.jpg",
-        alt: "Monsieur Bride'o'neaut",
-      },
-    },
-    quote:
-      "Franchement j'ai bien aimé, c'est pas trop difficile à installer ! C'est mon mac qui m'a le plus ralenti. Je sais pas vraiment comment ça fonctionne mais j'imagine que c'est bien",
-    star: 3,
-  },
-  {
-    user: {
-      name: "Donald D.",
-      description: "CEO des Etats Unis",
-      avatar: {
-        src: "https://www.trumplibrary.gov/sites/default/files/styles/large/public/2021-01/President-Trump-Official-Portrait.jpg?itok=eReCLE7X",
-        alt: "Donald D.",
-      },
-    },
-    quote:
-      "J'adore NohamDrive ! Et j'adore la France, Macron est un nice guy. Make NohamDrive great again !!",
-    star: 4,
-  },
-  {
-    user: {
-      name: "Jay Lense",
-      description: "Professeur en informatique",
-      avatar: {
-        src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBcmfL2liSkvMLJ7KJE925MM7kSlBjx6sPRg&s",
-        alt: "Jay Lance",
-      },
-    },
-    quote:
-      "Windows c'est de la merde, tout le monde le sait ! C'est pour ça que j'ai décidé d'utiliser la meilleure alternative à Onedrive (cette merde) : NohamDrive ! J'apprécie cette app presque autant que Linux",
-    star: 5,
-  },
-]);
+//   {
+//     user: {
+//       name: "Monsieur Bride'o'neaut",
+//       description: "CEO des graphes",
+//       avatar: {
+//         src: "https://pierrelacroix.com/wp-content/uploads/2009/07/coeur-de-dieu.jpg",
+//         alt: "Monsieur Bride'o'neaut",
+//       },
+//     },
+//     quote:
+//       "Franchement j'ai bien aimé, c'est pas trop difficile à installer ! C'est mon mac qui m'a le plus ralenti. Je sais pas vraiment comment ça fonctionne mais j'imagine que c'est bien",
+//     star: 3,
+//   },
+//   {
+//     user: {
+//       name: "Donald D.",
+//       description: "CEO des Etats Unis",
+//       avatar: {
+//         src: "https://www.trumplibrary.gov/sites/default/files/styles/large/public/2021-01/President-Trump-Official-Portrait.jpg?itok=eReCLE7X",
+//         alt: "Donald D.",
+//       },
+//     },
+//     quote:
+//       "J'adore NohamDrive ! Et j'adore la France, Macron est un nice guy. Make NohamDrive great again !!",
+//     star: 4,
+//   },
+//   {
+//     user: {
+//       name: "Jay Lense",
+//       description: "Professeur en informatique",
+//       avatar: {
+//         src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSBcmfL2liSkvMLJ7KJE925MM7kSlBjx6sPRg&s",
+//         alt: "Jay Lance",
+//       },
+//     },
+//     quote:
+//       "Windows c'est de la merde, tout le monde le sait ! C'est pour ça que j'ai décidé d'utiliser la meilleure alternative à Onedrive (cette merde) : NohamDrive ! J'apprécie cette app presque autant que Linux",
+//     star: 5,
+//   },
+// ]);
 
 const PageTitle = "Stock, share & collaborate freely";
 const PageDesc = ref(
@@ -325,7 +325,7 @@ const PageDesc = ref(
         </div>
       </div>
     </div>
-    <div id="testimonials" class="py-16 px-4 sm:py-20 sm:px-6 lg:py-24 lg:px-8">
+    <!-- <div id="testimonials" class="py-16 px-4 sm:py-20 sm:px-6 lg:py-24 lg:px-8">
       <div class="max-w-7xl mx-auto">
         <h2
           class="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-12 md:mb-16"
@@ -369,6 +369,6 @@ const PageDesc = ref(
           </UPageCard>
         </UPageColumns>
       </div>
-    </div>
+    </div> -->
   </section>
 </template>
