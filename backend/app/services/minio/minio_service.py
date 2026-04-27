@@ -83,7 +83,7 @@ class MinioService:
                                 name=name,
                                 size=None if is_dir else obj.size,
                                 is_dir=is_dir,
-                                last_modified=last_modified or datetime.datetime.now(),
+                                last_modified=last_modified,
                             )
                         )
 

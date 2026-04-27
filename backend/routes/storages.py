@@ -105,21 +105,23 @@ async def upload_file_endpoint(
     if not file.filename:
         raise HTTPException(status_code=400, detail="Nom de fichier vide.")
 
-    message, metadata = await minio_service.download_service.upload_file(
+    file_upload_metadata = await minio_service.download_service.upload_file(
         user.id, file, path
     )
 
     sse_message = SSEMessage(
         event="upload",
         user_id=user.id,
-        payload=metadata.model_dump(),
-        message=message,
+        payload=file_upload_metadata,
+        message="File/folder uploaded",
         timestamp=datetime.now().isoformat(),
     )
 
     await sse_manager.notify_user(user.id, sse_message.model_dump())
     return BaseResponse(
-        data=metadata, message=message, status_code=status.HTTP_201_CREATED
+        data=file_upload_metadata,
+        message="File / folder uploaded successfully",
+        status_code=status.HTTP_201_CREATED,
     )
 
 

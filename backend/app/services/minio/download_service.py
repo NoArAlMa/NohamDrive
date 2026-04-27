@@ -1,10 +1,8 @@
-from datetime import datetime
 from typing import Iterator, cast
 import zipfile
 from fastapi import HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from minio import Minio, S3Error
-from app.schemas.files import FileMetadata
 from app.services.minio.bucket_service import BucketService
 from app.utils.minio_utils import MinioUtils
 from core.logging import setup_logger
@@ -19,27 +17,18 @@ class DownloadService:
         self.minio = minio
         self.bucket_service = bucket_service
 
-    async def upload_file(
-        self, user_id: int, file: UploadFile, path: str = ""
-    ) -> tuple[str, FileMetadata]:
+    async def upload_file(self, user_id: int, file: UploadFile, path: str = ""):
         """
         Upload un fichier dans MinIO dans le dossier spécifié.
-        Args:
-            user_id: ID de l'utilisateur
-            file: FastAPI UploadFile
-            path: chemin relatif dans le bucket (ex: "dossier1/dossier2")
-        Returns:
-            FileMetadata
         """
-        bucket_name = await self.bucket_service.ensure_bucket_exists(user_id)
 
+        if not file or not file.filename:
+            raise HTTPException(400, "Fichier invalide")
+
+        bucket_name = await self.bucket_service.get_user_bucket(user_id)
         normalized_path = MinioUtils.normalize_path(path, is_folder=False)
+        object_name_base = MinioUtils.sanitize_filename(file.filename)
 
-        # Sécurisation du nom de fichier
-        if file.filename:
-            object_name_base = MinioUtils.sanitize_filename(file.filename)
-
-        # Gestion des doublons façon Windows
         object_name = MinioUtils.generate_available_name(
             minio_client=self.minio,
             bucket_name=bucket_name,
@@ -48,39 +37,28 @@ class DownloadService:
             is_folder=False,
         )
 
-        logger.info("Nom du fichier : %s", object_name)
-
-        # Upload en streaming
         content_type = file.content_type or "application/octet-stream"
+
         try:
+            file.file.seek(0, 2)
+            file_size = file.file.tell()
+            file.file.seek(0)
+
             self.minio.put_object(
-                bucket_name,
-                object_name,
-                file.file,
-                length=-1,
-                part_size=10 * 1024 * 1024,
+                bucket_name=bucket_name,
+                object_name=object_name,
+                data=file.file,
+                length=file_size,
                 content_type=content_type,
             )
 
-            # Récupération de la taille réelle
-            stat = self.minio.stat_object(bucket_name, object_name)
-
-            return (
-                f"{file.filename} uploadé",
-                FileMetadata(
-                    filename=file.filename,
-                    size=stat.size,
-                    content_type=content_type,
-                    upload_date=datetime.now().isoformat(),
-                    bucket=bucket_name,
-                    object_name=object_name,
-                ),
-            )
+            return {"name": object_name}
 
         except S3Error as e:
             status_code = (
                 400 if e.code in ["InvalidArgument", "EntityTooLarge"] else 500
             )
+
             raise HTTPException(
                 status_code=status_code,
                 detail=f"Échec de l'upload: {str(e)}",
@@ -92,7 +70,7 @@ class DownloadService:
         self, user_id: int, object_name: str
     ) -> StreamingResponse:
         """
-        Télécharge un fichier ou un dossier depuis MinIO (streaming propre).
+        Télécharge un fichier ou un dossier depuis MinIO.
         """
         bucket_name = await self.bucket_service.get_user_bucket(user_id)
 
@@ -101,99 +79,72 @@ class DownloadService:
             object_name, is_folder=object_name.endswith("/")
         )
 
-        try:
-            # --- Détection fichier vs dossier ---
+        def try_get_file():
             try:
-                stat = self.minio.stat_object(bucket_name, object_name)
-                is_file = True
-            except S3Error as e:
-                if e.code == "NoSuchKey":
-                    is_file = False
-                else:
-                    raise
+                return self.minio.get_object(bucket_name, object_name)
+            except S3Error:
+                return None
 
-            if is_file:
+        response = try_get_file()
 
-                def file_iterator() -> Iterator[bytes]:
-                    response = self.minio.get_object(bucket_name, object_name)
-                    try:
-                        for chunk in response.stream(1024 * 1024):
-                            yield cast(bytes, chunk)
-                    finally:
-                        response.close()
-                        response.release_conn()
+        if response:
+            filename = object_name.split("/")[-1]
 
-                filename = object_name.split("/")[-1]
-
-                return StreamingResponse(
-                    file_iterator(),
-                    media_type=stat.content_type or "application/octet-stream",
-                    headers={
-                        "Content-Disposition": f'attachment; filename="{filename}"'
-                    },
-                )
-
-            prefix = object_name.rstrip("/") + "/"
-
-            objects = list(
-                self.minio.list_objects(bucket_name, prefix=prefix, recursive=True)
-            )
-
-            if not objects:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"Objet ou dossier '{object_name}' introuvable.",
-                )
-
-            def zip_iterator() -> Iterator[bytes]:
-                z = zipstream.ZipFile(mode="w", compression=zipfile.ZIP_DEFLATED)
-
-                # Préparer tous les générateurs avant le yield
-                for obj in objects:
-                    if obj.object_name:
-                        if obj.object_name.endswith("/"):
-                            continue
-
-                        response = self.minio.get_object(bucket_name, obj.object_name)
-
-                    # générateur indépendant
-                    def stream_file(resp=response) -> Iterator[bytes]:
-                        try:
-                            for chunk in resp.stream(1024 * 1024):
-                                yield bytes(chunk)
-                        finally:
-                            resp.close()
-                            resp.release_conn()
-
-                    if obj.object_name:
-                        relative_path = obj.object_name[len(prefix) :]
-                    z.write_iter(relative_path, stream_file())
-
-                # itération finale pour produire le ZIP
-                for chunk in z:
-                    yield cast(bytes, chunk)
-
-            zip_name = f"{object_name.rstrip('/')}.zip"
+            def file_iterator():
+                try:
+                    for chunk in response.stream(1024 * 1024):
+                        yield bytes(chunk)
+                finally:
+                    response.close()
+                    response.release_conn()
 
             return StreamingResponse(
-                zip_iterator(),
-                media_type="application/zip",
-                headers={"Content-Disposition": f'attachment; filename="{zip_name}"'},
+                file_iterator(),
+                media_type="application/octet-stream",
+                headers={"Content-Disposition": f'attachment; filename="{filename}"'},
             )
 
-        except S3Error as e:
-            logger.error(
-                "Échec du téléchargement",
-                extra={
-                    "user_id": user_id,
-                    "object_name": object_name,
-                    "error": str(e),
-                },
-            )
-            raise HTTPException(
-                status_code=500,
-                detail=f"Erreur lors du téléchargement: {str(e)}",
-            )
+        prefix = object_name.rstrip("/") + "/"
+
+        objects_iter = self.minio.list_objects(
+            bucket_name, prefix=prefix, recursive=True
+        )
+
+        def zip_iterator() -> Iterator[bytes]:
+            z = zipstream.ZipFile(mode="w", compression=zipfile.ZIP_DEFLATED)
+
+            for obj in objects_iter:
+                name = obj.object_name
+
+                if not name or name.endswith("/"):
+                    continue
+
+                try:
+                    response = self.minio.get_object(bucket_name, name)
+                except S3Error:
+                    continue
+
+                relative_path = name[len(prefix) :]
+
+                def stream_file(r=response):
+                    try:
+                        for chunk in r.stream(1024 * 1024):
+                            yield bytes(chunk)
+                    finally:
+                        r.close()
+                        r.release_conn()
+
+                z.write_iter(relative_path, stream_file())
+
+            yield from cast(Iterator[bytes], z)
+
+        zip_name = f"{object_name.rstrip('/')}.zip"
+
+        return StreamingResponse(
+            zip_iterator(),
+            media_type="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{zip_name}"'},
+        )
 
     async def preview_object(
         self,
