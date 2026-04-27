@@ -33,9 +33,21 @@ async def sse_endpoint(
     request: Request,
     user: User = Depends(current_user),
     sse_manager: SSEManager = Depends(get_sse_manager),
-):  # TODO: Récupérer user_id via auth
+):
+    token = request.cookies.get("access_token")
+
+    if not token:
+        # fallback header Authorization
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Token manquant"
+        )
     return StreamingResponse(
-        sse_manager.add_client(user.id),
+        sse_manager.add_client(user.id, token),
         media_type="text/event-stream; charset=utf-8",
     )
 

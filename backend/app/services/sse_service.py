@@ -5,15 +5,15 @@ from fastapi import Request
 import redis.asyncio as redis
 from core.logging import setup_logger
 from datetime import datetime
+from core.security import 
 
 logger = setup_logger(__name__)
 
 
 class SSEManager:
     def __init__(self, redis_client: redis.Redis | None):
-        self.clients: Dict[int, List[asyncio.Queue]] = {}
+        self.clients: Dict[int, List[tuple[str, asyncio.Queue]]] = {}  # (token, queue)
         self.lock = asyncio.Lock()
-
         self.redis = redis_client
         self.pubsub = self.redis.pubsub() if self.redis else None
         self.listener_task: asyncio.Task | None = None
@@ -66,12 +66,12 @@ class SSEManager:
                     continue
                 await self._notify_local_user(user_id, data)
 
-    async def add_client(self, user_id: int) -> AsyncGenerator[str, None]:
-        """Ajoute un client SSE"""
+    async def add_client(self, user_id: int, token: str) -> AsyncGenerator[str, None]:
+        # Vérifie la validité du token (à implémenter selon ta logique métier)
         queue = asyncio.Queue()
 
         async with self.lock:
-            self.clients.setdefault(user_id, []).append(queue)
+            self.clients.setdefault(user_id, []).append((token, queue))
 
         try:
             while True:
@@ -79,13 +79,11 @@ class SSEManager:
                 event_name = message.pop("event", "message")
                 yield f"event: {event_name}\n"
                 yield f"data: {json.dumps(message)}\n\n"
-
-                # Ping optionnel
                 yield ": ping\n\n"
         finally:
             async with self.lock:
-                if user_id in self.clients and queue in self.clients[user_id]:
-                    self.clients[user_id].remove(queue)
+                if user_id in self.clients:
+                    self.clients[user_id] = [(t, q) for (t, q) in self.clients[user_id] if q != queue]
                     if not self.clients[user_id]:
                         del self.clients[user_id]
 
