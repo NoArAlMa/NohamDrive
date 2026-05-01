@@ -18,32 +18,6 @@
 @theme static {
   --font-terminal: "Fira Code", monospace;
 
-  /* Override default green color */
-  --color-green-50: #effdf5;
-  --color-green-100: #d9fbe8;
-  --color-green-200: #b3f5d1;
-  --color-green-300: #75edae;
-  --color-green-400: #00dc82;
-  --color-green-500: #00c16a;
-  --color-green-600: #00a155;
-  --color-green-700: #007f45;
-  --color-green-800: #016538;
-  --color-green-900: #0a5331;
-  --color-green-950: #052e16;
-
-  /* Define new custom color */
-  --color-brand-50: #fef2f2;
-  --color-brand-100: #fee2e2;
-  --color-brand-200: #fecaca;
-  --color-brand-300: #fca5a5;
-  --color-brand-400: #f87171;
-  --color-brand-500: #ef4444;
-  --color-brand-600: #dc2626;
-  --color-brand-700: #b91c1c;
-  --color-brand-800: #991b1b;
-  --color-brand-900: #7f1d1d;
-  --color-brand-950: #450a0a;
-
   --color-primary-50: #f0f8ff;
   --color-primary-100: #e0f2ff;
   --color-primary-200: #bae6ff;
@@ -152,10 +126,6 @@
 
 @layer base {
   body {
-    @apply transition-colors duration-100;
+    @apply transition-colors duration-100 scroll-smooth;
   }
-}
-
-html {
-  scroll-behavior: smooth;
 }

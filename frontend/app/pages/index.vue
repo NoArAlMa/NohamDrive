@@ -28,6 +28,8 @@ definePageMeta({
   middleware: "app-middleware",
 });
 
+const { isMobile } = useResponsive();
+
 const features = [
   {
     title: "Explorateur de fichiers avancé",
@@ -252,38 +254,40 @@ const PageDesc = ref(
 
 <template>
   <section class="flex flex-col scroll-smooth">
-    <UPageSection
-      :features="pageSection"
-      :title="PageTitle"
-      :description="PageDesc"
-      :links="links"
-      class="w-full h-[90vh] mb-10"
-    />
+    <div class="min-h-screen">
+      <UPageSection
+        :features="pageSection"
+        :title="PageTitle"
+        :description="PageDesc"
+        :links="links"
+        class="mb-10"
+      />
 
-    <div id="features" class="py-16 px-4 sm:py-20 sm:px-6 lg:py-24 lg:px-8">
-      <div class="max-w-7xl mx-auto">
-        <h2
-          class="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-12 md:mb-16"
-        >
-          Tout ce dont vous avez besoin<br class="hidden sm:block" />
-          pour gérer vos fichiers en équipe
-        </h2>
-        <UPageGrid
-          class="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
-        >
-          <UPageCard
-            v-for="(card, index) in features"
-            :key="index"
-            v-bind="card"
-            :ui="{
-              title: 'mb-3',
-            }"
-            class="h-full hover:shadow-lg transition-all duration-300 hover:transform hover:-translate-y-1"
-          />
-        </UPageGrid>
+      <div id="features" class="py-16 px-4 sm:py-20 sm:px-6 lg:py-24 lg:px-8">
+        <div class="max-w-7xl mx-auto">
+          <h2
+            v-if="isMobile"
+            class="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-12 md:mb-16"
+          >
+            Tout ce dont vous avez besoin<br class="hidden sm:block" />
+            pour gérer vos fichiers en équipe
+          </h2>
+          <UPageGrid
+            class="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
+          >
+            <UPageCard
+              v-for="(card, index) in features"
+              :key="index"
+              v-bind="card"
+              :ui="{
+                title: 'mb-3',
+              }"
+              class="h-full hover:shadow-lg transition-all duration-300 hover:transform hover:-translate-y-1"
+            />
+          </UPageGrid>
+        </div>
       </div>
     </div>
-
     <div
       id="echo"
       class="min-h-[80vh] w-full flex flex-col rounded-md md:flex-row items-center justify-center gap-12 px-4 sm:px-8 py-12 bg-gray-200 dark:bg-gray-800"
