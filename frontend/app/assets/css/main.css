@@ -15,8 +15,21 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: "Sora";
+  src: url("@/assets/fonts/Sora-variable.woff2") format("woff2");
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("@/assets/fonts/SpaceGrotesk-variable.woff2") format("woff2");
+  font-style: normal;
+}
+
 @theme static {
   --font-terminal: "Fira Code", monospace;
+  --font-sans: "Space Grotesk", sans-serif;
 
   --color-primary-50: #f0f8ff;
   --color-primary-100: #e0f2ff;
