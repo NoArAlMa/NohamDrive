@@ -3,6 +3,9 @@ import type { ButtonProps, PageFeatureProps } from "@nuxt/ui";
 
 useHead({
   title: "Welcome - NohamDrive",
+  htmlAttrs: {
+    class: "scroll-smooth",
+  },
   meta: [
     {
       name: "NohamDrive | Welcome Page",
@@ -253,7 +256,7 @@ const PageDesc = ref(
 </script>
 
 <template>
-  <section class="flex flex-col scroll-smooth">
+  <section class="flex flex-col">
     <div class="min-h-screen">
       <UPageSection
         :features="pageSection"

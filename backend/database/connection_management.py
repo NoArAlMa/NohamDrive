@@ -25,17 +25,43 @@ class ConnectionManager:
             ) as error:  # not 100% sure it's the right error
                 print("JE SUIS UNE ERREUR DE ARTHUR", error)
 
-    # Function borrowing a connection from the pool (if it exists, which it should) and returning it
+    # Function borrowing a connection from the pool (tout en vérifiant) and returning it
     @classmethod
     def request_conn(cls):
-        if ConnectionManager._pool is not None:
-            return ConnectionManager._pool.getconn()
-        else:
-            print("Error : pool does not exist")
+        if ConnectionManager._pool is None:
+            raise RuntimeError("Error: pool does not exist")
+
+        conn = ConnectionManager._pool.getconn()
+
+        try:
+            # Vérifie si connection est closed
+            if conn.closed != 0:
+                raise Exception("Connection closed")
+
+            # On ping pour voir si elle est vivante
+            with conn.cursor() as cur:
+                cur.execute("SELECT 1")
+
+        except Exception:
+            #
+            try:
+                ConnectionManager._pool.putconn(conn, close=True)
+            except Exception:
+                pass  # au cas où elle est déjà cassée
+
+            conn = ConnectionManager._pool.getconn()
+
+        return conn
 
     # Function returning a borrowed connection to the pool (if it exists)
     def drop_conn(self, conn) -> None:
+        
+
         if ConnectionManager._pool is not None:
-            ConnectionManager._pool.putconn(conn)
+            # évite de remettre une connexion morte dans le pool
+            if conn.closed == 0:
+                ConnectionManager._pool.putconn(conn)
+            else:
+                ConnectionManager._pool.putconn(conn, close=True)
         else:
             print("Error : pool does not exist")

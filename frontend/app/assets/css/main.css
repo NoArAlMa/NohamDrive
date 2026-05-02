@@ -29,7 +29,8 @@
 
 @theme static {
   --font-terminal: "Fira Code", monospace;
-  --font-sans: "Space Grotesk", sans-serif;
+  --font-sans: "Sora", sans-serif;
+  --font-title: "Space Grotesk", sans-serif;
 
   --color-primary-50: #f0f8ff;
   --color-primary-100: #e0f2ff;
@@ -138,7 +139,20 @@
 }
 
 @layer base {
+  html {
+    font-family: var(--font-sans);
+  }
+
   body {
     @apply transition-colors duration-100 scroll-smooth;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-title);
   }
 }

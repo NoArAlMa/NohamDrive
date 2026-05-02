@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     MINIO_ACCESS_KEY: str
     MINIO_SECRET_KEY: str
     MINIO_SECURE: bool = False
+    MINIO_COPY_MAX_WORKERS: int = 4
+    MINIO_ZIP_MAX_WORKERS: int = 4
+    MINIO_ZIP_STREAM_CHUNK_SIZE: int = 1024 * 1024
+    MINIO_IMAGE_METADATA_READ_SIZE: int = 1024 * 1024
 
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
