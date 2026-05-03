@@ -87,3 +87,4 @@ docker-compose.yml
 /backend/Dockerfile.*
 /backend/Dockerfile
 /frontend/Dockerfile.*
+/backend/tests/.pytest_cache

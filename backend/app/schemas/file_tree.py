@@ -10,7 +10,7 @@ class SimpleFileItem(BaseModel):
     name: Optional[str]  # Nom de l'objet (ex: "dossier/fichier.txt")
     size: Optional[int]  # Taille en octets
     is_dir: bool  # True si c'est un "dossier" (préfixe), False si c'est un fichier
-    last_modified: datetime
+    last_modified: datetime | None
 
 
 class SimpleFileTreeResponse(BaseModel):

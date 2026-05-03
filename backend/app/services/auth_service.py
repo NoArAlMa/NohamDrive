@@ -166,7 +166,7 @@ class AuthService:
         )
 
         if not is_bucket:
-            return HTTPException(
+            raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Bucket doesn't exist"
             )
 

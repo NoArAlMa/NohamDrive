@@ -1,16 +1,19 @@
-import { GenericAPIResponse } from "~~/shared/types/API";
-import { CompressFilePayload } from "~~/shared/types/file_request";
+import type { GenericAPIResponse } from "../../../shared/types/API";
 
 export default defineEventHandler(async (event) => {
-  const payload = await readBody(event);
-  const API_URL = useRuntimeConfig().public.apiBaseUrl;
+  const query = getQuery(event);
+  const path = query.folder_path as string;
   const token = getCookie(event, "auth_token");
+
+  const API_URL = useRuntimeConfig().public.apiBaseUrl;
   try {
-    const data = await $fetch<GenericAPIResponse<CompressFilePayload>>(
-      `${API_URL}/storage/compress`,
+    const data = await $fetch<GenericAPIResponse<null>>(
+      `${API_URL}/storage/object`,
       {
-        method: "POST",
-        body: payload,
+        method: "DELETE",
+        query: {
+          folder_path: path,
+        },
         headers: {
         Authorization: `Bearer ${token}`,
       },

@@ -1,19 +1,16 @@
-import { GenericAPIResponse } from "../../../shared/types/API";
+import type { GenericAPIResponse } from "~~/shared/types/API";
+import type { CopyFilePayload } from "~~/shared/types/file_request";
 
 export default defineEventHandler(async (event) => {
-  const query = getQuery(event);
-  const path = query.folder_path as string;
-  const token = getCookie(event, "auth_token");
-
+  const payload = await readBody(event);
   const API_URL = useRuntimeConfig().public.apiBaseUrl;
+  const token = getCookie(event, "auth_token");
   try {
-    const data = await $fetch<GenericAPIResponse<null>>(
-      `${API_URL}/storage/object`,
+    const data = await $fetch<GenericAPIResponse<CopyFilePayload>>(
+      `${API_URL}/storage/copy`,
       {
-        method: "DELETE",
-        query: {
-          folder_path: path,
-        },
+        method: "POST",
+        body: payload,
         headers: {
         Authorization: `Bearer ${token}`,
       },

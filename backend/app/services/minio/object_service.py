@@ -19,9 +19,10 @@ from core.logging import setup_logger
 from minio.deleteobjects import DeleteObject
 import io
 from minio.commonconfig import CopySource
-from typing import cast, BinaryIO
+from typing import cast, BinaryIO, Iterable
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from core.config import settings
 
 logger = setup_logger(__name__)
 
@@ -30,6 +31,83 @@ class ObjectService:
     def __init__(self, minio: Minio, bucket_service: BucketService) -> None:
         self.minio = minio
         self.bucket_service = bucket_service
+
+    def _list_objects(self, bucket_name: str, prefix: str, recursive: bool = True):
+        return list(
+            self.minio.list_objects(
+                bucket_name,
+                prefix=prefix,
+                recursive=recursive,
+            )
+        )
+
+    def _prefix_exists(self, bucket_name: str, prefix: str) -> bool:
+        return any(
+            self.minio.list_objects(
+                bucket_name,
+                prefix=prefix,
+                recursive=False,
+            )
+        )
+
+    def _remove_objects(self, bucket_name: str, object_names: Iterable[str]) -> None:
+        delete_errors = self.minio.remove_objects(
+            bucket_name,
+            (DeleteObject(object_name) for object_name in object_names),
+        )
+
+        for err in delete_errors:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Erreur suppression: {err.message}",
+            )
+
+    def _copy_objects(
+        self,
+        bucket_name: str,
+        copy_pairs: list[tuple[str, str]],
+        *,
+        max_workers: int | None = None,
+    ) -> None:
+        if not copy_pairs:
+            return
+
+        max_workers = max_workers or settings.MINIO_COPY_MAX_WORKERS
+
+        def copy_pair(pair: tuple[str, str]) -> None:
+            source_name, destination_name = pair
+            self.minio.copy_object(
+                bucket_name,
+                destination_name,
+                CopySource(bucket_name, source_name),
+            )
+
+        worker_count = min(max_workers, len(copy_pairs))
+        with ThreadPoolExecutor(max_workers=worker_count) as executor:
+            futures = [executor.submit(copy_pair, pair) for pair in copy_pairs]
+            for future in as_completed(futures):
+                future.result()
+
+    def _read_object_prefix(
+        self,
+        bucket_name: str,
+        object_name: str,
+        size: int,
+    ) -> bytes:
+        response = self.minio.get_object(bucket_name, object_name)
+        try:
+            return cast(bytes, response.read(size))
+        finally:
+            response.close()
+            response.release_conn()
+
+    def _read_object(self, bucket_name: str, object_name: str) -> bytes:
+        response = self.minio.get_object(bucket_name, object_name)
+        try:
+            return cast(bytes, response.read())
+        finally:
+            response.close()
+            response.release_conn()
 
     async def delete_object(self, user_id: int, path: str) -> tuple:
         """
@@ -48,13 +126,7 @@ class ObjectService:
         # Suppression dossier
         try:
             if is_folder:
-                objects = list(
-                    self.minio.list_objects(
-                        bucket_name,
-                        prefix=path,
-                        recursive=True,
-                    )
-                )
+                objects = self._list_objects(bucket_name, path)
 
                 if not objects:
                     raise HTTPException(
@@ -62,20 +134,8 @@ class ObjectService:
                         detail="Dossier vide ou inexistant",
                     )
 
-                delete_errors = self.minio.remove_objects(
-                    bucket_name,
-                    (
-                        DeleteObject(obj.object_name)
-                        for obj in objects
-                        if obj.object_name
-                    ),
-                )
-
-                for err in delete_errors:
-                    raise HTTPException(
-                        status_code=500,
-                        detail=f"Erreur suppression: {err.message}",
-                    )
+                object_names = [obj.object_name for obj in objects if obj.object_name]
+                self._remove_objects(bucket_name, object_names)
 
                 return (
                     f"Dossier '{path}' supprimé ({len(objects)} objets)",
@@ -202,11 +262,7 @@ class ObjectService:
 
         try:
             if is_folder:
-                objects = list(
-                    self.minio.list_objects(
-                        bucket_name, prefix=old_prefix, recursive=True
-                    )
-                )
+                objects = self._list_objects(bucket_name, old_prefix)
                 if not objects:
                     raise HTTPException(status_code=404, detail="Dossier introuvable")
             else:
@@ -221,6 +277,7 @@ class ObjectService:
         try:
             if is_folder:
                 now = datetime.now().isoformat()
+                copy_pairs: list[tuple[str, str]] = []
 
                 for obj in objects:
                     if not obj.object_name:
@@ -229,31 +286,22 @@ class ObjectService:
                     relative_path = obj.object_name[len(old_prefix) :]
                     new_object_name = new_prefix + relative_path
 
-                    self.minio.copy_object(
-                        bucket_name,
-                        new_object_name,
-                        CopySource(bucket_name, obj.object_name),
-                        metadata={"last_modified": now}
-                        if new_object_name.endswith("/")
-                        else None,
-                        metadata_directive="REPLACE"
-                        if new_object_name.endswith("/")
-                        else "COPY",
-                    )
+                    if new_object_name.endswith("/"):
+                        self.minio.copy_object(
+                            bucket_name,
+                            new_object_name,
+                            CopySource(bucket_name, obj.object_name),
+                            metadata={"last_modified": now},
+                            metadata_directive="REPLACE",
+                        )
+                    else:
+                        copy_pairs.append((obj.object_name, new_object_name))
+
+                self._copy_objects(bucket_name, copy_pairs)
 
                 # Suppression des anciens objets
-                delete_errors = self.minio.remove_objects(
-                    bucket_name,
-                    (
-                        DeleteObject(obj.object_name)
-                        for obj in objects
-                        if obj.object_name
-                    ),
-                )
-                for err in delete_errors:
-                    raise HTTPException(
-                        status_code=500, detail=f"Erreur suppression objet {err}"
-                    )
+                object_names = [obj.object_name for obj in objects if obj.object_name]
+                self._remove_objects(bucket_name, object_names)
             else:
                 # Fichier unique
                 self.minio.copy_object(
@@ -336,13 +384,7 @@ class ObjectService:
         # Vérification existence source
         try:
             if is_folder:
-                objects = list(
-                    self.minio.list_objects(
-                        bucket_name,
-                        prefix=source_path,
-                        recursive=True,
-                    )
-                )
+                objects = self._list_objects(bucket_name, source_path)
                 if not objects:
                     raise HTTPException(404, "Dossier introuvable ou vide.")
             else:
@@ -357,43 +399,22 @@ class ObjectService:
         try:
             if is_folder:
                 # Vérifie collision dossier
-                existing = list(
-                    self.minio.list_objects(
-                        bucket_name,
-                        prefix=destination_path,
-                        recursive=True,
-                    )
-                )
-                if existing:
+                if self._prefix_exists(bucket_name, destination_path):
                     raise HTTPException(409, "Un dossier du même nom existe déjà.")
 
                 # Copie récursive
+                copy_pairs: list[tuple[str, str]] = []
                 for obj in objects:
                     if obj.object_name:
                         relative_path = obj.object_name[len(source_path) :]
                         new_object_name = destination_path + relative_path
+                        copy_pairs.append((obj.object_name, new_object_name))
 
-                        self.minio.copy_object(
-                            bucket_name,
-                            new_object_name,
-                            CopySource(bucket_name, obj.object_name),
-                        )
+                self._copy_objects(bucket_name, copy_pairs)
 
                 # Suppression des anciens objets
-                delete_errors = self.minio.remove_objects(
-                    bucket_name,
-                    (
-                        DeleteObject(obj.object_name)
-                        for obj in objects
-                        if obj.object_name
-                    ),
-                )
-
-                for err in delete_errors:
-                    raise HTTPException(
-                        500,
-                        f"Erreur suppression: {err.message}",
-                    )
+                object_names = [obj.object_name for obj in objects if obj.object_name]
+                self._remove_objects(bucket_name, object_names)
 
             else:
                 # Vérifie collision fichier
@@ -465,13 +486,7 @@ class ObjectService:
         # Vérification de l'existence de la source
         try:
             if is_folder:
-                objects = list(
-                    self.minio.list_objects(
-                        bucket_name,
-                        prefix=source_path,
-                        recursive=True,
-                    )
-                )
+                objects = self._list_objects(bucket_name, source_path)
                 if not objects:
                     raise HTTPException(404, "Dossier introuvable ou vide.")
             else:
@@ -485,17 +500,16 @@ class ObjectService:
         # Copie
         try:
             if is_folder:
+                copy_pairs: list[tuple[str, str]] = []
                 for obj in objects:
                     if obj.object_name:
                         relative_path = obj.object_name[len(source_path) :]
                         new_object_name = destination_path + relative_path
                         # Vérifie que source ≠ destination
                         if obj.object_name != new_object_name:
-                            self.minio.copy_object(
-                                bucket_name,
-                                new_object_name,
-                                CopySource(bucket_name, obj.object_name),
-                            )
+                            copy_pairs.append((obj.object_name, new_object_name))
+
+                self._copy_objects(bucket_name, copy_pairs)
             else:
                 # Vérifie que source ≠ destination
                 if source_path != destination_path:
@@ -528,7 +542,7 @@ class ObjectService:
         object_names: list[str],
         destination_folder: str,
         output_base_name: str = "compressed_folder",
-        max_workers: int = 4,
+        max_workers: int | None = None,
         max_zip_size_mb: int = 1024,
     ):
         """
@@ -547,30 +561,45 @@ class ObjectService:
         """
         try:
             bucket_name = await self.bucket_service.get_user_bucket(user_id)
+            max_workers = max_workers or settings.MINIO_ZIP_MAX_WORKERS
             destination_folder = MinioUtils.normalize_path(
                 destination_folder, is_folder=True
             )
-            valid_objects = set()
+            valid_objects: dict[str, int] = {}
+            normalized_object_names: list[str] = []
 
             # Collecte des objets valides
             for obj_name in object_names:
                 obj_name = MinioUtils.normalize_path(
                     obj_name, is_folder=obj_name.endswith("/")
                 )
+                normalized_object_names.append(obj_name)
                 if obj_name.endswith("/"):
                     objs = self.minio.list_objects(
                         bucket_name, prefix=obj_name, recursive=True
                     )
-                    valid_objects.update(
-                        o.object_name
-                        for o in objs
-                        if o.object_name and not o.object_name.endswith("/")
-                    )
+                    for obj in objs:
+                        if obj.object_name and not obj.object_name.endswith("/"):
+                            valid_objects[obj.object_name] = obj.size or 0
                 else:
-                    valid_objects.add(obj_name)
+                    try:
+                        stat = self.minio.stat_object(bucket_name, obj_name)
+                    except S3Error as e:
+                        if e.code == "NoSuchKey":
+                            continue
+                        raise
+                    valid_objects[obj_name] = stat.size or 0
 
             if not valid_objects:
                 raise HTTPException(400, "Aucun fichier valide à compresser.")
+
+            max_zip_size = max_zip_size_mb * 1024 * 1024
+            total_source_size = sum(valid_objects.values())
+            if total_source_size > max_zip_size:
+                raise HTTPException(
+                    413,
+                    f"Taille maximale du ZIP ({max_zip_size_mb} Mo) dépassée.",
+                )
 
             output_object_name = MinioUtils.generate_available_name(
                 minio_client=self.minio,
@@ -581,20 +610,21 @@ class ObjectService:
             )
 
             source_prefix = (
-                object_names[0]
-                if len(object_names) == 1 and object_names[0].endswith("/")
-                else os.path.commonpath(object_names)
-                if len(object_names) > 1
+                normalized_object_names[0]
+                if len(normalized_object_names) == 1
+                and normalized_object_names[0].endswith("/")
+                else os.path.commonpath(normalized_object_names)
+                if len(normalized_object_names) > 1
                 else ""
             )
 
             temp_zip = SpooledTemporaryFile(max_size=100 * 1024 * 1024)
             zip_lock = threading.Lock()
             total_size = 0
-            max_zip_size = max_zip_size_mb * 1024 * 1024
 
             def add_to_zip(obj_name: str):
                 nonlocal total_size
+                response = None
                 try:
                     response = self.minio.get_object(bucket_name, obj_name)
                     arcname = (
@@ -617,17 +647,11 @@ class ObjectService:
                     if arcname:
                         with zip_lock:
                             with zipf.open(arcname, "w") as zip_entry:
-                                for chunk in response.stream(32 * 1024):
+                                for chunk in response.stream(
+                                    settings.MINIO_ZIP_STREAM_CHUNK_SIZE
+                                ):
                                     zip_entry.write(chunk)
                                     total_size += len(chunk)
-                                    if total_size > max_zip_size:
-                                        logger.warning(
-                                            f"Taille maximale du ZIP ({max_zip_size_mb} Mo) atteinte."
-                                        )
-                                        return False
-
-                    response.close()
-                    response.release_conn()
                     return True
 
                 except S3Error as e:
@@ -636,6 +660,10 @@ class ObjectService:
                 except Exception as e:
                     logger.error(f"Erreur inattendue pour {obj_name}: {str(e)}")
                     return False
+                finally:
+                    if response is not None:
+                        response.close()
+                        response.release_conn()
 
             with zipfile.ZipFile(
                 temp_zip,
@@ -728,12 +756,20 @@ class ObjectService:
             }
 
             if content_type == "image":
-                data = self.minio.get_object(bucket_name, normalized_path).read()
-                img_meta = MinioUtils.extract_image_metadata(data)
+                data = self._read_object_prefix(
+                    bucket_name,
+                    normalized_path,
+                    settings.MINIO_IMAGE_METADATA_READ_SIZE,
+                )
+                try:
+                    img_meta = MinioUtils.extract_image_metadata(data)
+                except Exception:
+                    data = self._read_object(bucket_name, normalized_path)
+                    img_meta = MinioUtils.extract_image_metadata(data)
                 return ImageMetadata(**base_metadata, **img_meta)
 
             elif content_type == "video":
-                video_data = self.minio.get_object(bucket_name, normalized_path).read()
+                video_data = self._read_object(bucket_name, normalized_path)
                 media_info_json = MediaInfo.parse(io.BytesIO(video_data), output="JSON")
                 video_meta = MinioUtils.extract_video_metadata(media_info_json)
                 logger.info(video_meta)
@@ -765,15 +801,8 @@ class ObjectService:
                 )
 
             dir_prefix = normalized_path.rstrip("/") + "/"
-            objects = list(
-                self.minio.list_objects(
-                    bucket,
-                    prefix=dir_prefix,
-                    recursive=False,
-                )
-            )
 
-            if objects:
+            if self._prefix_exists(bucket, dir_prefix):
                 return ResolvePathResponse(
                     path="/" + normalized_path,
                     exists=True,

@@ -1,24 +1,24 @@
-import { FileExistsResponse } from "~~/shared/types/file_request";
-import { GenericAPIResponse } from "../../../shared/types/API";
+import type { FileMetadata } from "../../../shared/types/file_metadata";
+import type { GenericAPIResponse } from "../../../shared/types/API";
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
-  const object_path = query.path as string;
+  const object_path = query.object_path as string;
   const token = getCookie(event, "auth_token");
 
   const API_URL = useRuntimeConfig().public.apiBaseUrl;
   try {
-    const data = await $fetch<GenericAPIResponse<FileExistsResponse>>(
-      `${API_URL}/storage/resolve`,
+    const data = await $fetch<GenericAPIResponse<FileMetadata>>(
+      `${API_URL}/storage/stats`,
       {
         method: "GET",
         query: {
-          path: object_path,
+          object_path: object_path,
         },
         headers: {
         Authorization: `Bearer ${token}`,
       },
-      },
+      }
     );
     return data;
   } catch (error: any) {

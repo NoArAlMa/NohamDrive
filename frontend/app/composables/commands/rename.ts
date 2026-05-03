@@ -65,7 +65,7 @@ export const renameCommand: TerminalCommand = {
       };
 
       try {
-        await $fetch<GenericAPIResponse<string>>("/storage/rename", {
+        await $fetch<GenericAPIResponse<string>>("api/storage/rename", {
           method: "PATCH",
           body: payload,
         });

@@ -1,29 +1,32 @@
-import { ApiFileTreeResponse } from "~~/shared/types/file_tree";
+import type { GenericAPIResponse } from "~~/shared/types/API";
+import type { MoveFilePayload } from "~~/shared/types/file_request";
 
 export default defineEventHandler(async (event) => {
-  const query = getQuery(event);
-  const path = (query.path as string) || "/";
+  const payload = await readBody<MoveFilePayload>(event);
+
   const API_URL = useRuntimeConfig().public.apiBaseUrl;
   const token = getCookie(event, "auth_token");
 
   try {
-    const data = await $fetch<ApiFileTreeResponse>(`${API_URL}/storage/tree`, {
-      method: "GET",
-      query: {
-        path: path,
-      },
-      headers: {
+    const data = await $fetch<GenericAPIResponse<string>>(
+      `${API_URL}/storage/move`,
+      {
+        method: "POST",
+        body: payload,
+        headers: {
         Authorization: `Bearer ${token}`,
       },
-    });
+      },
+    );
+
     return data;
   } catch (error: any) {
     if (error?.response?.status) {
       throw createError({
         statusCode: error.response.status,
-        statusMessage:
+        message:
           error.response._data?.message ??
-          "Erreur lors de la récupération des fichiers",
+          "Impossible de déplacer le fichier/dossier",
       });
     }
     throw createError({

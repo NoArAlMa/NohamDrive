@@ -1,32 +1,30 @@
-import { GenericAPIResponse } from "~~/shared/types/API";
-import { MoveFilePayload } from "~~/shared/types/file_request";
+import type { GenericAPIResponse } from "~~/shared/types/API";
+import type { RenameFilePayload } from "~~/shared/types/file_request";
 
 export default defineEventHandler(async (event) => {
-  const payload = await readBody<MoveFilePayload>(event);
+  const payload = await readBody(event);
 
   const API_URL = useRuntimeConfig().public.apiBaseUrl;
   const token = getCookie(event, "auth_token");
-
   try {
-    const data = await $fetch<GenericAPIResponse<string>>(
-      `${API_URL}/storage/move`,
+    const data = (await $fetch)<GenericAPIResponse<RenameFilePayload>>(
+      `${API_URL}/storage/rename`,
       {
-        method: "POST",
+        method: "PATCH",
         body: payload,
         headers: {
-        Authorization: `Bearer ${token}`,
-      },
+          Authorization: `Bearer ${token}`,
+        },
       },
     );
-
     return data;
   } catch (error: any) {
     if (error?.response?.status) {
       throw createError({
         statusCode: error.response.status,
-        message:
+        statusMessage:
           error.response._data?.message ??
-          "Impossible de déplacer le fichier/dossier",
+          "Erreur lors de la récupération des fichiers",
       });
     }
     throw createError({

@@ -24,46 +24,13 @@ export const useFsActions = () => {
     } else {
       const fullPath = `${joinPath(FSStore.currentPath, item.name)}`;
       const cleanPath = fullPath.replace(/^\/+/, "");
-      let loadingToast: Toast | undefined;
-      loadingToast = toast.add({
-        title: "En cours d'ouverture...",
-        color: "neutral",
-        duration: 0,
-        close: false,
-        ui: { icon: "animate-spin" },
-        icon: "material-symbols:progress-activity",
+      const viewModal = overlay.create(LazyFileExplorerModalPreview, {
+        props: {
+          fileName: item.name,
+          previewPath: cleanPath,
+        },
       });
-      try {
-        const response = await $fetch(`/storage/preview/${cleanPath}`, {
-          responseType: "blob",
-        });
-        const blob = new Blob([response], { type: response.type });
-        const fileName = item.name;
-
-        // Crée un objet File
-        const file = new File([blob], fileName, { type: blob.type });
-
-        const viewModal = overlay.create(LazyFileExplorerModalPreview, {
-          props: {
-            fileName: fileName,
-            file: file,
-          },
-        });
-        viewModal.open();
-        if (loadingToast) toast.remove(loadingToast.id);
-      } catch (error: any) {
-        if (loadingToast) toast.remove(loadingToast.id);
-        toast.add({
-          title: "Erreur",
-          description:
-            error.data?.statusMessage ??
-            "Impossible de supprimer le fichier/dossier.",
-          color: "error",
-          icon: "material-symbols:error-outline-rounded",
-        });
-
-        throw error;
-      }
+      viewModal.open();
     }
   };
 
@@ -78,7 +45,7 @@ export const useFsActions = () => {
 
     try {
       const req = await $fetch<GenericAPIResponse<RenameFilePayload>>(
-        "/storage/rename",
+        "api/storage/rename",
         {
           method: "PATCH",
           body: {
@@ -127,7 +94,7 @@ export const useFsActions = () => {
       });
     }
     try {
-      await $fetch("/storage/object", {
+      await $fetch("api/storage/object", {
         method: "DELETE",
         query: { folder_path: full_path },
       });
@@ -183,7 +150,7 @@ export const useFsActions = () => {
     }
 
     try {
-      const response = await fetch(`/storage/download/${cleanPath}`);
+      const response = await fetch(`api/storage/download/${cleanPath}`);
 
       if (!response.ok) {
         if (loadingToast) toast.remove(loadingToast.id);
@@ -200,11 +167,13 @@ export const useFsActions = () => {
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
 
-      // Téléchargement
       const a = document.createElement("a");
       a.href = url;
       a.download = filename;
+      a.rel = "noopener";
+      document.body.appendChild(a);
       a.click();
+      a.remove();
 
       URL.revokeObjectURL(url);
 
@@ -224,10 +193,14 @@ export const useFsActions = () => {
         toast.add({
           title: "Erreur",
           icon: "material-symbols:error-outline-rounded",
-          description: error.message.message || "Le téléchargement a échoué",
+          description:
+            error?.data?.statusMessage ??
+            error?.message ??
+            "Le téléchargement a échoué",
           color: "error",
         });
       }
+      throw error;
     }
   };
 
@@ -256,7 +229,7 @@ export const useFsActions = () => {
     }
 
     try {
-      await $fetch<GenericAPIResponse<null>>("/storage/upload", {
+      await $fetch<GenericAPIResponse<null>>("api/storage/upload", {
         method: "POST",
         body: formData,
       });
@@ -303,7 +276,7 @@ export const useFsActions = () => {
     });
     try {
       const req = await $fetch<GenericAPIResponse<FileMetadata>>(
-        "/storage/stats",
+        "api/storage/stats",
         {
           method: "GET",
           query: {
@@ -361,7 +334,7 @@ export const useFsActions = () => {
     });
     try {
       const req = await $fetch<GenericAPIResponse<CopyFilePayload>>(
-        "/storage/copy",
+        "api/storage/copy",
         {
           method: "POST",
           body: {
@@ -422,7 +395,7 @@ export const useFsActions = () => {
     });
     try {
       const req = await $fetch<GenericAPIResponse<CompressFileResponse>>(
-        "/storage/compress",
+        "api/storage/compress",
         {
           method: "POST",
           body: {
@@ -460,7 +433,7 @@ export const useFsActions = () => {
     currentPath: string = FSStore.currentPath,
   ): Promise<{ success: boolean; message?: string }> => {
     try {
-      const req = await $fetch<GenericAPIResponse<string>>("/storage/folder", {
+      await $fetch<GenericAPIResponse<string>>("api/storage/folder", {
         method: "POST",
         body: {
           currentPath,
@@ -509,7 +482,7 @@ export const useFsActions = () => {
       }
 
       const req = await $fetch<GenericAPIResponse<CopyFilePayload>>(
-        "/storage/move",
+        "api/storage/move",
         {
           method: "POST",
           body: payload,

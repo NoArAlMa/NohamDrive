@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-const { currentPath } = useFSStore();
+const { currentPath } = storeToRefs(useFSStore());
 const { runBatch } = useBatchAction();
 const { move } = useFsActions();
 
@@ -9,7 +9,10 @@ const props = defineProps<{
 
 const emit = defineEmits<{ close: [any] }>();
 
-const breadcrumb = ref(currentPath);
+const breadcrumb = ref(currentPath.value);
+watch(currentPath, (newPath) => {
+  breadcrumb.value = newPath;
+});
 
 function close() {
   emit("close", "");
@@ -39,9 +42,9 @@ const fetchFileTree = async (): Promise<void> => {
     error.value = null;
 
     const response = await $fetch<GenericAPIResponse<ApiFileTreeData>>(
-      "/storage/tree",
+      "api/storage/tree",
       {
-        params: { path: breadcrumb.value },
+        query: { path: breadcrumb.value },
       },
     );
 
@@ -169,7 +172,7 @@ async function moveItems() {
             <LazyFileExplorerLoaderList />
           </div>
           <div
-            v-if="tree.length === 0"
+            v-else-if="tree.length === 0"
             class="w-full h-full flex items-center justify-center"
           >
             <LazyUEmpty

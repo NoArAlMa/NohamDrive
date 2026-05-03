@@ -9,7 +9,7 @@ export function openFilePicker(multiple = true): Promise<File[]> {
 
     const cleanup = () => {
       window.removeEventListener("focus", onFocus);
-      document.body.removeChild(input);
+      input.remove();
     };
 
     const onFocus = () => {

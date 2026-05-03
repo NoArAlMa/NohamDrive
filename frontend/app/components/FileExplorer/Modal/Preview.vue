@@ -1,20 +1,67 @@
 <script lang="ts" setup>
 import { VueFilesPreview } from "vue-files-preview";
 
-const { fileName, file } = defineProps<{
-  file: File;
+const props = defineProps<{
+  file?: File;
   fileName: string;
+  previewPath?: string;
 }>();
 
-const LazyVueFilesPreview = defineAsyncComponent(() =>
-  import("vue-files-preview").then((m) => m.VueFilesPreview),
+const showPreview = ref(true);
+const file = shallowRef<File | null>(props.file ?? null);
+const loading = ref(!props.file);
+const errorMessage = ref<string | null>(null);
+const previewKey = ref(0);
+let abortController: AbortController | null = null;
+
+const previewUrl = computed(() =>
+  props.previewPath ? `api/storage/preview/${props.previewPath}` : null,
 );
 
-const showPreview = ref(true);
+async function fetchPreview() {
+  if (file.value || !previewUrl.value) {
+    loading.value = false;
+    return;
+  }
+
+  abortController?.abort();
+  abortController = new AbortController();
+
+  try {
+    loading.value = true;
+    errorMessage.value = null;
+
+    const response = await $fetch<Blob>(previewUrl.value, {
+      responseType: "blob",
+      signal: abortController.signal,
+    });
+
+    const blob = new Blob([response], { type: response.type });
+    file.value = new File([blob], props.fileName, { type: blob.type });
+    previewKey.value++;
+  } catch (error: any) {
+    if (error?.name === "AbortError") return;
+    errorMessage.value =
+      error?.data?.statusMessage ??
+      error?.statusMessage ??
+      "Impossible de prévisualiser ce fichier.";
+  } finally {
+    loading.value = false;
+  }
+}
 
 function closeModal() {
+  abortController?.abort();
   showPreview.value = false;
 }
+
+onMounted(() => {
+  void fetchPreview();
+});
+
+onBeforeUnmount(() => {
+  abortController?.abort();
+});
 </script>
 
 <template>
@@ -25,7 +72,7 @@ function closeModal() {
     :description="fileName"
     :close="{
       onClick: () => {
-        closeModal;
+        closeModal();
       },
     }"
     :ui="{
@@ -39,8 +86,27 @@ function closeModal() {
           <div
             class="w-full h-full max-w-full max-h-full flex items-center justify-center"
           >
+            <div
+              v-if="loading"
+              class="flex flex-col items-center justify-center gap-3 text-muted"
+            >
+              <UIcon
+                name="material-symbols:progress-activity"
+                class="size-8 animate-spin"
+              />
+              <span class="text-sm">Chargement de la prévisualisation...</span>
+            </div>
+            <UAlert
+              v-else-if="errorMessage"
+              color="error"
+              icon="material-symbols:error-outline-rounded"
+              title="Erreur"
+              :description="errorMessage"
+              class="max-w-lg"
+            />
             <VueFilesPreview
-              v-if="showPreview"
+              v-else-if="showPreview && file"
+              :key="previewKey"
               :file="file"
               v-bind="$attrs"
               class="w-full h-full"

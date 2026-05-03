@@ -1,13 +1,15 @@
-import { GenericAPIResponse } from "~~/shared/types/API";
-import { CopyFilePayload } from "~~/shared/types/file_request";
+import type { GenericAPIResponse } from "~~/shared/types/API";
+import type { CreateFolderPayload } from "~~/shared/types/file_request";
 
 export default defineEventHandler(async (event) => {
-  const payload = await readBody(event);
+  const payload = await readBody<CreateFolderPayload>(event);
+
   const API_URL = useRuntimeConfig().public.apiBaseUrl;
   const token = getCookie(event, "auth_token");
+
   try {
-    const data = await $fetch<GenericAPIResponse<CopyFilePayload>>(
-      `${API_URL}/storage/copy`,
+    const data = await $fetch<GenericAPIResponse<string>>(
+      `${API_URL}/storage/folder`,
       {
         method: "POST",
         body: payload,
@@ -16,14 +18,14 @@ export default defineEventHandler(async (event) => {
       },
       }
     );
+
     return data;
   } catch (error: any) {
     if (error?.response?.status) {
       throw createError({
         statusCode: error.response.status,
-        statusMessage:
-          error.response._data?.message ??
-          "Erreur lors de la récupération des fichiers",
+        message:
+          error.response._data?.message ?? "Impossible de créer le dossier",
       });
     }
     throw createError({

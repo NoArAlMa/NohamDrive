@@ -46,7 +46,7 @@ export const moveCommand: TerminalCommand = {
       };
 
       try {
-        await $fetch<GenericAPIResponse<string>>("/storage/move", {
+        await $fetch<GenericAPIResponse<string>>("api/storage/move", {
           method: "POST",
           body: payload,
         });

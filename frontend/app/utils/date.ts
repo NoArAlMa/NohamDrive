@@ -1,4 +1,7 @@
 export default function formatDate(value: string | number | Date) {
+  if (!value) {
+    return "--";
+  }
   try {
     return new Date(value).toLocaleString("fr-FR", {
       day: "numeric",
@@ -11,3 +14,4 @@ export default function formatDate(value: string | number | Date) {
     return value;
   }
 }
+ 

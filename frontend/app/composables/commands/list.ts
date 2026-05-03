@@ -39,14 +39,14 @@ export const listCommand: TerminalCommand = {
 
     if (args.length === 1 && args[0]) {
       const path = args[0];
-      const correct_path = resolvePath(path, ctx.currentPath!);
+      const correct_path = resolvePath(path, ctx.currentPath ?? "/");
 
       try {
         const data = await $fetch<GenericAPIResponse<ApiFileTreeData>>(
-          "/storage/tree",
+          "api/storage/tree",
           {
             method: "GET",
-            params: { path: correct_path },
+            query: { path: correct_path },
           },
         );
 

@@ -15,6 +15,7 @@ from core.limiter import limiter
 from core.logging import setup_logger
 from database.connection_management import ConnectionManager
 from database.tools.db_utils import test_db_connection
+from app.services.minio.minio_service import MinioService
 
 logger = setup_logger(__name__)
 
@@ -24,6 +25,9 @@ logger = setup_logger(__name__)
 async def lifespan(app: FastAPI):
     # Injection du client MinIO
     app.state.minio_client = get_healthy_minio()
+    app.state.minio_service = (
+        MinioService(app.state.minio_client) if app.state.minio_client else None
+    )
     app.state.redis = await get_healthy_redis()
     if app.state.redis:
         limiter._storage_uri = f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}"
@@ -47,7 +51,9 @@ async def lifespan(app: FastAPI):
 
     app.state.database = ConnectionManager()
     if not test_db_connection(app.state.database):
-        logger.critical("Échec de la connexion à la base de données. Arrêt de l'application.")
+        logger.critical(
+            "Échec de la connexion à la base de données. Arrêt de l'application."
+        )
         raise RuntimeError("Impossible de se connecter à la base de données.")
 
     yield
@@ -57,6 +63,7 @@ async def lifespan(app: FastAPI):
         await sse_manager.shutdown()
 
     app.state.minio_client = None
+    app.state.minio_service = None
     app.state.redis = None
     app.state.limiter = None
 
@@ -144,7 +151,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         if loc:
             field_name = loc[-1]
             msg = err.get("msg", "")
-            # 🔹 nettoyer le préfixe "Value error, " si présent
+            # nettoyer le préfixe "Value error, " si présent
             if msg.startswith("Value error, "):
                 msg = msg.replace("Value error, ", "", 1)
             errors[field_name] = msg

@@ -34,21 +34,22 @@ export const changeDirectoryCommand: TerminalCommand = {
 
     if (args.length === 1 && args[0]) {
       const { navigate } = useFSStore();
-      const resolved_path = resolvePath(args[0], ctx.currentPath!);
+      const currentPath = ctx.currentPath ?? "/";
+      const resolved_path = resolvePath(args[0], currentPath);
 
-      if (resolved_path === ctx.currentPath!) {
+      if (resolved_path === currentPath) {
         return { type: "nope" };
       }
 
       try {
         const resolved = await $fetch<GenericAPIResponse<FileExistsResponse>>(
-          "/storage/resolve",
+          "api/storage/resolve",
           {
-            params: { path: resolved_path },
+            query: { path: resolved_path },
           },
         );
 
-        if (resolved.data!.type !== "directory") {
+        if (resolved.data?.type !== "directory") {
           return {
             type: "output",
             level: "error",

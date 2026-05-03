@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { NavigationMenuItem } from "@nuxt/ui";
 
+const { isAuthenticated, user } = useAuthStore();
 const { isMobile } = useResponsive();
 
 const items = ref<NavigationMenuItem[][]>([
@@ -45,23 +46,44 @@ const items = ref<NavigationMenuItem[][]>([
             <UNavigationMenu :items="items" />
 
             <template #right>
-              <div class="mr-3 flex gap-2">
+              <section v-if="isAuthenticated">
                 <UButton
-                  icon="material-symbols:login-rounded"
-                  label="Log in"
-                  variant="ghost"
+                  :label="user?.full_name"
                   color="neutral"
-                  loading-auto
-                  @click="navigateTo('/auth?mode=login')"
-                />
-                <UButton
-                  label="Register"
-                  color="primary"
-                  variant="subtle"
-                  @click="navigateTo('/auth?mode=register')"
-                  loading-auto
-                />
-              </div>
+                  variant="ghost"
+                  :square="false"
+                  :ui="{
+                    label: 'mr-2',
+                  }"
+                  @click="navigateTo('/home')"
+                >
+                  <template #trailing>
+                    <UAvatar
+                      src="https://i.pinimg.com/736x/be/a3/49/bea3491915571d34a026753f4a872000.jpg"
+                      size="md"
+                    />
+                  </template>
+                </UButton>
+              </section>
+              <section v-else>
+                <div class="mr-3 flex gap-2">
+                  <UButton
+                    icon="material-symbols:login-rounded"
+                    label="Log in"
+                    variant="ghost"
+                    color="neutral"
+                    loading-auto
+                    @click="navigateTo('/auth?mode=login')"
+                  />
+                  <UButton
+                    label="Register"
+                    color="primary"
+                    variant="subtle"
+                    @click="navigateTo('/auth?mode=register')"
+                    loading-auto
+                  />
+                </div>
+              </section>
             </template>
           </UDashboardNavbar>
         </template>

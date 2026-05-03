@@ -1,21 +1,20 @@
-import { GenericAPIResponse } from "~~/shared/types/API";
-import { RenameFilePayload } from "~~/shared/types/file_request";
+import type { GenericAPIResponse } from "~~/shared/types/API";
+import type { CompressFilePayload } from "~~/shared/types/file_request";
 
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);
-
   const API_URL = useRuntimeConfig().public.apiBaseUrl;
   const token = getCookie(event, "auth_token");
   try {
-    const data = (await $fetch)<GenericAPIResponse<RenameFilePayload>>(
-      `${API_URL}/storage/rename`,
+    const data = await $fetch<GenericAPIResponse<CompressFilePayload>>(
+      `${API_URL}/storage/compress`,
       {
-        method: "PATCH",
+        method: "POST",
         body: payload,
         headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        Authorization: `Bearer ${token}`,
       },
+      }
     );
     return data;
   } catch (error: any) {
