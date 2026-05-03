@@ -1,7 +1,9 @@
-import { ref, onMounted } from "vue";
+import { getCurrentInstance, onMounted, ref } from "vue";
 
 export const useElectron = () => {
-  const isElectron = ref(false);
+  const isElectron = ref(
+    import.meta.client && typeof window !== "undefined" && !!window.electronAPI,
+  );
   const appInfo = ref<null | {
     isElectron: boolean;
     appVersion: string;
@@ -20,8 +22,11 @@ export const useElectron = () => {
     }
   };
 
-  onMounted(checkElectron);
-  checkElectron();
+  if (getCurrentInstance()) {
+    onMounted(checkElectron);
+  } else if (import.meta.client) {
+    checkElectron();
+  }
 
   return { isElectron, appInfo };
 };
