@@ -41,7 +41,7 @@ const fetchFileTree = async (): Promise<void> => {
     const response = await $fetch<GenericAPIResponse<ApiFileTreeData>>(
       "api/storage/tree",
       {
-        params: { path: breadcrumb.value },
+        query: { path: breadcrumb.value },
       },
     );
 
@@ -169,7 +169,7 @@ async function moveItems() {
             <LazyFileExplorerLoaderList />
           </div>
           <div
-            v-if="tree.length === 0"
+            v-else-if="tree.length === 0"
             class="w-full h-full flex items-center justify-center"
           >
             <LazyUEmpty

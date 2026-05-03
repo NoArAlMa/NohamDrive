@@ -1,35 +1,72 @@
 import { defineStore } from "pinia";
-import { ref, computed, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useFSStore } from "./fs";
 
 export const useFileTree = defineStore("fileTree", () => {
   const FSStore = useFSStore();
   const AuthStore = useAuthStore();
 
+  const emptyFileTree: ApiFileItem[] = [];
+  const cache = new Map<string, GenericAPIResponse<ApiFileTreeData>>();
   const data = ref<GenericAPIResponse<ApiFileTreeData> | null>(null);
   const loading = ref(false);
   const error = ref<Error | null>(null);
+  let activeFetchId = 0;
+  let abortController: AbortController | null = null;
 
-  const fetchFileTree = async (): Promise<void> => {
-    if (loading.value) return;
+  const fetchFileTree = async (
+    options: { force?: boolean } = {},
+  ): Promise<void> => {
+    const path = FSStore.currentPath;
+    const cachedData = cache.get(path);
+
+    if (!options.force && cachedData) {
+      abortController?.abort();
+      abortController = null;
+      activeFetchId++;
+      loading.value = false;
+      data.value = cachedData;
+      error.value = null;
+      return;
+    }
+
+    abortController?.abort();
+    abortController = new AbortController();
+    const fetchId = ++activeFetchId;
+    const requestFetch = import.meta.server ? useRequestFetch() : $fetch;
+
     try {
       loading.value = true;
       error.value = null;
-      const response = await $fetch<GenericAPIResponse<ApiFileTreeData>>(
+      const response = await requestFetch<GenericAPIResponse<ApiFileTreeData>>(
         "/api/storage/tree",
         {
-          params: { path: FSStore.currentPath },
+          query: { path },
+          signal: abortController.signal,
         },
       );
+      if (fetchId !== activeFetchId) return;
+
+      cache.set(path, response);
       data.value = response;
     } catch (err) {
+      if ((err as Error).name === "AbortError" || fetchId !== activeFetchId) {
+        return;
+      }
       error.value = err as Error;
     } finally {
-      loading.value = false;
+      if (fetchId === activeFetchId) {
+        loading.value = false;
+        abortController = null;
+      }
     }
   };
-  
+
   const reset = () => {
+    abortController?.abort();
+    abortController = null;
+    activeFetchId++;
+    cache.clear();
     data.value = null;
     error.value = null;
     loading.value = false;
@@ -37,18 +74,21 @@ export const useFileTree = defineStore("fileTree", () => {
 
   watch(
     [() => FSStore.currentPath, () => AuthStore.token],
-    ([path, tokenVal]) => {
+    ([, tokenVal], [, previousToken]) => {
       if (!tokenVal) {
         reset();
         return;
+      }
+      if (previousToken && tokenVal !== previousToken) {
+        cache.clear();
       }
       fetchFileTree();
     },
     { immediate: true },
   );
-  const fileTree = computed<ApiFileItem[]>(() => {
-    return [...(data.value?.data?.items ?? [])];
-  });
+  const fileTree = computed<ApiFileItem[]>(
+    () => data.value?.data?.items ?? emptyFileTree,
+  );
 
   const hasError = computed(() => !!error.value);
   const errorStatus = computed(() => (error.value as any)?.statusCode);
@@ -60,11 +100,8 @@ export const useFileTree = defineStore("fileTree", () => {
   const totalElements = computed(() => data.value?.data?.total_items ?? 0);
 
   const retryFetching = async () => {
-    if (loading.value) return;
-    await fetchFileTree();
+    await fetchFileTree({ force: true });
   };
-
-  
 
   return {
     fileTree,

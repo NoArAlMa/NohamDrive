@@ -1,5 +1,5 @@
-import { GenericAPIResponse } from "~~/shared/types/API";
-import { CompressFilePayload } from "~~/shared/types/file_request";
+import type { GenericAPIResponse } from "~~/shared/types/API";
+import type { CompressFilePayload } from "~~/shared/types/file_request";
 
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);

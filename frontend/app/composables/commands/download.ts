@@ -24,13 +24,12 @@ export const downloadCommand: TerminalCommand = {
     }
     if (args.length === 1 && args[0]) {
       const path = args[0];
-
-      const correct_path = resolvePath(path, ctx?.currentPath!);
+      const currentPath = ctx.currentPath ?? "/";
+      const correct_path = resolvePath(path, currentPath);
+      const cleanPath = correct_path.replace(/^\/+/, "");
 
       try {
-        const response = await fetch(
-          `api/storage/download/${encodeURIComponent(correct_path)}`,
-        );
+        const response = await fetch(`api/storage/download/${cleanPath}`);
 
         if (!response.ok) {
           const text = (await response.json()) as GenericAPIResponse<null>;

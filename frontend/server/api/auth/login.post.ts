@@ -1,5 +1,5 @@
-import { GenericAPIResponse } from "~~/shared/types/API";
-import { UserLoginPayload } from "~~/shared/types/auth";
+import type { GenericAPIResponse } from "~~/shared/types/API";
+import type { UserLoginPayload } from "~~/shared/types/auth";
 
 export default defineEventHandler(async (event) => {
   const payload = await readBody<UserLoginPayload>(event);

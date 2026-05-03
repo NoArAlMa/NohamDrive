@@ -1,5 +1,5 @@
-import { GenericAPIResponse } from "~~/shared/types/API";
-import { MoveFilePayload } from "~~/shared/types/file_request";
+import type { GenericAPIResponse } from "~~/shared/types/API";
+import type { MoveFilePayload } from "~~/shared/types/file_request";
 
 export default defineEventHandler(async (event) => {
   const payload = await readBody<MoveFilePayload>(event);

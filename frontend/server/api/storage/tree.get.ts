@@ -1,4 +1,4 @@
-import { ApiFileTreeResponse } from "~~/shared/types/file_tree";
+import type { ApiFileTreeResponse } from "~~/shared/types/file_tree";
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);

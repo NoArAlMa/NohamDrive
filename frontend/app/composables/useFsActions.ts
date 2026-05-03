@@ -24,46 +24,13 @@ export const useFsActions = () => {
     } else {
       const fullPath = `${joinPath(FSStore.currentPath, item.name)}`;
       const cleanPath = fullPath.replace(/^\/+/, "");
-      let loadingToast: Toast | undefined;
-      loadingToast = toast.add({
-        title: "En cours d'ouverture...",
-        color: "neutral",
-        duration: 0,
-        close: false,
-        ui: { icon: "animate-spin" },
-        icon: "material-symbols:progress-activity",
+      const viewModal = overlay.create(LazyFileExplorerModalPreview, {
+        props: {
+          fileName: item.name,
+          previewPath: cleanPath,
+        },
       });
-      try {
-        const response = await $fetch(`api/storage/preview/${cleanPath}`, {
-          responseType: "blob",
-        });
-        const blob = new Blob([response], { type: response.type });
-        const fileName = item.name;
-
-        // Crée un objet File
-        const file = new File([blob], fileName, { type: blob.type });
-
-        const viewModal = overlay.create(LazyFileExplorerModalPreview, {
-          props: {
-            fileName: fileName,
-            file: file,
-          },
-        });
-        viewModal.open();
-        if (loadingToast) toast.remove(loadingToast.id);
-      } catch (error: any) {
-        if (loadingToast) toast.remove(loadingToast.id);
-        toast.add({
-          title: "Erreur",
-          description:
-            error.data?.statusMessage ??
-            "Impossible de supprimer le fichier/dossier.",
-          color: "error",
-          icon: "material-symbols:error-outline-rounded",
-        });
-
-        throw error;
-      }
+      viewModal.open();
     }
   };
 
@@ -200,11 +167,13 @@ export const useFsActions = () => {
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
 
-      // Téléchargement
       const a = document.createElement("a");
       a.href = url;
       a.download = filename;
+      a.rel = "noopener";
+      document.body.appendChild(a);
       a.click();
+      a.remove();
 
       URL.revokeObjectURL(url);
 
@@ -224,10 +193,14 @@ export const useFsActions = () => {
         toast.add({
           title: "Erreur",
           icon: "material-symbols:error-outline-rounded",
-          description: error.message.message || "Le téléchargement a échoué",
+          description:
+            error?.data?.statusMessage ??
+            error?.message ??
+            "Le téléchargement a échoué",
           color: "error",
         });
       }
+      throw error;
     }
   };
 

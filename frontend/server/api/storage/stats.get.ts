@@ -1,5 +1,5 @@
-import { FileMetadata } from "../../../shared/types/file_metadata";
-import { GenericAPIResponse } from "../../../shared/types/API";
+import type { FileMetadata } from "../../../shared/types/file_metadata";
+import type { GenericAPIResponse } from "../../../shared/types/API";
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);

@@ -1,5 +1,5 @@
-import { GenericAPIResponse } from "~~/shared/types/API";
-import { RenameFilePayload } from "~~/shared/types/file_request";
+import type { GenericAPIResponse } from "~~/shared/types/API";
+import type { RenameFilePayload } from "~~/shared/types/file_request";
 
 export default defineEventHandler(async (event) => {
   const payload = await readBody(event);

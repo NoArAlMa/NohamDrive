@@ -1,4 +1,4 @@
-import { GenericAPIResponse } from "~~/shared/types/API";
+import type { GenericAPIResponse } from "~~/shared/types/API";
 
 interface MultipartFile {
   name?: string;
@@ -23,9 +23,12 @@ export default defineEventHandler(async (event) => {
 
     for (const file of formData) {
       if (file.name && file.filename && file.data) {
+        const fileBuffer = new ArrayBuffer(file.data.byteLength);
+        new Uint8Array(fileBuffer).set(file.data);
+
         uploadFormData.append(
           file.name,
-          new Blob([file.data]), // Blob obligatoire en Node
+          new Blob([fileBuffer]), // Blob obligatoire en Node
           file.filename,
         );
       }

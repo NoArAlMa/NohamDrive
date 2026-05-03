@@ -1,5 +1,5 @@
-import { FileExistsResponse } from "~~/shared/types/file_request";
-import { GenericAPIResponse } from "../../../shared/types/API";
+import type { FileExistsResponse } from "~~/shared/types/file_request";
+import type { GenericAPIResponse } from "../../../shared/types/API";
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
