@@ -1,4 +1,6 @@
 import datetime
+import threading
+import time
 from fastapi import HTTPException, Query, Request
 from fastapi.concurrency import run_in_threadpool
 from minio import Minio
@@ -21,11 +23,45 @@ logger = setup_logger(__name__)
 
 
 class MinioService:
+    # Cache intentionally small + short-lived: it targets "UI refresh storms" (same prefix
+    # requested repeatedly within a few seconds), and avoids holding large directory
+    # listings in memory for too long.
+    _CACHE_TTL_S = 5.0
+    _CACHE_MAX_KEYS = 256
+    _CACHE_MAX_ITEMS = 2000
+
     def __init__(self, minio: Minio):
         self.minio: Minio = minio
         self.bucket_service = BucketService(minio)
         self.object_service = ObjectService(minio, self.bucket_service)
         self.download_service = DownloadService(minio, self.bucket_service)
+
+        self._cache_lock = threading.Lock()
+        # key -> (expires_at_monotonic, items)
+        self._simple_list_cache: dict[tuple[str, str], tuple[float, list[SimpleFileItem]]] = {}
+        self._full_list_cache: dict[tuple[str, str, bool], tuple[float, list[FullFileItem]]] = {}
+
+    def _cache_get(self, cache: dict, key):
+        now = time.monotonic()
+        with self._cache_lock:
+            entry = cache.get(key)
+            if not entry:
+                return None
+            expires_at, payload = entry
+            if expires_at <= now:
+                cache.pop(key, None)
+                return None
+            return payload
+
+    def _cache_set(self, cache: dict, key, payload):
+        # Basic size control to avoid unbounded growth.
+        now = time.monotonic()
+        expires_at = now + self._CACHE_TTL_S
+        with self._cache_lock:
+            if len(cache) >= self._CACHE_MAX_KEYS:
+                # Drop one arbitrary key; TTL is short, so a simple eviction is fine.
+                cache.pop(next(iter(cache)), None)
+            cache[key] = (expires_at, payload)
 
     async def simple_list_path(
         self,
@@ -46,39 +82,31 @@ class MinioService:
             start = (page - 1) * per_page
             end = start + per_page
 
-            def list_objects_paginated() -> tuple[list[SimpleFileItem], int]:
-                result = []
-                count = 0
+            cache_key = (bucket_name, normalized_path)
+            cached = self._cache_get(self._simple_list_cache, cache_key)
+            if cached is None:
+                def list_objects_all() -> list[SimpleFileItem]:
+                    items: list[SimpleFileItem] = []
+                    for obj in self.minio.list_objects(
+                        bucket_name,
+                        prefix=normalized_path,
+                        recursive=False,
+                    ):
+                        if obj.object_name == normalized_path:
+                            continue
+                        if not obj.object_name:
+                            continue
 
-                for obj in self.minio.list_objects(
-                    bucket_name,
-                    prefix=normalized_path,
-                    recursive=False,
-                ):
-                    if obj.object_name == normalized_path:
-                        continue
+                        name = obj.object_name.removeprefix(normalized_path).rstrip("/")
+                        is_dir = obj.object_name.endswith("/")
 
-                    if count >= end:
-                        break
-                    if count >= start:
-                        if obj.object_name:
-                            name = obj.object_name.removeprefix(normalized_path).rstrip(
-                                "/"
-                            )
-                            is_dir = obj.object_name.endswith("/")
-
-                        last_modified = None
-                        if obj.last_modified:
-                            last_modified = obj.last_modified
-
-                        if is_dir:
-                            lm = None
-                            if obj.metadata:
-                                lm = obj.metadata.get("x-amz-meta-last_modified")
+                        last_modified = obj.last_modified if obj.last_modified else None
+                        if is_dir and obj.metadata:
+                            lm = obj.metadata.get("x-amz-meta-last_modified")
                             if lm:
                                 last_modified = datetime.datetime.fromisoformat(lm)
 
-                        result.append(
+                        items.append(
                             SimpleFileItem(
                                 name=name,
                                 size=None if is_dir else obj.size,
@@ -87,13 +115,19 @@ class MinioService:
                             )
                         )
 
-                    count += 1
+                    # Deterministic ordering for pagination and UI consistency.
+                    items.sort(key=lambda x: (not x.is_dir, (x.name or "").lower()))
+                    return items
 
-                return result, count
+                all_items = await run_in_threadpool(list_objects_all)
+                if len(all_items) <= self._CACHE_MAX_ITEMS:
+                    self._cache_set(self._simple_list_cache, cache_key, all_items)
+            else:
+                all_items = cached
 
-            objects, total_items = await run_in_threadpool(list_objects_paginated)
+            total_items = len(all_items)
+            objects = all_items[start:end]
 
-            objects.sort(key=lambda x: (not x.is_dir, (x.name or "").lower()))
             total_pages = (total_items + per_page - 1) // per_page
 
             return SimpleFileTreeResponse(
@@ -136,49 +170,53 @@ class MinioService:
             if ".." in normalized_path.split("/"):
                 raise HTTPException(status_code=400, detail="Chemin invalide")
 
-            objects = self.minio.list_objects(
-                bucket_name, prefix=normalized_path, recursive=recursive
-            )
-            items: list[FullFileItem] = []
-
-            for obj in objects:
-                if obj.object_name == normalized_path:
-                    continue
-
-                # Nom affiché (relatif au path)
-                name = (
-                    obj.object_name.removeprefix(normalized_path).rstrip("/")
-                    if obj.object_name
-                    else ""
-                )
-                is_dir = obj.object_name.endswith("/") if obj.object_name else False
-
-                etag = obj.etag
-                content_type = obj.content_type
-                size = obj.size if not is_dir else None
-
-                last_modified = None
-                if obj.last_modified:
-                    last_modified = obj.last_modified
-                if is_dir:
-                    lm = None
-                    if obj.metadata:
-                        lm = obj.metadata.get("x-amz-meta-last_modified")
-                    if lm:
-                        last_modified = datetime.datetime.fromisoformat(lm)
-
-                items.append(
-                    FullFileItem(
-                        name=name,
-                        size=size,
-                        is_dir=is_dir,
-                        last_modified=last_modified or datetime.datetime.now(),
-                        etag=etag,
-                        content_type=content_type,
+            cache_key = (bucket_name, normalized_path, recursive)
+            cached = self._cache_get(self._full_list_cache, cache_key)
+            if cached is None:
+                def list_objects_full() -> list[FullFileItem]:
+                    objects = self.minio.list_objects(
+                        bucket_name, prefix=normalized_path, recursive=recursive
                     )
-                )
+                    items: list[FullFileItem] = []
 
-            items.sort(key=lambda x: (not x.is_dir, x.name.lower()))
+                    for obj in objects:
+                        if obj.object_name == normalized_path:
+                            continue
+                        if not obj.object_name:
+                            continue
+
+                        name = obj.object_name.removeprefix(normalized_path).rstrip("/")
+                        is_dir = obj.object_name.endswith("/")
+
+                        etag = obj.etag
+                        content_type = obj.content_type
+                        size = obj.size if not is_dir else None
+
+                        last_modified = obj.last_modified if obj.last_modified else None
+                        if is_dir and obj.metadata:
+                            lm = obj.metadata.get("x-amz-meta-last_modified")
+                            if lm:
+                                last_modified = datetime.datetime.fromisoformat(lm)
+
+                        items.append(
+                            FullFileItem(
+                                name=name,
+                                size=size,
+                                is_dir=is_dir,
+                                last_modified=last_modified or datetime.datetime.now(),
+                                etag=etag,
+                                content_type=content_type,
+                            )
+                        )
+
+                    items.sort(key=lambda x: (not x.is_dir, x.name.lower()))
+                    return items
+
+                items = await run_in_threadpool(list_objects_full)
+                if len(items) <= self._CACHE_MAX_ITEMS:
+                    self._cache_set(self._full_list_cache, cache_key, items)
+            else:
+                items = cached
 
             return FullFileTreeResponse(
                 path="/" + normalized_path if normalized_path else "/",
@@ -196,4 +234,10 @@ class MinioService:
 
 def get_minio_service(request: Request) -> MinioService:
     """Fournit une instance de MinioService avec le client Minio de l'app."""
+    # Prefer the singleton created at startup so we can reuse internal caches and
+    # avoid recreating service wrappers for every request.
+    existing = getattr(request.app.state, "minio_service", None)
+    if existing is not None:
+        return existing
+    # Fallback (tests or older app.state setup).
     return MinioService(request.app.state.minio_client)

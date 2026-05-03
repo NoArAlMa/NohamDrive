@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-const { currentPath } = useFSStore();
+const { currentPath } = storeToRefs(useFSStore());
 const { runBatch } = useBatchAction();
 const { move } = useFsActions();
 
@@ -9,7 +9,10 @@ const props = defineProps<{
 
 const emit = defineEmits<{ close: [any] }>();
 
-const breadcrumb = ref(currentPath);
+const breadcrumb = ref(currentPath.value);
+watch(currentPath, (newPath) => {
+  breadcrumb.value = newPath;
+});
 
 function close() {
   emit("close", "");
