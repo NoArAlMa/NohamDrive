@@ -39,7 +39,7 @@ export const removeCommand: TerminalCommand = {
       }
       try {
         const { retryFetching } = useFileTree();
-        const data = await $fetch<GenericAPIResponse<null>>("api/storage/object", {
+        await $fetch<GenericAPIResponse<null>>("api/storage/object", {
           method: "DELETE",
           query: { folder_path: correct_path },
         });
