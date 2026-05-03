@@ -433,7 +433,7 @@ export const useFsActions = () => {
     currentPath: string = FSStore.currentPath,
   ): Promise<{ success: boolean; message?: string }> => {
     try {
-      const req = await $fetch<GenericAPIResponse<string>>("api/storage/folder", {
+      await $fetch<GenericAPIResponse<string>>("api/storage/folder", {
         method: "POST",
         body: {
           currentPath,
