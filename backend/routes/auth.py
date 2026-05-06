@@ -11,7 +11,7 @@ from database.services.setup import (
     drop_tokens_table,
     drop_users_table,
 )
-
+import asyncio
 
 router = APIRouter(prefix="/auth", tags=["Authentification"])
 
@@ -23,6 +23,7 @@ async def create_user_endpoint(
     payload: UserCreate,
     auth_service: AuthService = Depends(get_auth_service),
 ):
+    await asyncio.sleep(1)
     created_user = await auth_service.auth_create_user(payload)
     return BaseResponse(
         success=True,

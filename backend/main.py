@@ -16,6 +16,8 @@ from core.logging import setup_logger
 from database.connection_management import ConnectionManager
 from database.tools.db_utils import test_db_connection
 from app.services.minio.minio_service import MinioService
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
+
 
 logger = setup_logger(__name__)
 
@@ -90,6 +92,8 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
+
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="127.0.0.1")
 
 
 @app.middleware("http")
