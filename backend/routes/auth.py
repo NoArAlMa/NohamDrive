@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from app.services.auth_service import get_auth_service, AuthService
 from app.schemas.auth import UserCreate, UserLogin
 from app.utils.response import BaseResponse
@@ -23,6 +23,11 @@ async def create_user_endpoint(
     payload: UserCreate,
     auth_service: AuthService = Depends(get_auth_service),
 ):
+    token = request.headers.get("authorization")
+
+    if token or request.cookies.get("auth_token"):
+        raise HTTPException(status_code=666, detail="Que la diarrhée t'emporte !")
+
     await asyncio.sleep(1)
     created_user = await auth_service.auth_create_user(payload)
     return BaseResponse(
