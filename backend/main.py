@@ -31,14 +31,7 @@ async def lifespan(app: FastAPI):
         MinioService(app.state.minio_client) if app.state.minio_client else None
     )
     app.state.redis = await get_healthy_redis()
-    if app.state.redis:
-        limiter._storage_uri = f"redis://{settings.REDIS_HOST}:{settings.REDIS_PORT}"
-        limiter.enabled = True
-        logger.info("Rate limiter ACTIVÉ")
-    else:
-        limiter.enabled = False
-        logger.warning("Rate limiter DÉSACTIVÉ")
-
+    
     app.state.limiter = limiter
 
     sse_manager = SSEManager(app.state.redis)
