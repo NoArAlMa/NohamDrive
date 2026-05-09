@@ -17,7 +17,7 @@ from database.connection_management import ConnectionManager
 from database.tools.db_utils import test_db_connection
 from app.services.minio.minio_service import MinioService
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
-
+from slowapi.middleware import SlowAPIMiddleware
 
 logger = setup_logger(__name__)
 
@@ -92,8 +92,8 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
-
-app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="127.0.0.1")
+app.add_middleware(SlowAPIMiddleware)
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="10.0.0.2")
 
 
 @app.middleware("http")
@@ -190,3 +190,12 @@ async def generic_exception_handler(request: Request, exc: Exception):
 @app.get("/")
 def read_root():
     return {"message": "Bienvenue sur l'API OneDrive Alternative !"}
+
+
+@app.post("/test")
+async def test(request: Request):
+    return {
+        "client_host": request.client.host,
+        "xff": request.headers.get("x-forwarded-for"),
+        "real_ip": request.headers.get("x-real-ip"),
+    }
