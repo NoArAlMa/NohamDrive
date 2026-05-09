@@ -185,10 +185,3 @@ def read_root():
     return {"message": "Bienvenue sur l'API OneDrive Alternative !"}
 
 
-@app.post("/test")
-async def test(request: Request):
-    return {
-        "client_host": request.client.host,
-        "xff": request.headers.get("x-forwarded-for"),
-        "real_ip": request.headers.get("x-real-ip"),
-    }
