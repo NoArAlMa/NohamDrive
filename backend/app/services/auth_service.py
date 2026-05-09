@@ -1,4 +1,5 @@
 from datetime import datetime
+import asyncio
 
 from fastapi import HTTPException, status
 from fastapi import Request
@@ -121,7 +122,9 @@ class AuthService:
             }
         )
 
-        await self.minio_service.bucket_service.create_user_bucket(user.id)
+        asyncio.create_task(
+        self.minio_service.bucket_service.create_user_bucket(user.id)
+        )
 
         create_token(
             self.connection_manager,
