@@ -24,6 +24,7 @@ const itemsDropDown = ref<DropdownMenuItem[]>([
   {
     label: "Settings",
     icon: "material-symbols:settings-outline-rounded",
+    onSelect: () => navigateTo("/settings"),
   },
   {
     label: "Inbox",
