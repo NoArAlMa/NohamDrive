@@ -4,7 +4,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.services.sse_service import SSEManager
 from core.redis import get_healthy_redis
-from routes import storages, auth
+from routes import storages, auth, users
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
@@ -82,7 +82,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
     allow_headers=["*"],
 )
 app.add_middleware(SlowAPIMiddleware)
@@ -109,6 +109,7 @@ async def restrict_docs(request: Request, call_next):
 
 app.include_router(storages.router)
 app.include_router(auth.router)
+app.include_router(users.router)
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -183,5 +184,4 @@ async def generic_exception_handler(request: Request, exc: Exception):
 @app.get("/")
 def read_root():
     return {"message": "Bienvenue sur l'API OneDrive Alternative !"}
-
 

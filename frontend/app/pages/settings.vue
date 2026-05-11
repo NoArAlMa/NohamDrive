@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import type { GenericAPIResponse } from "~~/shared/types/API";
+import type { User } from "~~/shared/types/auth";
+
 definePageMeta({
   layout: "default",
   middleware: "auth-middleware",
@@ -39,8 +42,11 @@ type UserSettings = {
   };
   sync: {
     autoSync: boolean;
+    localPath: string;
+    startOnStartup: boolean;
     syncOnMetered: boolean;
     intervalMinutes: 5 | 15 | 30 | 60;
+    lastSyncAt: string | null;
   };
   security: {
     lockOnIdle: boolean;
@@ -75,8 +81,11 @@ const DEFAULT_SETTINGS: UserSettings = {
   },
   sync: {
     autoSync: true,
+    localPath: "~/NohamDrive",
+    startOnStartup: false,
     syncOnMetered: false,
     intervalMinutes: 15,
+    lastSyncAt: null,
   },
   security: {
     lockOnIdle: true,
@@ -95,6 +104,21 @@ const settings = useLocalStorage<UserSettings>(
   { deep: true },
 );
 
+settings.value = {
+  ...DEFAULT_SETTINGS,
+  ...settings.value,
+  appearance: { ...DEFAULT_SETTINGS.appearance, ...settings.value.appearance },
+  account: { ...DEFAULT_SETTINGS.account, ...settings.value.account },
+  general: { ...DEFAULT_SETTINGS.general, ...settings.value.general },
+  notifications: {
+    ...DEFAULT_SETTINGS.notifications,
+    ...settings.value.notifications,
+  },
+  sync: { ...DEFAULT_SETTINGS.sync, ...settings.value.sync },
+  security: { ...DEFAULT_SETTINGS.security, ...settings.value.security },
+  privacy: { ...DEFAULT_SETTINGS.privacy, ...settings.value.privacy },
+};
+
 const colorMode = useColorMode();
 
 watch(
@@ -107,6 +131,7 @@ watch(
 
 const authStore = useAuthStore();
 const { user } = storeToRefs(authStore);
+const toast = useToast();
 
 const resetOpen = ref(false);
 
@@ -140,8 +165,9 @@ watch(
 
 const profileError = ref<string | null>(null);
 const profileSaved = ref(false);
+const profileSaving = ref(false);
 
-function saveProfile() {
+async function saveProfile() {
   profileSaved.value = false;
   profileError.value = null;
 
@@ -165,15 +191,34 @@ function saveProfile() {
     return;
   }
 
-  authStore.setUser({
-    ...user.value,
-    username: profileDraft.username.trim(),
-    email: profileDraft.email.trim(),
-    full_name: profileDraft.full_name.trim(),
-  });
+  profileSaving.value = true;
+  try {
+    const response = await $fetch<GenericAPIResponse<User>>("/api/users/me", {
+      method: "PATCH",
+      body: {
+        username: profileDraft.username.trim(),
+        email: profileDraft.email.trim(),
+        full_name: profileDraft.full_name.trim(),
+      },
+    });
 
-  profileSaved.value = true;
-  setTimeout(() => (profileSaved.value = false), 1500);
+    if (response.data) {
+      authStore.setUser(response.data);
+    }
+
+    profileSaved.value = true;
+    toast.add({
+      title: "Profile saved",
+      color: "success",
+      icon: "material-symbols:check-rounded",
+    });
+    setTimeout(() => (profileSaved.value = false), 1500);
+  } catch (error: any) {
+    profileError.value =
+      error?.data?.message ?? error?.message ?? "Unable to save profile.";
+  } finally {
+    profileSaving.value = false;
+  }
 }
 
 // function removeAvatar() {
@@ -181,6 +226,93 @@ function saveProfile() {
 // }
 
 const avatarInput = ref<HTMLInputElement | null>(null);
+
+const passwordDraft = reactive({
+  current_password: "",
+  new_password: "",
+  confirm_password: "",
+});
+
+const passwordError = ref<string | null>(null);
+const passwordSaved = ref(false);
+const passwordSaving = ref(false);
+
+async function savePassword() {
+  passwordSaved.value = false;
+  passwordError.value = null;
+
+  if (!passwordDraft.current_password) {
+    passwordError.value = "Current password is required.";
+    return;
+  }
+
+  if (passwordDraft.new_password !== passwordDraft.confirm_password) {
+    passwordError.value = "New passwords do not match.";
+    return;
+  }
+
+  passwordSaving.value = true;
+  try {
+    await $fetch<GenericAPIResponse<null>>("/api/users/password", {
+      method: "PATCH",
+      body: {
+        current_password: passwordDraft.current_password,
+        new_password: passwordDraft.new_password,
+      },
+    });
+
+    passwordDraft.current_password = "";
+    passwordDraft.new_password = "";
+    passwordDraft.confirm_password = "";
+    passwordSaved.value = true;
+    toast.add({
+      title: "Password updated",
+      color: "success",
+      icon: "material-symbols:check-rounded",
+    });
+    setTimeout(() => (passwordSaved.value = false), 1500);
+  } catch (error: any) {
+    passwordError.value =
+      error?.data?.message ?? error?.message ?? "Unable to update password.";
+  } finally {
+    passwordSaving.value = false;
+  }
+}
+
+const syncPathError = computed(() => {
+  const path = settings.value.sync.localPath?.trim() ?? "";
+  const pathWithoutDrive = path.replace(/^[A-Za-z]:[\\/]/, "");
+
+  if (!path) return "Choose a local folder before enabling sync.";
+  if (/[<>:"|?*]/.test(pathWithoutDrive)) {
+    return "This path contains characters that are not supported.";
+  }
+
+  return null;
+});
+
+const syncReady = computed(() => settings.value.sync.autoSync && !syncPathError.value);
+const lastSyncLabel = computed(() => {
+  if (!settings.value.sync.lastSyncAt) return "Not synced yet";
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(settings.value.sync.lastSyncAt));
+});
+
+function resetSyncPath() {
+  settings.value.sync.localPath = DEFAULT_SETTINGS.sync.localPath;
+}
+
+function markSyncNow() {
+  if (!syncReady.value) return;
+  settings.value.sync.lastSyncAt = new Date().toISOString();
+  toast.add({
+    title: "Sync queued",
+    color: "primary",
+    icon: "material-symbols:sync-rounded",
+  });
+}
 
 // function pickAvatar() {
 //   avatarInput.value?.click();
@@ -219,9 +351,9 @@ const themeOptions: { label: string; value: ThemePreference }[] = [
   { label: "Dark", value: "dark" },
 ];
 
-const languageOptions: { label: string; value: "EN" | "FR" }[] = [
-  { label: "Français", value: "FR" },
-  { label: "English", value: "EN" },
+const languageOptions: { label: string; value: "en" | "fr" }[] = [
+  { label: "Français", value: "fr" },
+  { label: "English", value: "en" },
 ];
 
 const startPageOptions: { label: string; value: StartPage }[] = [
@@ -336,7 +468,7 @@ const syncIntervalOptions: {
               </div>
             </div>
             <p class="mt-3 text-sm text-muted">
-              Frontend only: updates are stored locally (cookie / localStorage).
+              Account details are saved on your NohamDrive profile.
             </p>
           </div>
 
@@ -385,9 +517,88 @@ const syncIntervalOptions: {
                 color="primary"
                 variant="subtle"
                 icon="material-symbols:save-outline-rounded"
+                :loading="profileSaving"
                 @click="saveProfile"
               >
                 Save profile
+              </UButton>
+            </div>
+          </div>
+        </div>
+      </UCard>
+
+      <UCard class="lg:col-span-2">
+        <template #header>
+          <div class="flex items-center gap-2">
+            <UIcon
+              name="material-symbols:password-rounded"
+              class="size-5"
+            />
+            <h2 class="text-lg font-semibold">Password</h2>
+          </div>
+        </template>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div>
+            <p class="text-sm text-muted">
+              Confirm your current password before choosing a new one.
+            </p>
+          </div>
+
+          <div class="lg:col-span-2 space-y-4">
+            <UFormField label="Current password">
+              <UInput
+                v-model="passwordDraft.current_password"
+                type="password"
+                autocomplete="current-password"
+                placeholder="Current password"
+              />
+            </UFormField>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <UFormField label="New password">
+                <UInput
+                  v-model="passwordDraft.new_password"
+                  type="password"
+                  autocomplete="new-password"
+                  placeholder="New password"
+                />
+              </UFormField>
+              <UFormField label="Confirm password">
+                <UInput
+                  v-model="passwordDraft.confirm_password"
+                  type="password"
+                  autocomplete="new-password"
+                  placeholder="Confirm password"
+                />
+              </UFormField>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 justify-end">
+              <UAlert
+                v-if="passwordError"
+                color="error"
+                variant="subtle"
+                title="Password not updated"
+                :description="passwordError"
+                class="w-full md:w-auto"
+              />
+              <UAlert
+                v-else-if="passwordSaved"
+                color="success"
+                variant="subtle"
+                title="Saved"
+                description="Password updated."
+                class="w-full md:w-auto"
+              />
+              <UButton
+                color="primary"
+                variant="subtle"
+                icon="material-symbols:lock-reset-rounded"
+                :loading="passwordSaving"
+                @click="savePassword"
+              >
+                Update password
               </UButton>
             </div>
           </div>
@@ -462,47 +673,101 @@ const syncIntervalOptions: {
 
       <UCard>
         <template #header>
-          <div class="flex items-center gap-2">
-            <UIcon name="material-symbols:sync-rounded" class="size-5" />
-            <h2 class="text-lg font-semibold">Sync</h2>
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <UIcon name="material-symbols:sync-rounded" class="size-5" />
+              <h2 class="text-lg font-semibold">Sync</h2>
+            </div>
+            <UBadge
+              :color="syncReady ? 'success' : 'neutral'"
+              variant="subtle"
+            >
+              {{ syncReady ? "Ready" : "Paused" }}
+            </UBadge>
           </div>
         </template>
 
         <div class="space-y-4">
+          <div class="rounded-lg border border-muted bg-muted/20 p-3">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-medium text-default truncate">
+                  {{ settings.sync.localPath || "No local folder selected" }}
+                </p>
+                <p class="text-xs text-muted">Last sync: {{ lastSyncLabel }}</p>
+              </div>
+              <UButton
+                color="primary"
+                variant="soft"
+                icon="material-symbols:sync-rounded"
+                :disabled="!syncReady"
+                @click="markSyncNow"
+              >
+                Sync now
+              </UButton>
+            </div>
+          </div>
+
+          <UFormField
+            label="Storage path"
+            description="Local folder used by the desktop sync engine"
+            :error="syncPathError"
+          >
+            <div class="flex flex-col gap-2 sm:flex-row">
+              <UInput
+                v-model="settings.sync.localPath"
+                class="flex-1"
+                placeholder="~/NohamDrive"
+                icon="material-symbols:folder-outline-rounded"
+              />
+              <UButton
+                color="neutral"
+                variant="soft"
+                icon="material-symbols:restart-alt-rounded"
+                @click="resetSyncPath"
+              >
+                Default
+              </UButton>
+            </div>
+          </UFormField>
+
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <UFormField label="Auto-sync" description="Keep files up to date">
+            <UFormField
+              label="Auto-sync"
+              description="Keep files up to date automatically"
+            >
               <USwitch v-model="settings.sync.autoSync" />
             </UFormField>
             <UFormField
-              label="Storage Path"
-              description="The path where the files should go"
-            >
-              <UInput />
-            </UFormField>
-            <UFormField
               label="Start app on startup"
-              description="Whether or not the app should be start when the computer starts-up"
+              description="Open NohamDrive when your session starts"
             >
-              <USwitch />
+              <USwitch
+                v-model="settings.sync.startOnStartup"
+                :disabled="!settings.sync.autoSync"
+              />
             </UFormField>
 
             <UFormField
               label="Metered connection"
               description="Allow sync on metered networks"
             >
-              <USwitch v-model="settings.sync.syncOnMetered" />
+              <USwitch
+                v-model="settings.sync.syncOnMetered"
+                :disabled="!settings.sync.autoSync"
+              />
+            </UFormField>
+
+            <UFormField label="Sync interval" description="How often to sync">
+              <USelect
+                v-model="settings.sync.intervalMinutes"
+                :disabled="!settings.sync.autoSync"
+                :options="syncIntervalOptions"
+                option-attribute="label"
+                value-attribute="value"
+              />
             </UFormField>
           </div>
-
-          <UFormField label="Sync interval" description="How often to sync">
-            <USelect
-              v-model="settings.sync.intervalMinutes"
-              :disabled="!settings.sync.autoSync"
-              :options="syncIntervalOptions"
-              option-attribute="label"
-              value-attribute="value"
-            />
-          </UFormField>
         </div>
       </UCard>
 
