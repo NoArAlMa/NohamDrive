@@ -4,10 +4,11 @@ import type { DropdownMenuItem } from "@nuxt/ui";
 import Limiter from "./Limiter.vue";
 
 const { isMobile } = useResponsive();
-const { user } = useAuthStore();
+const authStore = useAuthStore();
+const { user, profilePictureUrl } = storeToRefs(authStore);
 const { logoutUser } = useAuth();
 
-const name_user = user?.full_name;
+const name_user = computed(() => user.value?.full_name || "");
 
 const { isElectron } = useElectron();
 
@@ -24,6 +25,7 @@ const itemsDropDown = ref<DropdownMenuItem[]>([
   {
     label: "Settings",
     icon: "material-symbols:settings-outline-rounded",
+    onSelect: () => navigateTo("/settings"),
   },
   {
     label: "Inbox",
@@ -226,10 +228,10 @@ const collapsed = ref(false);
       >
         <UButton
           :avatar="{
-            src: 'https://i.pinimg.com/736x/be/a3/49/bea3491915571d34a026753f4a872000.jpg',
+            src: profilePictureUrl || undefined,
             size: 'md',
           }"
-          :label="collapsed ? 'undefined' : name_user ? name_user : 'Salut nom'"
+          :label="collapsed ? ' ' : name_user || ' '"
           color="neutral"
           variant="ghost"
           :square="false"

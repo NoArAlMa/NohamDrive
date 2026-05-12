@@ -10,6 +10,17 @@ export interface UserLoginPayload {
   password: string;
 }
 
+export interface UserUpdatePayload {
+  username: string;
+  email: string;
+  full_name: string;
+}
+
+export interface PasswordUpdatePayload {
+  current_password: string;
+  new_password: string;
+}
+
 export interface Token {
   token: string;
   expiration_date: Date;

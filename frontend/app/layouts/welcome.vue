@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import type { NavigationMenuItem } from "@nuxt/ui";
 
-const { isAuthenticated, user } = useAuthStore();
+const authStore = useAuthStore();
+const { isAuthenticated, user, profilePictureUrl } = storeToRefs(authStore);
 const { isMobile } = useResponsive();
 
 const items = ref<NavigationMenuItem[][]>([
@@ -59,7 +60,7 @@ const items = ref<NavigationMenuItem[][]>([
                 >
                   <template #trailing>
                     <UAvatar
-                      src="https://i.pinimg.com/736x/be/a3/49/bea3491915571d34a026753f4a872000.jpg"
+                      :src="profilePictureUrl || undefined"
                       size="md"
                     />
                   </template>

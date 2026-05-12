@@ -102,7 +102,7 @@ class JWTService:
         )
 
     def get_token_from_request(self, request: Request) -> str:
-        token = request.cookies.get("auth_token")
+        token = request.cookies.get("access_token") or request.cookies.get("auth_token")
 
         if not token:
             # fallback header Authorization
