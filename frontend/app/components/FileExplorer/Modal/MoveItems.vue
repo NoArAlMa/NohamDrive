@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+const { t } = useI18n();
+
 const { currentPath } = storeToRefs(useFSStore());
 const { runBatch } = useBatchAction();
 const { move } = useFsActions();
@@ -25,7 +27,10 @@ const listNames = computed(() => {
     return names.join("\n");
   }
 
-  return [...names.slice(0, 5), `+ ${names.length - 5} autres...`].join("\n");
+  return [
+    ...names.slice(0, 5),
+    t("fileExplorer.andMore", { count: names.length - 5 }),
+  ].join("\n");
 });
 
 const itemsCount = props.items.length;
@@ -89,7 +94,7 @@ const generateBreadcrumbItems = () => {
   // Ajoute toujours la racine ("/") en premier
   return [
     {
-      label: "Mes fichiers",
+      label: t("fileExplorer.myFiles"),
       path: "/",
     },
     ...items,
@@ -115,9 +120,9 @@ async function moveItems() {
       await move(sourcePath, destination, options);
     },
     {
-      loading: "Déplacement en cours...",
-      success: "Déplacement terminé !",
-      error: "Le déplacement a échoué",
+      loading: t("fileExplorer.moving"),
+      success: t("fileExplorer.moveSuccess"),
+      error: t("fileExplorer.moveError"),
     },
   );
 
@@ -126,8 +131,8 @@ async function moveItems() {
 </script>
 <template>
   <UModal
-    title="Move Items"
-    description="Choisissez un dossier de destination"
+    :title="t('fileExplorer.moveItemsTitle')"
+    :description="t('fileExplorer.moveItemsDesc')"
     class="min-w-[50vw] h-2/3"
   >
     <template #body>

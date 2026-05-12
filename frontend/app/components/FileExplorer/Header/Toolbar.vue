@@ -2,6 +2,8 @@
 import type { DropdownMenuItem, NavigationMenuItem } from "@nuxt/ui";
 import { LazyFileExplorerModalMoveItems } from "#components";
 
+const { t } = useI18n();
+
 const props = defineProps<{
   items: ApiFileItem[];
 }>();
@@ -23,19 +25,19 @@ type FileAction = {
 const fileActions = computed<FileAction[]>(() => [
   {
     key: "download",
-    label: "Télécharger",
+    label: t("fileExplorer.download") as string,
     icon: "material-symbols:download-rounded",
 
     handler: () =>
       runBatch(props.items, action.download, {
-        loading: "Téléchargement en cours...",
-        success: "Téléchargement terminé !",
-        error: "Le téléchargement a échoué",
+        loading: t("fileExplorer.downloading") as string,
+        success: t("fileExplorer.downloadSuccess") as string,
+        error: t("fileExplorer.downloadError") as string,
       }),
   },
   {
     key: "move",
-    label: "Déplacer",
+    label: t("fileExplorer.move") as string,
     icon: "material-symbols:drive-file-move-outline-rounded",
     handler: async () => {
       const overlay = useOverlay();
@@ -50,7 +52,7 @@ const fileActions = computed<FileAction[]>(() => [
   },
   {
     key: "share",
-    label: "Partager",
+    label: t("fileExplorer.share") as string,
     icon: "material-symbols:share-windows-rounded",
     disabled: true,
 
@@ -58,30 +60,30 @@ const fileActions = computed<FileAction[]>(() => [
   },
   {
     key: "delete",
-    label: "Supprimer",
+    label: t("fileExplorer.delete") as string,
     icon: "material-symbols:delete-outline-rounded",
     color: "error",
     handler: () =>
       runBatch(props.items, action.del, {
-        loading: "Suppression en cours…",
-        success: "Éléments supprimés !",
-        error: "Erreur lors de la suppression",
+        loading: t("fileExplorer.deleting") as string,
+        success: t("fileExplorer.deleteSuccess") as string,
+        error: t("fileExplorer.deleteError") as string,
       }),
   },
 ]);
 
-const DropdownItems = ref<DropdownMenuItem[]>([
+const DropdownItems = computed<DropdownMenuItem[]>(() => [
   {
-    label: "Compresser",
+    label: t("fileExplorer.compress") as string,
     icon: "material-symbols:compress-rounded",
     onSelect: () => action.compress(props.items),
   },
 ]);
 
-const DrawerItems = ref<NavigationMenuItem[]>([
+const DrawerItems = computed<NavigationMenuItem[]>(() => [
   [
     {
-      label: "Télécharger",
+      label: t("fileExplorer.download") as string,
       icon: "material-symbols:download-rounded",
       onSelect: () => {
         runBatch(props.items, action.download);
@@ -93,14 +95,14 @@ const DrawerItems = ref<NavigationMenuItem[]>([
   ],
   [
     {
-      label: "Partager",
+      label: t("fileExplorer.share") as string,
       icon: "material-symbols:share-windows-rounded",
       disabled: true,
       onSelect: () => {},
     },
 
     {
-      label: "Compresser",
+      label: t("fileExplorer.compress") as string,
       icon: "material-symbols:compress-rounded",
       onSelect: () => action.compress(props.items),
     },
@@ -130,7 +132,7 @@ const DrawerItems = ref<NavigationMenuItem[]>([
           <UDropdownMenu :items="DropdownItems" class="ml-3">
             <UButton
               leading-icon="material-symbols:more-horiz"
-              label="Plus"
+              :label="String(t('fileExplorer.more'))"
               color="neutral"
               variant="ghost"
               class="px-2 py-1 ml-3"
@@ -151,7 +153,7 @@ const DrawerItems = ref<NavigationMenuItem[]>([
               <template #suppress>
                 <UButton
                   leading-icon="material-symbols:delete-outline-rounded"
-                  label="Supprimer"
+                  :label="String(t('fileExplorer.delete'))"
                   color="error"
                   class="p-0"
                   variant="link"

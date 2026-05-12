@@ -2,38 +2,40 @@
 import type { AuthFormField, FormSubmitEvent } from "@nuxt/ui";
 import * as z from "zod";
 
+const { t } = useI18n();
+
 const authForm = useTemplateRef("authForm");
 const { loginUser } = useAuth();
 
 const generalError = ref<string | null>(null);
 
-const loginFields: AuthFormField[] = [
+const loginFields = computed<AuthFormField[]>(() => [
   {
     name: "email",
     type: "email",
-    label: "Email",
-    placeholder: "Enter your email",
+    label: t("auth.email") as string,
+    placeholder: t("auth.placeholders.enterEmail") as string,
     required: true,
   },
   {
     name: "password",
     type: "password",
-    label: "Password",
-    placeholder: "Enter your password",
+    label: t("auth.password") as string,
+    placeholder: t("auth.placeholders.enterPassword") as string,
     required: true,
   },
   {
     name: "remember",
-    label: "Remember me",
+    label: t("auth.rememberMe") as string,
     type: "checkbox",
   },
-];
+]);
 
 const loginSchema = z.object({
-  email: z.email("Invalid email"),
+  email: z.email(t("auth.validation.invalidEmail") as string),
   password: z
-    .string("Password is required")
-    .min(8, "Must be at least 8 characters"),
+    .string(t("auth.validation.passwordRequired") as string)
+    .min(8, t("auth.validation.min8") as string),
 });
 
 async function onSubmit(payload: FormSubmitEvent<any>) {
@@ -56,23 +58,23 @@ async function onSubmit(payload: FormSubmitEvent<any>) {
     <UPageCard class="w-full max-w-md shadow-md">
       <UAuthForm
         ref="authForm"
-        title="Login"
+        :title="String(t('auth.login'))"
         :schema="loginSchema"
         icon="i-lucide-user"
         :fields="loginFields"
         @submit="onSubmit"
         loading-auto
         :submit="{
-          label: 'Login',
+          label: String(t('auth.login')),
           color: 'primary',
         }"
       >
         <template #description>
-          Don't have an account?
+          {{ t("auth.noAccount") }}
           <ULink
             @click="$emit('switch-mode', 'register')"
             class="text-primary font-medium"
-            >Sign up</ULink
+            >{{ t("auth.signUp") }}</ULink
           >
         </template>
         <template #validation>
@@ -85,7 +87,9 @@ async function onSubmit(payload: FormSubmitEvent<any>) {
           />
         </template>
         <template #password-hint>
-          <ULink class="text-primary" to="/">Forgot your password ?</ULink>
+          <ULink class="text-primary" to="/">{{
+            t("auth.forgotPassword")
+          }}</ULink>
         </template>
       </UAuthForm>
     </UPageCard>

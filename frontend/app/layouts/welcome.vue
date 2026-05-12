@@ -1,11 +1,13 @@
 <script lang="ts" setup>
 import type { NavigationMenuItem } from "@nuxt/ui";
+import { en, fr } from "@nuxt/ui/locale";
+const { $getLocale, switchLocale, t, $getLocales } = useI18n();
 
 const authStore = useAuthStore();
 const { isAuthenticated, user, profilePictureUrl } = storeToRefs(authStore);
 const { isMobile } = useResponsive();
 
-const items = ref<NavigationMenuItem[][]>([
+const items = computed<NavigationMenuItem[][]>(() => [
   [
     {
       label: "Features",
@@ -28,6 +30,11 @@ const items = ref<NavigationMenuItem[][]>([
     },
   ],
 ]);
+
+const currentLocale = computed({
+  get: () => $getLocale(),
+  set: (value) => switchLocale(value),
+});
 </script>
 
 <template>
@@ -44,9 +51,16 @@ const items = ref<NavigationMenuItem[][]>([
               <h1 class="text-primary font-bold text-2xl">NohamDrive</h1>
             </template>
 
-            <UNavigationMenu :items="items" />
+            <UNavigationMenu
+              :items="items"
+              :ui="{
+                link: ['bg-transparent'],
+              }"
+            />
 
             <template #right>
+              <ULocaleSelect v-model="currentLocale" :locales="[en, fr]" />
+
               <section v-if="isAuthenticated">
                 <UButton
                   :label="user?.full_name"
@@ -59,10 +73,7 @@ const items = ref<NavigationMenuItem[][]>([
                   @click="navigateTo('/home')"
                 >
                   <template #trailing>
-                    <UAvatar
-                      :src="profilePictureUrl || undefined"
-                      size="md"
-                    />
+                    <UAvatar :src="profilePictureUrl || undefined" size="md" />
                   </template>
                 </UButton>
               </section>
@@ -70,14 +81,14 @@ const items = ref<NavigationMenuItem[][]>([
                 <div class="mr-3 flex gap-2">
                   <UButton
                     icon="material-symbols:login-rounded"
-                    label="Log in"
+                    :label="String(t('auth.logIn'))"
                     variant="ghost"
                     color="neutral"
                     loading-auto
                     @click="navigateTo('/auth?mode=login')"
                   />
                   <UButton
-                    label="Register"
+                    :label="String(t('auth.register'))"
                     color="primary"
                     variant="subtle"
                     @click="navigateTo('/auth?mode=register')"
@@ -99,7 +110,7 @@ const items = ref<NavigationMenuItem[][]>([
               <div
                 class="flex items-center gap-2 text-sm text-muted select-none"
               >
-                <span>Built with</span>
+                <span>{{ t("welcome.footerBuiltWith") }}</span>
 
                 <UIcon
                   name="logos:nuxt-icon"
@@ -119,7 +130,9 @@ const items = ref<NavigationMenuItem[][]>([
               <h1 class="text-lg font-bold text-primary tracking-tight">
                 NohamDrive
               </h1>
-              <span class="text-xs text-muted"> Next level file storage </span>
+              <span class="text-xs text-muted">
+                {{ t("welcome.footerTagline") }}
+              </span>
             </div>
 
             <template #right>

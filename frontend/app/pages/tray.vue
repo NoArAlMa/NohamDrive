@@ -1,11 +1,15 @@
 <script lang="ts" setup>
+const { locale, t, tc } = useI18n();
+
 type LocalItem = {
   id: number;
   name: string;
   kind: "folder" | "file";
   parent: string;
-  size: string;
-  modified: string;
+  size:
+    | { kind: "count"; count: number }
+    | { kind: "label"; label: string };
+  modifiedAt: string;
   synced: boolean;
 };
 
@@ -27,8 +31,8 @@ const localItems = ref<LocalItem[]>([
     name: "Documents",
     kind: "folder",
     parent: "C:/Users/Alex/NohamDrive",
-    size: "12 items",
-    modified: "Today, 09:42",
+    size: { kind: "count", count: 12 },
+    modifiedAt: new Date().toISOString(),
     synced: true,
   },
   {
@@ -36,8 +40,8 @@ const localItems = ref<LocalItem[]>([
     name: "Screenshots",
     kind: "folder",
     parent: "C:/Users/Alex/NohamDrive",
-    size: "48 items",
-    modified: "Yesterday",
+    size: { kind: "count", count: 48 },
+    modifiedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
     synced: false,
   },
   {
@@ -45,8 +49,8 @@ const localItems = ref<LocalItem[]>([
     name: "Roadmap.pdf",
     kind: "file",
     parent: "C:/Users/Alex/NohamDrive",
-    size: "2.4 MB",
-    modified: "Today, 08:10",
+    size: { kind: "label", label: "2.4 MB" },
+    modifiedAt: new Date(Date.now() - 90 * 60 * 1000).toISOString(),
     synced: true,
   },
   {
@@ -54,8 +58,8 @@ const localItems = ref<LocalItem[]>([
     name: "Brand-assets.zip",
     kind: "file",
     parent: "C:/Users/Alex/NohamDrive",
-    size: "18.7 MB",
-    modified: "Mon",
+    size: { kind: "label", label: "18.7 MB" },
+    modifiedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
     synced: false,
   },
   {
@@ -63,8 +67,8 @@ const localItems = ref<LocalItem[]>([
     name: "Invoices",
     kind: "folder",
     parent: "C:/Users/Alex/NohamDrive/Documents",
-    size: "9 items",
-    modified: "Apr 24",
+    size: { kind: "count", count: 9 },
+    modifiedAt: new Date("2026-04-24T10:00:00.000Z").toISOString(),
     synced: true,
   },
   {
@@ -72,8 +76,8 @@ const localItems = ref<LocalItem[]>([
     name: "Contract.docx",
     kind: "file",
     parent: "C:/Users/Alex/NohamDrive/Documents",
-    size: "186 KB",
-    modified: "Apr 23",
+    size: { kind: "label", label: "186 KB" },
+    modifiedAt: new Date("2026-04-23T10:00:00.000Z").toISOString(),
     synced: true,
   },
 ]);
@@ -100,6 +104,34 @@ const canGoUp = computed(
 const syncedCount = computed(
   () => localItems.value.filter((item) => item.synced).length,
 );
+
+function formatSize(item: LocalItem) {
+  if (item.size.kind === "label") return item.size.label;
+  const count = item.size.count;
+  return tc("tray.item", count, { count }) || t("tray.items", { count });
+}
+
+function formatModified(iso: string) {
+  const dt = new Date(iso);
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfYesterday = new Date(startOfToday);
+  startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+
+  const lang = locale.value || "en";
+  const time = new Intl.DateTimeFormat(lang, {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(dt);
+
+  if (dt >= startOfToday) return t("tray.todayAt", { time });
+  if (dt >= startOfYesterday) return t("tray.yesterday");
+
+  return new Intl.DateTimeFormat(lang, {
+    month: "short",
+    day: "numeric",
+  }).format(dt);
+}
 
 function iconFor(item: LocalItem) {
   if (item.kind === "folder") return "material-symbols:folder-rounded";
@@ -133,8 +165,8 @@ function createFolder() {
     name,
     kind: "folder",
     parent: currentPath.value,
-    size: "0 items",
-    modified: "Just now",
+    size: { kind: "count", count: 0 },
+    modifiedAt: new Date().toISOString(),
     synced: false,
   });
   newFolderName.value = "";
@@ -152,7 +184,7 @@ function submitRename() {
   if (!item || !name) return;
 
   item.name = name;
-  item.modified = "Just now";
+  item.modifiedAt = new Date().toISOString();
   item.synced = false;
   renamingId.value = null;
 }
@@ -172,7 +204,7 @@ function deleteSelected() {
 function toggleSync(item = selectedItem.value) {
   if (!item) return;
   item.synced = !item.synced;
-  item.modified = "Just now";
+  item.modifiedAt = new Date().toISOString();
 }
 </script>
 
@@ -191,10 +223,10 @@ function toggleSync(item = selectedItem.value) {
                 name="material-symbols:cloud-sync-rounded"
                 class="size-5 text-primary"
               />
-              <h1 class="truncate text-sm font-semibold">NohamDrive Tray</h1>
+              <h1 class="truncate text-sm font-semibold">{{ t("tray.title") }}</h1>
             </div>
             <p class="truncate text-xs text-muted">
-              {{ syncedCount }} synced items on this device
+              {{ syncedCount }} {{ t("tray.synced") }}
             </p>
           </div>
 
@@ -204,14 +236,14 @@ function toggleSync(item = selectedItem.value) {
               color="neutral"
               variant="ghost"
               size="xs"
-              aria-label="Refresh"
+              :aria-label="t('tray.refresh')"
             />
             <UButton
               icon="material-symbols:settings-rounded"
               color="neutral"
               variant="ghost"
               size="xs"
-              aria-label="Settings"
+              :aria-label="t('nav.settings')"
             />
           </div>
         </header>
@@ -223,7 +255,7 @@ function toggleSync(item = selectedItem.value) {
             variant="soft"
             size="xs"
             :disabled="!canGoUp"
-            aria-label="Parent folder"
+            :aria-label="t('tray.parentFolder')"
             @click="goUp"
           />
           <div
@@ -246,14 +278,14 @@ function toggleSync(item = selectedItem.value) {
             v-model="search"
             icon="material-symbols:search-rounded"
             size="sm"
-            placeholder="Search local files"
+            :placeholder="t('tray.searchPlaceholder')"
           />
           <UButton
             icon="material-symbols:folder-open-rounded"
             color="primary"
             variant="soft"
             size="sm"
-            aria-label="Choose folder"
+            :aria-label="t('tray.chooseFolder')"
           />
         </div>
 
@@ -261,7 +293,7 @@ function toggleSync(item = selectedItem.value) {
           <UInput
             v-model="newFolderName"
             size="xs"
-            placeholder="New folder"
+            :placeholder="t('tray.newFolder')"
             class="min-w-0 flex-1"
             @keydown.enter.prevent="createFolder"
           />
@@ -270,7 +302,7 @@ function toggleSync(item = selectedItem.value) {
             color="neutral"
             variant="soft"
             size="xs"
-            aria-label="Create folder"
+            :aria-label="t('tray.createFolder')"
             @click="createFolder"
           />
         </div>
@@ -304,7 +336,7 @@ function toggleSync(item = selectedItem.value) {
               />
               <p v-else class="truncate font-medium">{{ item.name }}</p>
               <p class="truncate text-xs text-muted">
-                {{ item.size }} - {{ item.modified }}
+                {{ formatSize(item) }} - {{ formatModified(item.modifiedAt) }}
               </p>
             </div>
 
@@ -317,7 +349,7 @@ function toggleSync(item = selectedItem.value) {
               :color="item.synced ? 'success' : 'warning'"
               variant="ghost"
               size="xs"
-              :aria-label="item.synced ? 'Synced' : 'Needs sync'"
+              :aria-label="item.synced ? t('tray.synced') : t('tray.needsSync')"
               @click.stop="toggleSync(item)"
             />
           </button>
@@ -327,7 +359,7 @@ function toggleSync(item = selectedItem.value) {
             class="flex h-full min-h-40 flex-col items-center justify-center gap-2 px-4 text-center text-muted"
           >
             <UIcon name="material-symbols:folder-off-rounded" class="size-8" />
-            <p class="text-sm font-medium">No local item found</p>
+            <p class="text-sm font-medium">{{ t("tray.noLocalItem") }}</p>
           </div>
         </div>
 
@@ -343,8 +375,8 @@ function toggleSync(item = selectedItem.value) {
               <p class="truncate text-[11px] text-muted">
                 {{
                   selectedItem.synced
-                    ? "Available in cloud"
-                    : "Local changes pending"
+                    ? t("tray.availableInCloud")
+                    : t("tray.localChangesPending")
                 }}
               </p>
             </div>
@@ -355,14 +387,14 @@ function toggleSync(item = selectedItem.value) {
                 color="neutral"
                 variant="soft"
                 size="xs"
-                aria-label="Move"
+                :aria-label="t('tray.move')"
               />
               <UButton
                 icon="material-symbols:edit-rounded"
                 color="neutral"
                 variant="soft"
                 size="xs"
-                aria-label="Rename"
+                :aria-label="t('tray.rename')"
                 @click="startRename"
               />
               <UButton
@@ -370,17 +402,17 @@ function toggleSync(item = selectedItem.value) {
                 color="error"
                 variant="soft"
                 size="xs"
-                aria-label="Delete"
+                :aria-label="t('tray.delete')"
                 @click="deleteSelected"
               />
             </div>
           </div>
 
           <div v-else class="flex items-center justify-between gap-2">
-            <p class="text-xs text-muted">Select an item to manage it</p>
+            <p class="text-xs text-muted">{{ t("tray.selectItem") }}</p>
             <UButton
               icon="material-symbols:cloud-upload-rounded"
-              label="Sync all"
+              :label="t('tray.syncAll')"
               color="primary"
               size="xs"
             />

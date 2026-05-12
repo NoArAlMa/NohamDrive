@@ -4,6 +4,8 @@ import { useFileRenameRegistry } from "~/composables/file/RenameRegistry";
 import type { ApiFileItem } from "~~/shared/types/file_tree";
 import { LazyFileExplorerModalCreateFolder } from "#components";
 
+const { t } = useI18n();
+
 const props = defineProps<{
   row: TableRow<ApiFileItem> | ApiFileItem | null;
 }>();
@@ -17,17 +19,17 @@ const { start } = useFileRenameRegistry();
 
 const baseMenu = (item: ApiFileItem): ContextMenuItem[] => [
   {
-    label: "Télécharger",
+    label: t("fileExplorer.download") as string,
     icon: "material-symbols:download-rounded",
     onSelect: () => fsActions.download(item),
   },
   {
-    label: "Dupliquer",
+    label: t("fileExplorer.duplicate") as string,
     icon: "material-symbols:content-copy-outline-rounded",
     onSelect: () => fsActions.copy(item),
   },
   {
-    label: "Renommer",
+    label: t("fileExplorer.rename") as string,
     icon: "material-symbols:edit-outline-rounded",
     onSelect: () => {
       if (props.row) {
@@ -38,13 +40,13 @@ const baseMenu = (item: ApiFileItem): ContextMenuItem[] => [
   },
   { type: "separator" as const },
   {
-    label: "Supprimer",
+    label: t("fileExplorer.delete") as string,
     icon: "material-symbols:delete-outline-rounded",
     color: "error" as const,
     onSelect: () => fsActions.del(item),
   },
   {
-    label: "Propriétés",
+    label: t("fileExplorer.properties") as string,
     icon: "material-symbols:info-outline-rounded",
     onSelect: () => fsActions.property(item),
   },
@@ -55,7 +57,7 @@ const rowItems = computed((): ContextMenuItem[] => {
   if (!props.row)
     return [
       {
-        label: "Creer dossier",
+        label: t("fileExplorer.createFolder") as string,
         icon: "material-symbols:create-new-folder-outline-rounded",
         onSelect: () => {
           const createFolderModal = overlay.create(
@@ -66,7 +68,7 @@ const rowItems = computed((): ContextMenuItem[] => {
         },
       },
       {
-        label: "Import file",
+        label: t("fileExplorer.importFile") as string,
         icon: "material-symbols:file-open-outline-rounded",
         onSelect: async () => {
   
@@ -79,9 +81,9 @@ const rowItems = computed((): ContextMenuItem[] => {
 
           if (files.length > 1) {
             await runBatch(files, fsActions.upload, {
-              loading: "Upload en cours…",
-              success: "Upload terminé",
-              error: "Une erreur est survenue pendant l’upload.",
+              loading: t("fileExplorer.uploading") as string,
+              success: t("fileExplorer.uploadSuccess") as string,
+              error: t("fileExplorer.uploadError") as string,
             });
           } else {
             await fsActions.upload(files[0]!);
@@ -94,7 +96,7 @@ const rowItems = computed((): ContextMenuItem[] => {
   if (item.is_dir) {
     return [
       {
-        label: "Ouvrir avec Echo",
+        label: t("fileExplorer.openWithEcho") as string,
         icon: "terminal:echo-icon",
         onSelect: () => fsActions.terminal(item),
       },
@@ -104,7 +106,7 @@ const rowItems = computed((): ContextMenuItem[] => {
   } else {
     return [
       {
-        label: "Visualiser",
+        label: t("fileExplorer.preview") as string,
         icon: "material-symbols:visibility-outline-rounded",
         onSelect: () => {
           fsActions.open(item);

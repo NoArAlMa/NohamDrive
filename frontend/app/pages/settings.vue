@@ -2,20 +2,23 @@
 import type { GenericAPIResponse } from "~~/shared/types/API";
 import type { User } from "~~/shared/types/auth";
 
+const { $getLocale, switchLocale, t: i18nT } = useI18n();
+const t = (...args: Parameters<typeof i18nT>) => i18nT(...args) as string;
+
 definePageMeta({
   layout: "default",
   middleware: "auth-middleware",
 });
 
-useHead({
-  title: "Settings - NohamDrive",
+useHead(() => ({
+  title: t("settings.headTitle"),
   meta: [
     {
       name: "NohamDrive | Settings",
-      content: "Customize your NohamDrive experience",
+      content: t("settings.description"),
     },
   ],
-});
+}));
 
 type ThemePreference = "system" | "light" | "dark";
 type StartPage = "home" | "explorer" | "terminal";
@@ -129,6 +132,28 @@ watch(
   { immediate: true },
 );
 
+watch(
+  () => settings.value.general.language,
+  (next) => {
+    if (next && next !== $getLocale()) {
+      switchLocale(next);
+    }
+  },
+  { immediate: true },
+);
+
+watch(
+  () => $getLocale(),
+  (next) => {
+    if (
+      (next === "fr" || next === "en") &&
+      settings.value.general.language !== next
+    ) {
+      settings.value.general.language = next;
+    }
+  },
+  { immediate: true },
+);
 const authStore = useAuthStore();
 const { user, profilePictureUrl } = storeToRefs(authStore);
 const toast = useToast();
@@ -173,22 +198,22 @@ async function saveProfile() {
   profileError.value = null;
 
   if (!user.value) {
-    profileError.value = "No user loaded.";
+    profileError.value = t("settings.errors.noUser");
     return;
   }
 
   if (!profileDraft.username.trim()) {
-    profileError.value = "Username is required.";
+    profileError.value = t("settings.errors.usernameRequired");
     return;
   }
 
   if (!profileDraft.email.trim() || !profileDraft.email.includes("@")) {
-    profileError.value = "A valid email is required.";
+    profileError.value = t("settings.errors.emailInvalid");
     return;
   }
 
   if (!profileDraft.full_name.trim()) {
-    profileError.value = "Full name is required.";
+    profileError.value = t("settings.errors.fullNameRequired");
     return;
   }
 
@@ -209,7 +234,7 @@ async function saveProfile() {
 
     profileSaved.value = true;
     toast.add({
-      title: "Profile saved",
+      title: t("settings.profileSaved"),
       color: "success",
       icon: "material-symbols:check-rounded",
     });
@@ -243,12 +268,12 @@ async function savePassword() {
   passwordError.value = null;
 
   if (!passwordDraft.current_password) {
-    passwordError.value = "Current password is required.";
+    passwordError.value = t("settings.errors.currentPasswordRequired");
     return;
   }
 
   if (passwordDraft.new_password !== passwordDraft.confirm_password) {
-    passwordError.value = "New passwords do not match.";
+    passwordError.value = t("settings.errors.newPasswordsMismatch");
     return;
   }
 
@@ -267,7 +292,7 @@ async function savePassword() {
     passwordDraft.confirm_password = "";
     passwordSaved.value = true;
     toast.add({
-      title: "Password updated",
+      title: t("settings.passwordSection.updatedTitle"),
       color: "success",
       icon: "material-symbols:check-rounded",
     });
@@ -296,7 +321,7 @@ const syncReady = computed(
   () => settings.value.sync.autoSync && !syncPathError.value,
 );
 const lastSyncLabel = computed(() => {
-  if (!settings.value.sync.lastSyncAt) return "Not synced yet";
+  if (!settings.value.sync.lastSyncAt) return t("settings.sync.notSyncedYet");
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
     timeStyle: "short",
@@ -311,22 +336,26 @@ function markSyncNow() {
   if (!syncReady.value) return;
   settings.value.sync.lastSyncAt = new Date().toISOString();
   toast.add({
-    title: "Sync queued",
+    title: t("settings.sync.queued"),
     color: "primary",
     icon: "material-symbols:sync-rounded",
   });
 }
 
-const themeOptions: { label: string; value: ThemePreference }[] = [
-  { label: "System", value: "system" },
-  { label: "Light", value: "light" },
-  { label: "Dark", value: "dark" },
-];
+const themeOptions = computed<{ label: string; value: ThemePreference }[]>(
+  () => [
+    { label: t("settings.theme.system"), value: "system" },
+    { label: t("settings.theme.light"), value: "light" },
+    { label: t("settings.theme.dark"), value: "dark" },
+  ],
+);
 
-const languageOptions: { label: string; value: "en" | "fr" }[] = [
-  { label: "Français", value: "fr" },
-  { label: "English", value: "en" },
-];
+const languageOptions = computed<{ label: string; value: "en" | "fr" }[]>(
+  () => [
+    { label: t("language.fr"), value: "fr" },
+    { label: t("language.en"), value: "en" },
+  ],
+);
 
 const folderInput = ref<HTMLInputElement | null>(null);
 
@@ -387,7 +416,7 @@ function onFolderPicked(event: Event) {
             icon="material-symbols:restart-alt-rounded"
             @click="resetOpen = true"
           >
-            Reset
+            {{ t("settings.actions.reset") }}
           </UButton>
           <UButton
             color="primary"
@@ -395,7 +424,7 @@ function onFolderPicked(event: Event) {
             icon="material-symbols:shield-outline-rounded"
             to="/settings#security"
           >
-            Security
+            {{ t("settings.actions.security") }}
           </UButton>
         </div>
       </div>
@@ -409,7 +438,9 @@ function onFolderPicked(event: Event) {
               name="material-symbols:person-outline-rounded"
               class="size-5"
             />
-            <h2 class="text-lg font-semibold">User settings</h2>
+            <h2 class="text-lg font-semibold">
+              {{ t("settings.sections.userSettings") }}
+            </h2>
           </div>
         </template>
 
@@ -428,12 +459,12 @@ function onFolderPicked(event: Event) {
                   icon="material-symbols:photo-camera-outline-rounded"
                   @click="profilePictureOpen = true"
                 >
-                  Change photo
+                  {{ t("settings.profile.changePhoto") }}
                 </UButton>
               </div>
             </div>
             <p class="mt-3 text-sm text-muted">
-              Account details are saved on your NohamDrive profile.
+              {{ t("settings.profile.detailsHint") }}
             </p>
           </div>
 
@@ -444,25 +475,25 @@ function onFolderPicked(event: Event) {
 
           <div class="lg:col-span-2 space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <UFormField label="Username">
+              <UFormField :label="t('settings.profile.username')">
                 <UInput
                   v-model="profileDraft.username"
-                  placeholder="username"
+                  :placeholder="t('settings.profile.placeholderUsername')"
                 />
               </UFormField>
-              <UFormField label="Email">
+              <UFormField :label="t('settings.profile.email')">
                 <UInput
                   v-model="profileDraft.email"
                   type="email"
-                  placeholder="you@domain.com"
+                  :placeholder="t('settings.profile.placeholderEmail')"
                 />
               </UFormField>
             </div>
 
-            <UFormField label="Full name">
+            <UFormField :label="t('settings.profile.fullName')">
               <UInput
                 v-model="profileDraft.full_name"
-                placeholder="Full name"
+                :placeholder="t('settings.profile.placeholderFullName')"
               />
             </UFormField>
 
@@ -471,7 +502,7 @@ function onFolderPicked(event: Event) {
                 v-if="profileError"
                 color="error"
                 variant="subtle"
-                title="Profile not saved"
+                :title="t('settings.profile.notSaved')"
                 :description="profileError"
                 class="w-full md:w-auto"
               />
@@ -479,8 +510,8 @@ function onFolderPicked(event: Event) {
                 v-else-if="profileSaved"
                 color="success"
                 variant="subtle"
-                title="Saved"
-                description="Profile updated locally."
+                :title="t('settings.profile.savedTitle')"
+                :description="t('settings.profile.savedDesc')"
                 class="w-full md:w-auto"
               />
               <UButton
@@ -490,7 +521,7 @@ function onFolderPicked(event: Event) {
                 :loading="profileSaving"
                 @click="saveProfile"
               >
-                Save profile
+                {{ t("settings.profile.save") }}
               </UButton>
             </div>
           </div>
@@ -501,42 +532,46 @@ function onFolderPicked(event: Event) {
         <template #header>
           <div class="flex items-center gap-2">
             <UIcon name="material-symbols:password-rounded" class="size-5" />
-            <h2 class="text-lg font-semibold">Password</h2>
+            <h2 class="text-lg font-semibold">
+              {{ t("settings.sections.password") }}
+            </h2>
           </div>
         </template>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div>
             <p class="text-sm text-muted">
-              Confirm your current password before choosing a new one.
+              {{ t("settings.passwordSection.hint") }}
             </p>
           </div>
 
           <div class="lg:col-span-2 space-y-4">
-            <UFormField label="Current password">
+            <UFormField :label="t('settings.passwordSection.current')">
               <UInput
                 v-model="passwordDraft.current_password"
                 type="password"
                 autocomplete="current-password"
-                placeholder="Current password"
+                :placeholder="t('settings.passwordSection.placeholderCurrent')"
               />
             </UFormField>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <UFormField label="New password">
+              <UFormField :label="t('settings.passwordSection.new')">
                 <UInput
                   v-model="passwordDraft.new_password"
                   type="password"
                   autocomplete="new-password"
-                  placeholder="New password"
+                  :placeholder="t('settings.passwordSection.placeholderNew')"
                 />
               </UFormField>
-              <UFormField label="Confirm password">
+              <UFormField :label="t('settings.passwordSection.confirm')">
                 <UInput
                   v-model="passwordDraft.confirm_password"
                   type="password"
                   autocomplete="new-password"
-                  placeholder="Confirm password"
+                  :placeholder="
+                    t('settings.passwordSection.placeholderConfirm')
+                  "
                 />
               </UFormField>
             </div>
@@ -546,7 +581,7 @@ function onFolderPicked(event: Event) {
                 v-if="passwordError"
                 color="error"
                 variant="subtle"
-                title="Password not updated"
+                :title="t('settings.passwordSection.notUpdated')"
                 :description="passwordError"
                 class="w-full md:w-auto"
               />
@@ -554,8 +589,8 @@ function onFolderPicked(event: Event) {
                 v-else-if="passwordSaved"
                 color="success"
                 variant="subtle"
-                title="Saved"
-                description="Password updated."
+                :title="t('settings.profile.savedTitle')"
+                :description="t('settings.passwordSection.savedDesc')"
                 class="w-full md:w-auto"
               />
               <UButton
@@ -565,7 +600,7 @@ function onFolderPicked(event: Event) {
                 :loading="passwordSaving"
                 @click="savePassword"
               >
-                Update password
+                {{ t("settings.passwordSection.update") }}
               </UButton>
             </div>
           </div>
@@ -576,20 +611,28 @@ function onFolderPicked(event: Event) {
         <template #header>
           <div class="flex items-center gap-2">
             <UIcon name="material-symbols:palette-outline" class="size-5" />
-            <h2 class="text-lg font-semibold">Appearance</h2>
+            <h2 class="text-lg font-semibold">
+              {{ t("settings.sections.appearance") }}
+            </h2>
           </div>
         </template>
 
         <div class="space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <UFormField label="Theme" description="System, light or dark">
+            <UFormField
+              :label="t('settings.appearance.theme')"
+              :description="t('settings.appearance.themeDesc')"
+            >
               <USelect
                 v-model="settings.appearance.theme"
                 :items="themeOptions"
               />
             </UFormField>
 
-            <UFormField label="Language" description="UI language">
+            <UFormField
+              :label="t('settings.appearance.language')"
+              :description="t('settings.appearance.languageDesc')"
+            >
               <USelect
                 v-model="settings.general.language"
                 :items="languageOptions"
@@ -606,18 +649,29 @@ function onFolderPicked(event: Event) {
               name="material-symbols:notifications-outline-rounded"
               class="size-5"
             />
-            <h2 class="text-lg font-semibold">Notifications</h2>
+            <h2 class="text-lg font-semibold">
+              {{ t("settings.sections.notifications") }}
+            </h2>
           </div>
         </template>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <UFormField label="Desktop" description="Toasts & banners">
+          <UFormField
+            :label="t('settings.notifications.desktop')"
+            :description="t('settings.notifications.desktopDesc')"
+          >
             <USwitch v-model="settings.notifications.desktop" />
           </UFormField>
-          <UFormField label="Sounds" description="Subtle alerts">
+          <UFormField
+            :label="t('settings.notifications.sounds')"
+            :description="t('settings.notifications.soundsDesc')"
+          >
             <USwitch v-model="settings.notifications.sounds" />
           </UFormField>
-          <UFormField label="Sync alerts" description="Upload/download status">
+          <UFormField
+            :label="t('settings.notifications.syncAlerts')"
+            :description="t('settings.notifications.syncAlertsDesc')"
+          >
             <USwitch v-model="settings.notifications.syncAlerts" />
           </UFormField>
         </div>
@@ -628,10 +682,14 @@ function onFolderPicked(event: Event) {
           <div class="flex items-center justify-between gap-3">
             <div class="flex items-center gap-2">
               <UIcon name="material-symbols:sync-rounded" class="size-5" />
-              <h2 class="text-lg font-semibold">Sync</h2>
+              <h2 class="text-lg font-semibold">
+                {{ t("settings.sections.sync") }}
+              </h2>
             </div>
             <UBadge :color="syncReady ? 'success' : 'neutral'" variant="subtle">
-              {{ syncReady ? "Ready" : "Paused" }}
+              {{
+                syncReady ? t("settings.sync.ready") : t("settings.sync.paused")
+              }}
             </UBadge>
           </div>
         </template>
@@ -641,9 +699,14 @@ function onFolderPicked(event: Event) {
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
               <div class="min-w-0 flex-1">
                 <p class="text-sm font-medium text-default truncate">
-                  {{ settings.sync.localPath || "No local folder selected" }}
+                  {{
+                    settings.sync.localPath ||
+                    t("settings.sync.noFolderSelected")
+                  }}
                 </p>
-                <p class="text-xs text-muted">Last sync: {{ lastSyncLabel }}</p>
+                <p class="text-xs text-muted">
+                  {{ t("settings.sync.lastSync", { label: lastSyncLabel }) }}
+                </p>
               </div>
               <UButton
                 color="primary"
@@ -652,14 +715,14 @@ function onFolderPicked(event: Event) {
                 :disabled="!syncReady"
                 @click="markSyncNow"
               >
-                Sync now
+                {{ t("settings.sync.syncNow") }}
               </UButton>
             </div>
           </div>
 
           <UFormField
-            label="Storage path"
-            description="Local folder used by the desktop sync engine"
+            :label="t('settings.sync.storagePath')"
+            :description="t('settings.sync.storagePathDesc')"
             :error="syncPathError"
           >
             <div class="flex flex-col gap-2 sm:flex-row">
@@ -676,7 +739,7 @@ function onFolderPicked(event: Event) {
               <UInput
                 v-model="settings.sync.localPath"
                 class="flex-1"
-                placeholder="Choose a folder"
+                :placeholder="t('settings.sync.chooseFolder')"
                 icon="material-symbols:folder-outline-rounded"
                 readonly
               />
@@ -687,7 +750,7 @@ function onFolderPicked(event: Event) {
                 icon="material-symbols:folder-open-rounded"
                 @click="openFolderPicker"
               >
-                Browse
+                {{ t("common.browse") }}
               </UButton>
 
               <UButton
@@ -696,21 +759,21 @@ function onFolderPicked(event: Event) {
                 icon="material-symbols:restart-alt-rounded"
                 @click="resetSyncPath"
               >
-                Default
+                {{ t("common.default") }}
               </UButton>
             </div>
           </UFormField>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <UFormField
-              label="Auto-sync"
-              description="Keep files up to date automatically"
+              :label="t('settings.sync.autoSync')"
+              :description="t('settings.sync.autoSyncDesc')"
             >
               <USwitch v-model="settings.sync.autoSync" />
             </UFormField>
             <UFormField
-              label="Start app on startup"
-              description="Open NohamDrive when your session starts"
+              :label="t('settings.sync.startup')"
+              :description="t('settings.sync.startupDesc')"
             >
               <USwitch
                 v-model="settings.sync.startOnStartup"
@@ -719,8 +782,8 @@ function onFolderPicked(event: Event) {
             </UFormField>
 
             <UFormField
-              label="Metered connection"
-              description="Allow sync on metered networks"
+              :label="t('settings.sync.metered')"
+              :description="t('settings.sync.meteredDesc')"
             >
               <USwitch
                 v-model="settings.sync.syncOnMetered"
@@ -734,22 +797,24 @@ function onFolderPicked(event: Event) {
       <UCard class="lg:col-span-2">
         <template #header>
           <div class="flex items-center gap-2">
-            <UIcon
-              name="material-symbols:lock-outline-rounded"
-              class="size-5"
-            />
-            <h2 class="text-lg font-semibold">Privacy</h2>
+            <UIcon name="material-symbols:lock-outline" class="size-5" />
+            <h2 class="text-lg font-semibold">
+              {{ t("settings.sections.privacy") }}
+            </h2>
           </div>
         </template>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <UFormField label="Analytics" description="Helps improve the product">
+          <UFormField
+            :label="t('settings.privacy.analytics')"
+            :description="t('settings.privacy.analyticsDesc')"
+          >
             <USwitch v-model="settings.privacy.analytics" />
           </UFormField>
 
           <UFormField
-            label="Crash reports"
-            description="Send anonymous diagnostics"
+            :label="t('settings.privacy.crashReports')"
+            :description="t('settings.privacy.crashReportsDesc')"
           >
             <USwitch v-model="settings.privacy.crashReports" />
           </UFormField>
@@ -759,8 +824,8 @@ function onFolderPicked(event: Event) {
 
     <UModal
       v-model:open="resetOpen"
-      title="Reset settings"
-      description="This will restore the default preferences on this device."
+      :title="t('settings.reset.title')"
+      :description="t('settings.reset.desc')"
     >
       <template #content>
         <UCard>
@@ -770,17 +835,18 @@ function onFolderPicked(event: Event) {
               class="size-6 text-warning"
             />
             <div class="min-w-0">
-              <p class="font-medium text-default">Are you sure?</p>
+              <p class="font-medium text-default">
+                {{ t("settings.reset.areYouSure") }}
+              </p>
               <p class="text-sm text-muted">
-                This only affects the current browser / desktop app profile. No
-                server data is changed.
+                {{ t("settings.reset.detail") }}
               </p>
             </div>
           </div>
 
           <div class="mt-5 flex justify-end gap-2">
             <UButton color="neutral" variant="ghost" @click="resetOpen = false">
-              Cancel
+              {{ t("common.cancel") }}
             </UButton>
             <UButton
               color="error"
@@ -788,7 +854,7 @@ function onFolderPicked(event: Event) {
               icon="material-symbols:restart-alt-rounded"
               @click="resetSettings"
             >
-              Reset
+              {{ t("settings.reset.action") }}
             </UButton>
           </div>
         </UCard>
