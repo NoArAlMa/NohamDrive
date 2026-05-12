@@ -12,6 +12,7 @@ from app.schemas.user import CompleteUser, User
 
 from app.schemas.token import Token
 from app.services.minio.minio_service import MinioService, get_minio_service
+from app.services.profile_picture_service import ProfilePictureService
 from database.connection_management import ConnectionManager
 from core.config import settings
 from core.logging import setup_logger
@@ -122,9 +123,14 @@ class AuthService:
             }
         )
 
-        asyncio.create_task(
-        self.minio_service.bucket_service.create_user_bucket(user.id)
-        )
+        async def provision_storage_and_avatar():
+            await self.minio_service.bucket_service.create_user_bucket(user.id)
+            pp_service = ProfilePictureService(self.minio_service)
+            await pp_service.ensure_default_exists(
+                user_id=user.id, full_name=user.full_name
+            )
+
+        asyncio.create_task(provision_storage_and_avatar())
 
         create_token(
             self.connection_manager,

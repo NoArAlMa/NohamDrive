@@ -23,10 +23,16 @@ export const useAuthStore = defineStore("auth", () => {
   });
 
   const user = ref<User | null>(userCookie.value ?? null);
+  const avatarNonce = ref<number>(0);
 
   // Computed
   const isAuthenticated = computed(() => !!token.value);
   const userId = computed(() => user.value?.id ?? null);
+  const profilePictureUrl = computed(() => {
+    if (!isAuthenticated.value) return null;
+    const nonce = avatarNonce.value || 0;
+    return `/api/users/me/profile-picture?v=${nonce}`;
+  });
 
   // Actions
   function setToken(newToken: string) {
@@ -50,6 +56,11 @@ export const useAuthStore = defineStore("auth", () => {
   function logout() {
     clearToken();
     clearUser();
+    avatarNonce.value = 0;
+  }
+
+  function bumpAvatar() {
+    avatarNonce.value = Date.now();
   }
 
   // Hydratation côté client (si reload)
@@ -62,6 +73,8 @@ export const useAuthStore = defineStore("auth", () => {
     user,
     isAuthenticated,
     userId,
+    profilePictureUrl,
+    bumpAvatar,
     setToken,
     clearToken,
     setUser,

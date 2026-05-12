@@ -63,6 +63,10 @@ class MinioService:
                 cache.pop(next(iter(cache)), None)
             cache[key] = (expires_at, payload)
 
+    def _is_hidden_object(self, object_name: str | None) -> bool:
+        # Internal reserved prefix (not part of user-visible storage explorer).
+        return bool(object_name) and object_name.startswith("__profile__/")
+
     async def simple_list_path(
         self,
         path: str = "",
@@ -95,6 +99,8 @@ class MinioService:
                         if obj.object_name == normalized_path:
                             continue
                         if not obj.object_name:
+                            continue
+                        if self._is_hidden_object(obj.object_name):
                             continue
 
                         name = obj.object_name.removeprefix(normalized_path).rstrip("/")
@@ -183,6 +189,8 @@ class MinioService:
                         if obj.object_name == normalized_path:
                             continue
                         if not obj.object_name:
+                            continue
+                        if self._is_hidden_object(obj.object_name):
                             continue
 
                         name = obj.object_name.removeprefix(normalized_path).rstrip("/")

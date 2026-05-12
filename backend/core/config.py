@@ -3,6 +3,7 @@ from pydantic_settings import BaseSettings
 from pydantic import computed_field, ValidationError
 import sys
 from termcolor import colored
+from pathlib import Path
 # Classe qui va nous permettre d'accéder à notre .env
 
 
@@ -45,7 +46,7 @@ class Settings(BaseSettings):
 
     class Config:
         # Le fichier qu'il doit lire
-        env_file = ".env"
+        env_file = str(Path(__file__).resolve().parents[1] / ".env")
         env_file_encoding = "utf-8"
 
     # Méthode pour récupérer l'adresse de la DB

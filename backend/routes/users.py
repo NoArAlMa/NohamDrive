@@ -1,6 +1,11 @@
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Request, UploadFile, status
+from fastapi.responses import Response
 
 from app.schemas.user import PasswordUpdate, User, UserUpdate
+from app.services.profile_picture_service import (
+    ProfilePictureService,
+    get_profile_picture_service,
+)
 from app.services.user_service import UserService, get_user_service
 from app.utils.response import BaseResponse
 from core.limiter import limiter
@@ -42,4 +47,38 @@ async def update_current_user_password_endpoint(
         data=None,
         message="Mot de passe mis à jour",
         status_code=status.HTTP_200_OK,
+    )
+
+
+@router.get("/me/profile-picture")
+@limiter.limit("60/minute")
+async def get_my_profile_picture_endpoint(
+    request: Request,
+    user: User = Depends(current_user),
+    pp_service: ProfilePictureService = Depends(get_profile_picture_service),
+):
+    data, content_type = await pp_service.get_picture(
+        user_id=user.id, full_name=user.full_name
+    )
+    return Response(content=data, media_type=content_type)
+
+
+@router.post(
+    "/me/profile-picture",
+    response_model=BaseResponse[dict],
+    status_code=status.HTTP_201_CREATED,
+)
+@limiter.limit("10/minute")
+async def upload_my_profile_picture_endpoint(
+    request: Request,
+    file: UploadFile,
+    user: User = Depends(current_user),
+    pp_service: ProfilePictureService = Depends(get_profile_picture_service),
+) -> BaseResponse[dict]:
+    data = await pp_service.set_picture(user_id=user.id, file=file)
+    return BaseResponse(
+        success=True,
+        data=data,
+        message="Avatar mis à jour",
+        status_code=status.HTTP_201_CREATED,
     )

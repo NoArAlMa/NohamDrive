@@ -130,7 +130,7 @@ watch(
 );
 
 const authStore = useAuthStore();
-const { user } = storeToRefs(authStore);
+const { user, profilePictureUrl } = storeToRefs(authStore);
 const toast = useToast();
 
 const resetOpen = ref(false);
@@ -140,12 +140,13 @@ function resetSettings() {
   resetOpen.value = false;
 }
 
-const avatarFallbackUrl =
-  "https://i.pinimg.com/736x/be/a3/49/bea3491915571d34a026753f4a872000.jpg";
+const profilePictureOpen = ref(false);
 
-const avatarSrc = computed(() => {
-  return avatarFallbackUrl;
-});
+const avatarSrc = computed(() => profilePictureUrl.value || undefined);
+
+function onProfilePictureUpdated() {
+  authStore.bumpAvatar();
+}
 
 const profileDraft = reactive({
   username: "",
@@ -279,7 +280,7 @@ async function savePassword() {
   }
 }
 
-const syncPathError = computed(() => {
+const syncPathError = computed<string | boolean | undefined>(() => {
   const path = settings.value.sync.localPath?.trim() ?? "";
   const pathWithoutDrive = path.replace(/^[A-Za-z]:[\\/]/, "");
 
@@ -288,10 +289,12 @@ const syncPathError = computed(() => {
     return "This path contains characters that are not supported.";
   }
 
-  return null;
+  return undefined;
 });
 
-const syncReady = computed(() => settings.value.sync.autoSync && !syncPathError.value);
+const syncReady = computed(
+  () => settings.value.sync.autoSync && !syncPathError.value,
+);
 const lastSyncLabel = computed(() => {
   if (!settings.value.sync.lastSyncAt) return "Not synced yet";
   return new Intl.DateTimeFormat(undefined, {
@@ -314,37 +317,6 @@ function markSyncNow() {
   });
 }
 
-// function pickAvatar() {
-//   avatarInput.value?.click();
-// }
-
-// async function onAvatarPicked(event: Event) {
-//   profileError.value = null;
-//   const input = event.target as HTMLInputElement | null;
-//   const file = input?.files?.[0];
-//   if (!file) return;
-
-//   if (!file.type.startsWith("image/")) {
-//     profileError.value = "Please select an image file.";
-//     return;
-//   }
-
-//   if (file.size > 3 * 1024 * 1024) {
-//     profileError.value = "Image too large (max 3MB).";
-//     return;
-//   }
-
-//   const dataUrl = await new Promise<string>((resolve, reject) => {
-//     const reader = new FileReader();
-//     reader.onerror = () => reject(new Error("Failed to read image"));
-//     reader.onload = () => resolve(String(reader.result));
-//     reader.readAsDataURL(file);
-//   });
-
-//   settings.value.account.avatarDataUrl = dataUrl;
-//   if (input) input.value = "";
-// }
-
 const themeOptions: { label: string; value: ThemePreference }[] = [
   { label: "System", value: "system" },
   { label: "Light", value: "light" },
@@ -356,21 +328,26 @@ const languageOptions: { label: string; value: "en" | "fr" }[] = [
   { label: "English", value: "en" },
 ];
 
-const startPageOptions: { label: string; value: StartPage }[] = [
-  { label: "Explorer", value: "explorer" },
-  { label: "Home", value: "home" },
-  { label: "Terminal", value: "terminal" },
-];
+const folderInput = ref<HTMLInputElement | null>(null);
 
-const syncIntervalOptions: {
-  label: string;
-  value: UserSettings["sync"]["intervalMinutes"];
-}[] = [
-  { label: "Every 5 minutes", value: 5 },
-  { label: "Every 15 minutes", value: 15 },
-  { label: "Every 30 minutes", value: 30 },
-  { label: "Every 60 minutes", value: 60 },
-];
+function openFolderPicker() {
+  folderInput.value?.click();
+}
+
+function onFolderPicked(event: Event) {
+  const input = event.target as HTMLInputElement;
+
+  if (!input.files?.length) return;
+
+  const firstFile = input.files[0];
+
+  // Récupère le chemin du dossier racine
+  const relativePath = firstFile!.webkitRelativePath;
+
+  const folderName = relativePath.split("/")[0];
+
+  settings.value.sync.localPath = folderName!;
+}
 </script>
 
 <template>
@@ -442,28 +419,16 @@ const syncIntervalOptions: {
               <UAvatar
                 :alt="profileDraft.full_name || 'User'"
                 :src="avatarSrc"
-                size="xl"
+                size="3xl"
               />
               <div class="flex flex-col gap-2">
-                <input
-                  ref="avatarInput"
-                  type="file"
-                  accept="image/*"
-                  class="hidden"
-                />
                 <UButton
                   color="neutral"
                   variant="soft"
                   icon="material-symbols:photo-camera-outline-rounded"
+                  @click="profilePictureOpen = true"
                 >
                   Change photo
-                </UButton>
-                <UButton
-                  color="neutral"
-                  variant="ghost"
-                  icon="material-symbols:delete-outline-rounded"
-                >
-                  Remove
                 </UButton>
               </div>
             </div>
@@ -471,6 +436,11 @@ const syncIntervalOptions: {
               Account details are saved on your NohamDrive profile.
             </p>
           </div>
+
+          <LazySettingsProfilePicture
+            v-model:open="profilePictureOpen"
+            @updated="onProfilePictureUpdated"
+          />
 
           <div class="lg:col-span-2 space-y-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -530,10 +500,7 @@ const syncIntervalOptions: {
       <UCard class="lg:col-span-2">
         <template #header>
           <div class="flex items-center gap-2">
-            <UIcon
-              name="material-symbols:password-rounded"
-              class="size-5"
-            />
+            <UIcon name="material-symbols:password-rounded" class="size-5" />
             <h2 class="text-lg font-semibold">Password</h2>
           </div>
         </template>
@@ -608,10 +575,7 @@ const syncIntervalOptions: {
       <UCard>
         <template #header>
           <div class="flex items-center gap-2">
-            <UIcon
-              name="material-symbols:palette-outline-rounded"
-              class="size-5"
-            />
+            <UIcon name="material-symbols:palette-outline" class="size-5" />
             <h2 class="text-lg font-semibold">Appearance</h2>
           </div>
         </template>
@@ -621,27 +585,15 @@ const syncIntervalOptions: {
             <UFormField label="Theme" description="System, light or dark">
               <USelect
                 v-model="settings.appearance.theme"
-                :options="themeOptions"
-                option-attribute="label"
-                value-attribute="value"
+                :items="themeOptions"
               />
             </UFormField>
 
             <UFormField label="Language" description="UI language">
               <USelect
                 v-model="settings.general.language"
-                :options="languageOptions"
-                option-attribute="label"
-                value-attribute="value"
+                :items="languageOptions"
               />
-            </UFormField>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <UFormField label="Color mode" description="Quick toggle">
-              <div class="flex justify-end">
-                <UColorModeSwitch />
-              </div>
             </UFormField>
           </div>
         </div>
@@ -678,10 +630,7 @@ const syncIntervalOptions: {
               <UIcon name="material-symbols:sync-rounded" class="size-5" />
               <h2 class="text-lg font-semibold">Sync</h2>
             </div>
-            <UBadge
-              :color="syncReady ? 'success' : 'neutral'"
-              variant="subtle"
-            >
+            <UBadge :color="syncReady ? 'success' : 'neutral'" variant="subtle">
               {{ syncReady ? "Ready" : "Paused" }}
             </UBadge>
           </div>
@@ -714,12 +663,33 @@ const syncIntervalOptions: {
             :error="syncPathError"
           >
             <div class="flex flex-col gap-2 sm:flex-row">
+              <input
+                ref="folderInput"
+                type="file"
+                webkitdirectory
+                directory
+                multiple
+                class="hidden"
+                @change="onFolderPicked"
+              />
+
               <UInput
                 v-model="settings.sync.localPath"
                 class="flex-1"
-                placeholder="~/NohamDrive"
+                placeholder="Choose a folder"
                 icon="material-symbols:folder-outline-rounded"
+                readonly
               />
+
+              <UButton
+                color="primary"
+                variant="soft"
+                icon="material-symbols:folder-open-rounded"
+                @click="openFolderPicker"
+              >
+                Browse
+              </UButton>
+
               <UButton
                 color="neutral"
                 variant="soft"
@@ -757,16 +727,6 @@ const syncIntervalOptions: {
                 :disabled="!settings.sync.autoSync"
               />
             </UFormField>
-
-            <UFormField label="Sync interval" description="How often to sync">
-              <USelect
-                v-model="settings.sync.intervalMinutes"
-                :disabled="!settings.sync.autoSync"
-                :options="syncIntervalOptions"
-                option-attribute="label"
-                value-attribute="value"
-              />
-            </UFormField>
           </div>
         </div>
       </UCard>
@@ -792,21 +752,6 @@ const syncIntervalOptions: {
             description="Send anonymous diagnostics"
           >
             <USwitch v-model="settings.privacy.crashReports" />
-          </UFormField>
-
-          <UFormField label="Export settings" description="Local only">
-            <UButton
-              color="neutral"
-              variant="soft"
-              icon="material-symbols:download-rounded"
-              @click="
-                navigator.clipboard?.writeText(
-                  JSON.stringify(settings, null, 2),
-                )
-              "
-            >
-              Copy JSON
-            </UButton>
           </UFormField>
         </div>
       </UCard>
