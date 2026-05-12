@@ -75,6 +75,7 @@
     "nuxt": "^4.2.1",
     "pinia": "^3.0.4",
     "vue": "^3.5.22",
+    "vue-advanced-cropper": "^2.8.9",
     "vue-files-preview": "^1.0.41",
     "vue-router": "^5.0.3",
     "zod": "^4.3.6"
