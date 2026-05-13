@@ -142,18 +142,6 @@ watch(
   { immediate: true },
 );
 
-watch(
-  () => $getLocale(),
-  (next) => {
-    if (
-      (next === "fr" || next === "en") &&
-      settings.value.general.language !== next
-    ) {
-      settings.value.general.language = next;
-    }
-  },
-  { immediate: true },
-);
 const authStore = useAuthStore();
 const { user, profilePictureUrl } = storeToRefs(authStore);
 const toast = useToast();
@@ -246,10 +234,6 @@ async function saveProfile() {
     profileSaving.value = false;
   }
 }
-
-// function removeAvatar() {
-//   settings.value.account.avatarDataUrl = null;
-// }
 
 const avatarInput = ref<HTMLInputElement | null>(null);
 
