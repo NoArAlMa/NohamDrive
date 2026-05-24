@@ -7,7 +7,7 @@ from pathlib import Path
 from PIL import Image
 import io
 import json
-
+import unicodedata
 
 WINDOWS_SUFFIX_RE = re.compile(r"^(.*?)(?: \((\d+)\))?$")
 
@@ -116,31 +116,6 @@ class MinioUtils:
         return "/".join(parts[:-1]) + "/"
 
     @staticmethod
-    def sanitize_name(name: str) -> str:
-        name = name.strip()
-
-        if not name:
-            raise HTTPException(status_code=400, detail="Nom vide")
-
-        if name in {".", ".."}:
-            raise HTTPException(status_code=400, detail="Nom invalide")
-
-        forbidden_chars = r'[\\/*?:"<>|#%&=]'
-        name = re.sub(forbidden_chars, "_", name)
-
-        name = name.strip(" ._-")
-
-        if not name:
-            raise HTTPException(status_code=400, detail="Nom invalide après nettoyage")
-
-        if len(name) > 255:
-            raise HTTPException(
-                status_code=400, detail="Nom trop long (255 caractères max)"
-            )
-
-        return name
-
-    @staticmethod
     def normalize_path(path: str, is_folder: bool = False) -> str:
         """
         Nettoie et normalise un chemin MinIO.
@@ -156,16 +131,64 @@ class MinioUtils:
         return p
 
     @staticmethod
+    def sanitize_name(name: str) -> str:
+        """
+        Nettoie un nom de fichier/dossier
+        en autorisant les accents et caractères Unicode.
+        """
+
+        if not name:
+            raise HTTPException(status_code=400, detail="Nom vide")
+
+        name = unicodedata.normalize("NFC", name)
+
+        name = name.strip()
+
+        if not name:
+            raise HTTPException(status_code=400, detail="Nom vide")
+
+        if name in {".", ".."}:
+            raise HTTPException(status_code=400, detail="Nom invalide")
+
+        # Caractères interdits Windows / S3
+        forbidden_chars = r'[\\/*?:"<>|#%]'
+
+        name = re.sub(forbidden_chars, "_", name)
+
+        # Interdit caractères de contrôle invisibles
+        name = "".join(c for c in name if unicodedata.category(c)[0] != "C")
+
+        name = name.strip(" .")
+
+        if not name:
+            raise HTTPException(status_code=400, detail="Nom invalide après nettoyage")
+
+        if len(name) > 255:
+            raise HTTPException(
+                status_code=400, detail="Nom trop long (255 caractères max)"
+            )
+
+        return name
+
+    @staticmethod
     def sanitize_filename(filename: str) -> str:
         """
-        Nettoie un nom de fichier pour enlever les caractères invalides
+        Nettoie un nom de fichier tout en gardant les accents.
         """
-        if not filename:
-            raise HTTPException(status_code=400, detail="Nom de fichier vide")
-        base, ext = filename.rsplit(".", 1) if "." in filename else (filename, "")
-        base = re.sub(r"[^a-zA-Z0-9_.-]", "_", base)
-        ext = f".{ext}" if ext else ""
-        return base + ext
+
+        filename = MinioUtils.sanitize_name(filename)
+
+        # Séparation extension
+        if "." in filename and not filename.startswith("."):
+            base, ext = filename.rsplit(".", 1)
+            ext = "." + ext
+        else:
+            base = filename
+            ext = ""
+
+        base = re.sub(r'[\\/*?:"<>|]', "_", base)
+
+        return f"{base}{ext}"
 
     @staticmethod
     async def resolve_path_type(
