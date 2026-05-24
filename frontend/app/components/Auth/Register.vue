@@ -107,6 +107,7 @@ const hasStep1Errors = ref(false);
 const fullData = reactive<any>({});
 
 const { registerUser } = useAuth();
+const { isElectron } = useElectron();
 
 function buildGeneralError(
   errors: { name?: string; message: string }[],
@@ -143,7 +144,11 @@ async function onSubmit() {
   }
 
   if (result.success) {
-    await navigateTo("/home");
+    if (isElectron.value) {
+      navigateTo("/auth/desktop-settings");
+    } else {
+      navigateTo("/home");
+    }
   }
 
   return result;

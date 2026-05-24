@@ -14,9 +14,9 @@ export default defineEventHandler(async (event) => {
         method: "POST",
         body: payload,
         headers: {
-        Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
+        },
       },
-      }
     );
 
     return data;
@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
     }
     throw createError({
       statusCode: 500,
-      statusMessage: "Serveur de stockage indisponible",
+      message: "Serveur de stockage indisponible",
     });
   }
 });

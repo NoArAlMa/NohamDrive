@@ -12,23 +12,23 @@ export default defineEventHandler(async (event) => {
         method: "POST",
         body: payload,
         headers: {
-        Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
+        },
       },
-      }
     );
     return data;
   } catch (error: any) {
     if (error?.response?.status) {
       throw createError({
         statusCode: error.response.status,
-        statusMessage:
+        message:
           error.response._data?.message ??
           "Erreur lors de la récupération des fichiers",
       });
     }
     throw createError({
       statusCode: 500,
-      statusMessage: "Serveur de stockage indisponible",
+      message: "Serveur de stockage indisponible",
     });
   }
 });

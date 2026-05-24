@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
   if (!path) {
     throw createError({
       statusCode: 400,
-      statusMessage: "Chemin manquant",
+      message: "Chemin manquant",
     });
   }
 

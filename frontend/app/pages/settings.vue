@@ -17,6 +17,10 @@ useHead({
   ],
 });
 
+const { isElectron } = useElectron();
+const { enabled, refresh, toggle, start, pause, autoStart, setAutoStart } =
+  useSyncState();
+
 type ThemePreference = "system" | "light" | "dark";
 type StartPage = "home" | "explorer" | "terminal";
 
@@ -132,7 +136,6 @@ watch(
 const authStore = useAuthStore();
 const { user, profilePictureUrl } = storeToRefs(authStore);
 const toast = useToast();
-
 const resetOpen = ref(false);
 
 function resetSettings() {
@@ -222,10 +225,6 @@ async function saveProfile() {
   }
 }
 
-// function removeAvatar() {
-//   settings.value.account.avatarDataUrl = null;
-// }
-
 const avatarInput = ref<HTMLInputElement | null>(null);
 
 const passwordDraft = reactive({
@@ -292,9 +291,6 @@ const syncPathError = computed<string | boolean | undefined>(() => {
   return undefined;
 });
 
-const syncReady = computed(
-  () => settings.value.sync.autoSync && !syncPathError.value,
-);
 const lastSyncLabel = computed(() => {
   if (!settings.value.sync.lastSyncAt) return "Not synced yet";
   return new Intl.DateTimeFormat(undefined, {
@@ -302,20 +298,6 @@ const lastSyncLabel = computed(() => {
     timeStyle: "short",
   }).format(new Date(settings.value.sync.lastSyncAt));
 });
-
-function resetSyncPath() {
-  settings.value.sync.localPath = DEFAULT_SETTINGS.sync.localPath;
-}
-
-function markSyncNow() {
-  if (!syncReady.value) return;
-  settings.value.sync.lastSyncAt = new Date().toISOString();
-  toast.add({
-    title: "Sync queued",
-    color: "primary",
-    icon: "material-symbols:sync-rounded",
-  });
-}
 
 const themeOptions: { label: string; value: ThemePreference }[] = [
   { label: "System", value: "system" },
@@ -328,25 +310,53 @@ const languageOptions: { label: string; value: "en" | "fr" }[] = [
   { label: "English", value: "en" },
 ];
 
-const folderInput = ref<HTMLInputElement | null>(null);
+const path = ref("");
 
-function openFolderPicker() {
-  folderInput.value?.click();
+async function loadDrivePath() {
+  const res = await $fetch("/api/settings?value=drive_path");
+  path.value = res.value;
 }
 
-function onFolderPicked(event: Event) {
-  const input = event.target as HTMLInputElement;
+async function markSyncNow() {
+  try {
+    await start();
+    toast.add({
+      title: "Syncing started",
+      color: "success",
+      icon: "material-symbols:sync-rounded",
+    });
+  } catch (error) {
+    toast.add({ title: "Failed to trigger sync", color: "error" });
+  }
+}
 
-  if (!input.files?.length) return;
+onMounted(async () => {
+  if (isElectron.value) {
+    await loadDrivePath();
+    refresh();
+  }
+});
 
-  const firstFile = input.files[0];
+const loading = ref(false);
 
-  // Récupère le chemin du dossier racine
-  const relativePath = firstFile!.webkitRelativePath;
+async function openFolderPicker() {
+  loading.value = true;
 
-  const folderName = relativePath.split("/")[0];
+  try {
+    const selected = await (window as any).electronAPI.selectFolder();
+    if (!selected) return;
 
-  settings.value.sync.localPath = folderName!;
+    path.value = selected;
+
+    await $fetch("/api/syncer/settings", {
+      method: "PATCH",
+      body: {
+        drive_path: path.value,
+      },
+    });
+  } finally {
+    loading.value = false;
+  }
 }
 </script>
 
@@ -623,15 +633,15 @@ function onFolderPicked(event: Event) {
         </div>
       </UCard>
 
-      <UCard>
+      <UCard v-if="isElectron">
         <template #header>
           <div class="flex items-center justify-between gap-3">
             <div class="flex items-center gap-2">
               <UIcon name="material-symbols:sync-rounded" class="size-5" />
               <h2 class="text-lg font-semibold">Sync</h2>
             </div>
-            <UBadge :color="syncReady ? 'success' : 'neutral'" variant="subtle">
-              {{ syncReady ? "Ready" : "Paused" }}
+            <UBadge :color="enabled ? 'success' : 'neutral'" variant="subtle">
+              {{ enabled ? "Ready" : "Paused" }}
             </UBadge>
           </div>
         </template>
@@ -649,7 +659,6 @@ function onFolderPicked(event: Event) {
                 color="primary"
                 variant="soft"
                 icon="material-symbols:sync-rounded"
-                :disabled="!syncReady"
                 @click="markSyncNow"
               >
                 Sync now
@@ -663,41 +672,33 @@ function onFolderPicked(event: Event) {
             :error="syncPathError"
           >
             <div class="flex flex-col gap-2 sm:flex-row">
-              <input
-                ref="folderInput"
-                type="file"
-                webkitdirectory
-                directory
-                multiple
-                class="hidden"
-                @change="onFolderPicked"
-              />
+              <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                  <UInput
+                    :model-value="path"
+                    class="flex-1"
+                    placeholder="No folder selected"
+                    icon="material-symbols:folder-outline-rounded"
+                    readonly
+                  />
 
-              <UInput
-                v-model="settings.sync.localPath"
-                class="flex-1"
-                placeholder="Choose a folder"
-                icon="material-symbols:folder-outline-rounded"
-                readonly
-              />
+                  <UButton
+                    color="primary"
+                    variant="soft"
+                    icon="material-symbols:folder-open-rounded"
+                    :loading="loading"
+                    @click="openFolderPicker"
+                  >
+                    {{ path ? "Change" : "Browse" }}
+                  </UButton>
+                </div>
 
-              <UButton
-                color="primary"
-                variant="soft"
-                icon="material-symbols:folder-open-rounded"
-                @click="openFolderPicker"
-              >
-                Browse
-              </UButton>
-
-              <UButton
-                color="neutral"
-                variant="soft"
-                icon="material-symbols:restart-alt-rounded"
-                @click="resetSyncPath"
-              >
-                Default
-              </UButton>
+                <!-- PATH PREVIEW -->
+                <div v-if="path" class="text-xs text-gray-500 break-all">
+                  Selected:
+                  <span class="font-medium text-gray-700">{{ path }}</span>
+                </div>
+              </div>
             </div>
           </UFormField>
 
@@ -706,7 +707,10 @@ function onFolderPicked(event: Event) {
               label="Auto-sync"
               description="Keep files up to date automatically"
             >
-              <USwitch v-model="settings.sync.autoSync" />
+              <USwitch
+                :model-value="autoStart"
+                @update:model-value="setAutoStart"
+              />
             </UFormField>
             <UFormField
               label="Start app on startup"
@@ -714,16 +718,6 @@ function onFolderPicked(event: Event) {
             >
               <USwitch
                 v-model="settings.sync.startOnStartup"
-                :disabled="!settings.sync.autoSync"
-              />
-            </UFormField>
-
-            <UFormField
-              label="Metered connection"
-              description="Allow sync on metered networks"
-            >
-              <USwitch
-                v-model="settings.sync.syncOnMetered"
                 :disabled="!settings.sync.autoSync"
               />
             </UFormField>

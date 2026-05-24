@@ -7,27 +7,38 @@ export const useFileTree = defineStore("fileTree", () => {
   const AuthStore = useAuthStore();
 
   const emptyFileTree: ApiFileItem[] = [];
-  const cache = new Map<string, GenericAPIResponse<ApiFileTreeData>>();
+  const CACHE_TTL_MS = 15_000;
+  const cache = new Map<
+    string,
+    { fetchedAt: number; response: GenericAPIResponse<ApiFileTreeData> }
+  >();
   const data = ref<GenericAPIResponse<ApiFileTreeData> | null>(null);
   const loading = ref(false);
   const error = ref<Error | null>(null);
   let activeFetchId = 0;
   let abortController: AbortController | null = null;
+  let inFlightPath: string | null = null;
+  let inFlightPromise: Promise<void> | null = null;
 
   const fetchFileTree = async (
-    options: { force?: boolean } = {},
+    options: { force?: boolean; revalidate?: boolean } = {},
   ): Promise<void> => {
     const path = FSStore.currentPath;
-    const cachedData = cache.get(path);
+    const cachedEntry = cache.get(path);
 
-    if (!options.force && cachedData) {
-      abortController?.abort();
-      abortController = null;
-      activeFetchId++;
-      loading.value = false;
-      data.value = cachedData;
+    if (!options.force && cachedEntry) {
+      data.value = cachedEntry.response;
       error.value = null;
-      return;
+
+      const isFresh = Date.now() - cachedEntry.fetchedAt < CACHE_TTL_MS;
+      if (isFresh && !options.revalidate) {
+        loading.value = false;
+        return;
+      }
+    }
+
+    if (!options.force && loading.value && inFlightPath === path && inFlightPromise) {
+      return inFlightPromise;
     }
 
     abortController?.abort();
@@ -38,17 +49,22 @@ export const useFileTree = defineStore("fileTree", () => {
     try {
       loading.value = true;
       error.value = null;
-      const response = await requestFetch<GenericAPIResponse<ApiFileTreeData>>(
-        "/api/storage/tree",
-        {
-          query: { path },
-          signal: abortController.signal,
-        },
-      );
-      if (fetchId !== activeFetchId) return;
+      inFlightPath = path;
+      inFlightPromise = (async () => {
+        const response = await requestFetch<GenericAPIResponse<ApiFileTreeData>>(
+          "/api/storage/tree",
+          {
+            query: { path },
+            signal: abortController?.signal,
+          },
+        );
+        if (fetchId !== activeFetchId) return;
 
-      cache.set(path, response);
-      data.value = response;
+        cache.set(path, { fetchedAt: Date.now(), response });
+        data.value = response;
+      })();
+
+      await inFlightPromise;
     } catch (err) {
       if ((err as Error).name === "AbortError" || fetchId !== activeFetchId) {
         return;
@@ -58,6 +74,8 @@ export const useFileTree = defineStore("fileTree", () => {
       if (fetchId === activeFetchId) {
         loading.value = false;
         abortController = null;
+        inFlightPath = null;
+        inFlightPromise = null;
       }
     }
   };
@@ -70,6 +88,8 @@ export const useFileTree = defineStore("fileTree", () => {
     data.value = null;
     error.value = null;
     loading.value = false;
+    inFlightPath = null;
+    inFlightPromise = null;
   };
 
   watch(

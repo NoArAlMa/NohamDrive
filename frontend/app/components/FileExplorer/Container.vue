@@ -14,6 +14,12 @@ const explorerRef = ref();
 const isDragging = ref(false);
 const dragCounter = ref(0);
 
+const fileTreeStore = useFileTree();
+const syncerActivity = useSyncerActivityStore();
+const websocket = useSyncerWebSocket();
+const syncState = useSyncState();
+const { isElectron } = useElectron();
+
 const { upload } = useFsActions();
 const { runBatch } = useBatchAction();
 const { isMobile } = useResponsive();
@@ -22,6 +28,15 @@ const { isRoot } = storeToRefs(useFSStore());
 const isList = computed(
   () => viewMode.value === "list" || viewMode.value === "compact",
 );
+
+onMounted(async () => {
+  if (!isElectron.value) return;
+
+  websocket.connect();
+
+  await syncState.refresh();
+  syncerActivity.hydrateFromStatus(syncState.status.value);
+});
 
 // Fonction pour gérer l'entrée dans la zone de drop
 function onDragEnter(e: DragEvent) {
@@ -75,6 +90,9 @@ async function onDrop(e: DragEvent) {
 }
 
 const showMobileToolbar = computed(() => FileCount.value > 0);
+const showHeaderToolbar = computed(
+  () => showMobileToolbar.value || !isMobile.value || !isRoot.value,
+);
 
 function clearSelectionedFiles(explorerRef: any) {
   selection.clear();
@@ -89,27 +107,41 @@ function clearSelectionedFiles(explorerRef: any) {
     <div
       class="shrink-0 pl-1 pr-1 flex items-center justify-between h-12 tablet:mb-1"
       :class="isMobile ? 'mx-1 my-1' : ''"
-      v-if="showMobileToolbar || !isMobile || !isRoot"
+      v-if="showHeaderToolbar"
     >
-      <div class="rounded-md px-2 border border-muted py-1.5 shadow-sm">
-        <div v-if="FileCount > 0" class="flex gap-1 items-center">
-          <FileExplorerHeaderToolbar :items="selectedItems" />
-          <USeparator
-            :decorative="true"
-            orientation="vertical"
-            class="h-6 mx-2"
-          />
-          <LazyUTooltip text="Unselect all" :delay-duration="200">
-            <UButton
-              variant="subtle"
-              :size="isMobile ? 'md' : 'sm'"
-              color="error"
-              leading-icon="material-symbols:close"
-              @click="clearSelectionedFiles(explorerRef)"
+      <!-- Nouveau bloc flex pour aligner la toolbar/breadcrumb ET le bouton refresh ensemble à gauche -->
+      <div class="flex items-center gap-2">
+        <!-- Ce bloc garde la bordure, l'ombre, etc. -->
+        <div class="rounded-md px-2 border border-muted py-1.5 shadow-sm">
+          <div v-if="FileCount > 0" class="flex gap-1 items-center">
+            <FileExplorerHeaderToolbar :items="selectedItems" />
+            <USeparator
+              :decorative="true"
+              orientation="vertical"
+              class="h-6 mx-2"
             />
-          </LazyUTooltip>
+            <LazyUTooltip text="Unselect all" :delay-duration="200">
+              <UButton
+                variant="subtle"
+                :size="isMobile ? 'md' : 'sm'"
+                color="error"
+                leading-icon="material-symbols:close"
+                @click="clearSelectionedFiles(explorerRef)"
+              />
+            </LazyUTooltip>
+          </div>
+          <LazyFileExplorerHeaderBreadcrumb v-else />
         </div>
-        <LazyFileExplorerHeaderBreadcrumb v-else />
+
+        <LazyUTooltip text="Refresh" :delay-duration="200">
+          <UButton
+            variant="subtle"
+            size="md"
+            leading-icon="material-symbols:refresh"
+            :loading="fileTreeStore.loading"
+            @click="fileTreeStore.retryFetching()"
+          />
+        </LazyUTooltip>
       </div>
 
       <div class="flex flex-row gap-2 shrink-0" v-if="!isMobile">

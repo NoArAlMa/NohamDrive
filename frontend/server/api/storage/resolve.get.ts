@@ -16,15 +16,15 @@ export default defineEventHandler(async (event) => {
           path: object_path,
         },
         headers: {
-        Authorization: `Bearer ${token}`,
-      },
+          Authorization: `Bearer ${token}`,
+        },
       },
     );
     return data;
   } catch (error: any) {
     throw createError({
       statusCode: error.statusCode ?? 500,
-      statusMessage:
+      message:
         error.data?.message ??
         error.statusMessage ??
         "Erreur lors de la récupération des stats",

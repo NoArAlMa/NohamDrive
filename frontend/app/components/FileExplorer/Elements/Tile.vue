@@ -6,6 +6,8 @@ const { register, unregister } = useFileRenameRegistry();
 const FSStore = useFSStore();
 const selection = useFileExplorerSelection();
 const { runBatch } = useBatchAction();
+const syncerActivity = useSyncerActivityStore();
+const { isElectron } = useElectron();
 
 const props = defineProps<{
   item: ApiFileItem;
@@ -18,6 +20,11 @@ const emit = defineEmits<{
 
 const action = useFsActions();
 const key = computed(() => joinPath(FSStore.currentPath, props.item.name));
+
+const syncStatus = computed(() => {
+  if (!isElectron.value || !syncerActivity.connected.value) return "synced";
+  return syncerActivity.getStatus(key.value, props.item.is_dir);
+});
 
 watch(
   key,
@@ -223,6 +230,30 @@ async function onDrop(e: DragEvent) {
         @dragleave="onDragLeave"
         ref="tileRef"
       >
+        <div
+          v-if="isElectron && syncerActivity.connected"
+          class="absolute top-1 right-1"
+        >
+          <UIcon
+            :name="
+              syncStatus === 'syncing'
+                ? 'material-symbols:sync-rounded'
+                : 'material-symbols:cloud-done-outline-rounded'
+            "
+            class="size-4"
+            :class="
+              syncStatus === 'syncing'
+                ? 'animate-spin text-primary'
+                : 'text-muted'
+            "
+            :title="
+              syncStatus === 'syncing'
+                ? 'Synchronisation en cours'
+                : 'Synchronisé'
+            "
+          />
+        </div>
+
         <div
           class="absolute top-1 left-1 transition-opacity"
           :class="{

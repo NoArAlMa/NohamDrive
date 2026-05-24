@@ -10,6 +10,14 @@ declare global {
         platform: string;
         arch: string;
       }>;
+      getRuntime: () => Promise<{
+        host: string;
+        port: string;
+        token: string;
+        started_at: string;
+      }>;
+      selectFolder: () => Promise<string | null>;
+      onSyncStateUpdated: (status) => Promise<>;
     };
   }
 }

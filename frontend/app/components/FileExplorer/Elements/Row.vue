@@ -9,6 +9,8 @@ const props = defineProps<{ row: TableRow<ApiFileItem> }>();
 
 const { isMobile } = useResponsive();
 const { runBatch } = useBatchAction();
+const syncerActivity = useSyncerActivityStore();
+const { isElectron } = useElectron();
 
 // On utilise un composable maison pour enregistrer/désenregistrer les fonctions de renommage.
 // Cela permet de déclencher l'édition depuis n'importe où (ex: menu contextuel).
@@ -28,6 +30,11 @@ const key = computed(() =>
   joinPath(FSStore.currentPath, props.row.original.name),
 );
 const error = ref<string | null>(null);
+
+const syncStatus = computed(() => {
+  if (!isElectron.value || !syncerActivity.connected.value) return "synced";
+  return syncerActivity.getStatus(key.value, props.row.original.is_dir);
+});
 
 // Quand la clé change (ex: on change de dossier), on met à jour l'enregistrement.
 // Cela permet de savoir quelle fonction appeler pour éditer ce fichier/dossier.
@@ -239,6 +246,25 @@ async function onDrop(e: DragEvent) {
       :name="getFileIcon(row.original.name)"
       class="text-lg mr-2 shrink-0"
       :alt="`Icon for ${row.original.name}`"
+    />
+
+    <LazyUIcon
+      v-if="isElectron && syncerActivity.connected"
+      draggable="false"
+      :name="
+        syncStatus === 'syncing'
+          ? 'material-symbols:sync-rounded'
+          : 'material-symbols:cloud-done-outline-rounded'
+      "
+      class="text-base mr-2 shrink-0"
+      :class="
+        syncStatus === 'syncing' ? 'animate-spin text-primary' : 'text-muted'
+      "
+      :title="
+        syncStatus === 'syncing'
+          ? 'Synchronisation en cours'
+          : 'Synchronisé'
+      "
     />
 
     <!-- Nom du fichier -->

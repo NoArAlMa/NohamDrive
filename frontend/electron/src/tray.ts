@@ -73,4 +73,6 @@ export function createTray(win: BrowserWindow) {
 
   tray.setToolTip("NohamDrive");
   tray.setContextMenu(contextMenu);
+
+  return tray;
 }

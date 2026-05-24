@@ -13,6 +13,10 @@ const preloadPath = isDev
 
 const url = isDev ? "http://localhost:3000" : "https://nsi.alexandre-larue.fr";
 
+let syncState = {
+  status: "running",
+};
+
 export function createWindow() {
   const win = new BrowserWindow({
     width: 1200,
@@ -48,9 +52,14 @@ export function createWindow() {
 
   win.loadURL(url + "/home");
 
+  win.webContents.openDevTools({ mode: "detach" });
+
   win.webContents.once("did-finish-load", () => {
     win.show();
   });
+
+  win.webContents.send("sync-state-updated", syncState);
+
   return win;
 }
 
@@ -111,6 +120,9 @@ export function createTrayWindow() {
   trayWindow.on("show", () => {
     trayWindow?.focus();
   });
+
+  trayWindow.webContents.openDevTools({ mode: "detach" });
+  trayWindow.webContents.send("sync-state-updated", syncState);
 
   return trayWindow;
 }

@@ -49,7 +49,7 @@ export default defineEventHandler(async (event) => {
   } catch (error: any) {
     throw createError({
       statusCode: 500,
-      statusMessage: "Erreur proxy upload : " + error.message,
+      message: "Erreur proxy upload : " + error.message,
     });
   }
 });

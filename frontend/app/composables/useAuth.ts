@@ -3,6 +3,8 @@ import type { AuthResponse } from "~~/shared/types/auth";
 export const useAuth = () => {
   const { setToken, clearToken, setUser, clearUser, logout } = useAuthStore();
 
+  const { isElectron } = useElectron();
+
   const toast = useToast();
 
   const handleBackendError = (backend: any): AuthResponse => {
@@ -49,7 +51,11 @@ export const useAuth = () => {
         icon: "material-symbols:check-rounded",
       });
 
-      navigateTo("/home");
+      if (isElectron.value) {
+        navigateTo("/auth/desktop-settings");
+      } else {
+        navigateTo("/home");
+      }
 
       return { success: true, data: response.data!, message: response.message };
     } catch (error: any) {
@@ -83,7 +89,7 @@ export const useAuth = () => {
         icon: "material-symbols:check-rounded",
       });
 
-      navigateTo("/home");
+      
 
       return { success: true, data: response.data!, message: response.message };
     } catch (error: any) {
@@ -93,13 +99,6 @@ export const useAuth = () => {
 
   async function logoutUser() {
     try {
-      // const response = await $fetch<GenericAPIResponse<AuthUserResponse>>(
-      //   "api/auth/register",
-      //   {
-      //     method: "POST",
-      //   },
-      // );
-
       logout();
 
       toast.add({
@@ -108,7 +107,11 @@ export const useAuth = () => {
         icon: "material-symbols:check-rounded",
       });
 
-      navigateTo("/");
+      if (isElectron.value) {
+        navigateTo("/auth");
+      } else {
+        navigateTo("/home");
+      }
     } catch (error: any) {
       return handleBackendError(error?.data);
     }

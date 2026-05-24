@@ -3,15 +3,26 @@ import type { BrowserWindow as BrowserWindowType } from "electron";
 import { setupAutoUpdater } from "./src/main/update.js";
 import { createWindow } from "./src/main/window.js";
 import { createTray } from "./src/tray.js";
+import { loadRuntime } from "./src/syncer/connection.js";
 import os from "node:os";
+
 import { EventEmitter } from "events";
 
-const { BrowserWindow, app, ipcMain } = electron;
+const { BrowserWindow, app, ipcMain, dialog } = electron;
 const loadingEvents = new EventEmitter();
 
 let splashWindow: BrowserWindowType | null = null;
 let mainWindow: BrowserWindowType | null = null;
 let isQuiting = false;
+
+interface RuntimeFile {
+  token: string;
+  started_at: Date;
+  port: string;
+  host: string;
+}
+
+let runtime: RuntimeFile | null = null;
 
 function createMain() {
   // Create the browser window.
@@ -32,6 +43,10 @@ app.whenReady().then(async () => {
   createTray(mainWindow!);
   setupAutoUpdater(mainWindow!);
 
+  // RUNTIME API
+
+  runtime = loadRuntime();
+
   mainWindow?.on("close", (event: any) => {
     if (!isQuiting) {
       event.preventDefault();
@@ -40,12 +55,28 @@ app.whenReady().then(async () => {
   });
 });
 
+ipcMain.handle("select-folder", async () => {
+  const result = await dialog.showOpenDialog({
+    properties: ["openDirectory"],
+  });
+
+  if (result.canceled) return null;
+
+  return result.filePaths[0];
+});
+
 ipcMain.handle("get-app-info", async () => ({
   isElectron: true,
   appVersion: app.getVersion(),
   platform: os.platform(),
   arch: os.arch(),
 }));
+
+
+
+ipcMain.handle("get-runtime", () => {
+  return runtime;
+});
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();

@@ -144,7 +144,7 @@
   }
 
   body {
-    @apply transition-colors duration-100 scroll-smooth;
+    @apply transition-colors duration-1000 scroll-smooth;
   }
 
   h1,
