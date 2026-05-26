@@ -21,7 +21,6 @@ const items = computed<NavigationMenuItem[][]>(() => [
         linkLeadingIcon: "text-secondary",
       },
       to: "#echo",
-      class: "font-semibold text-secondary",
     },
     {
       label: "Review",
@@ -46,13 +45,23 @@ const currentLocale = computed({
         }"
       >
         <template #header>
-          <UDashboardNavbar toggle>
+          <UDashboardNavbar
+            toggle
+            :ui="{
+              root: 'h-(--ui-header-height) shrink-0 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center border-b border-default px-4 sm:px-6 gap-1.5',
+              left: 'flex items-center gap-1.5 min-w-0 justify-self-start',
+              center: 'hidden lg:flex justify-self-center',
+              right: 'flex items-center shrink-0 gap-1.5 justify-self-end',
+            }"
+          >
             <template #title>
               <h1 class="text-primary font-bold text-2xl">NohamDrive</h1>
             </template>
 
             <UNavigationMenu
               :items="items"
+              color="neutral"
+              variant="link"
               :ui="{
                 link: ['bg-transparent'],
               }"
