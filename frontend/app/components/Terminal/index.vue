@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useI18n();
+
 const fsStore = useFSStore();
 const { currentPath } = storeToRefs(fsStore);
 const { blocks, currentInput, submit, applySuggestion, ghostText } =
@@ -137,6 +139,7 @@ watch(
           class="relative w-full bg-transparent outline-none"
           autocomplete="off"
           spellcheck="false"
+          :aria-label="String(t('terminal.inputAria'))"
           @keydown.up.prevent="navigateUp"
           @keydown.down.prevent="navigateDown"
           @keydown.tab.prevent="applySuggestion"

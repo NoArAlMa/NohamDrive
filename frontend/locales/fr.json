@@ -1,0 +1,340 @@
+{
+  "common": {
+    "appName": "NohamDrive",
+    "learnMore": "En savoir plus",
+    "getStarted": "Commencer",
+    "cancel": "Annuler",
+    "default": "Par défaut",
+    "browse": "Parcourir",
+    "search": "Rechercher",
+    "loading": "Chargement…"
+  },
+  "seo": {
+    "welcomeTitle": "Bienvenue - NohamDrive",
+    "welcomeDescription": "Découvrez l’alternative open-source à OneDrive",
+    "authTitle": "Connexion & inscription - NohamDrive",
+    "authDescription": "Connectez-vous à votre prochaine application préférée",
+    "explorerTitle": "Explorateur de fichiers - NohamDrive",
+    "explorerDescription": "Parcourez vos fichiers stockés dans le cloud avec l’explorateur",
+    "terminalTitle": "Echo - NohamDrive",
+    "terminalDescription": "Découvrez une nouvelle façon de naviguer dans vos fichiers via une interface de type terminal"
+  },
+  "language": {
+    "label": "Langue",
+    "fr": "Français",
+    "en": "English"
+  },
+  "auth": {
+    "login": "Connexion",
+    "register": "Inscription",
+    "logIn": "Se connecter",
+    "logOut": "Se déconnecter",
+    "fullName": "Nom complet",
+    "username": "Nom d'utilisateur",
+    "email": "Email",
+    "password": "Mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "rememberMe": "Se souvenir de moi",
+    "forgotPassword": "Mot de passe oublié ?",
+    "noAccount": "Pas encore de compte ?",
+    "haveAccount": "Vous avez déjà un compte ?",
+    "signUp": "S’inscrire",
+    "next": "Suivant",
+    "back": "Retour",
+    "createAccount": "Créer un compte",
+    "placeholders": {
+      "enterEmail": "Entrez votre email",
+      "enterPassword": "Entrez votre mot de passe",
+      "enterName": "Entrez votre nom",
+      "enterUsername": "Entrez un nom d'utilisateur",
+      "choosePassword": "Choisissez un mot de passe",
+      "confirmPassword": "Confirmez votre mot de passe"
+    },
+    "validation": {
+      "invalidEmail": "Email invalide",
+      "passwordRequired": "Le mot de passe est requis",
+      "min8": "8 caractères minimum",
+      "fullNameRequired": "Le nom complet est requis",
+      "min3": "3 caractères minimum",
+      "usernameRequired": "Le nom d'utilisateur est requis",
+      "confirmPasswordRequired": "Veuillez confirmer votre mot de passe",
+      "passwordsDontMatch": "Les mots de passe ne correspondent pas"
+    }
+  },
+  "welcome": {
+    "nav": {
+      "features": "Fonctionnalités",
+      "echo": "Echo",
+      "review": "Avis"
+    },
+    "heroTitle": "Stockez, partagez et collaborez librement",
+    "heroDesc": "NohamDrive est une alternative open-source à OneDrive, conçue pour les équipes. Explorez, partagez et gérez vos fichiers depuis un terminal intégré et une interface intuitive, en toute sécurité.",
+    "featuresHeadingMobile": "Tout ce dont vous avez besoin pour gérer vos fichiers en équipe",
+    "echoHeading": "Découvrez Echo",
+    "echoLead": "Une façon révolutionnaire de naviguer entre vos dossiers et fichiers,",
+    "echoLeadStrong": "intuitive, rapide et puissante.",
+    "trustHeading": "Ils nous font confiance",
+    "cards": {
+      "advancedExplorer": {
+        "title": "Explorateur de fichiers avancé",
+        "description": "Naviguez dans vos fichiers comme sur votre ordinateur, avec un terminal intégré pour une gestion rapide et précise."
+      },
+      "secureSharing": {
+        "title": "Partage sécurisé et collaboratif",
+        "description": "Partagez des fichiers ou dossiers en un clic, avec des permissions personnalisables et un historique des modifications."
+      },
+      "openSource": {
+        "title": "100% Open-Source",
+        "description": "Un code transparent, modifiable et auditable par tous. Rejoignez notre communauté pour contribuer ou adapter NohamDrive à vos besoins."
+      }
+    },
+    "sections": {
+      "terminalEcho": {
+        "title": "Terminal Echo",
+        "description": "Gérez vos fichiers en ligne de commande directement dans le cloud, comme sur un système Linux."
+      },
+      "realtimeCollab": {
+        "title": "Collaboration en temps réel",
+        "description": "Partagez, commentez et éditez des fichiers à plusieurs, avec des notifications instantanées et un historique des changements."
+      },
+      "security": {
+        "title": "Sécurité et confidentialité",
+        "description": "Vos données sont chiffrées et protégées. Contrôlez les accès et les permissions pour chaque membre de votre équipe."
+      }
+    },
+    "testimonials": {
+      "t1": "Eh ben voyons ! NohamDrive a révolutionné notre gestion des arabes à renvoyer dans leurs pays. Le terminal intégré est un game-changer : enfin une alternative open-source à OneDrive qui répond à nos besoins techniques !",
+      "t2": "J’ai été rejeté des Beaux-arts étant plus jeune. L’intégration avec Minio et le terminal Linux-like m’ont convaincu : c’est l’outil qu’il me manquait pour mes projets.",
+      "t3": "C'EST LE TRAIN DE LA HYYYYYPE !! Johan adore cette application ! Cela nous permet de nous organiser pour faire les vidéos dégustation",
+      "t4": "Depuis que j'utilise NohamDrive, je suis le danger. Grâce à NohamDrive, Skyler gère mieux le blanchiment d'argent et surtout elle ouvre moins sa gueule",
+      "t5": "Miaou",
+      "t6": "L’intégration avec notre infrastructure existante (PostgreSQL + Docker) a été un jeu d’enfant. Les performances sont au rendez-vous, même avec des fichiers volumineux.",
+      "t7": "Ahah ne trouvez vous pas ça magnifique, mon cher ! Cette application est vraiment très belle et je l'aime bien. Un gain de temps énorme !",
+      "t8": "SIUUU… mes backups sont sécurisés.",
+      "t9": "Enfin un outil qui allie simplicité et puissance ! Mes équipes adorent explorer les enfants... euh les fichiers, et moi, je dors sur mes deux oreilles grâce au chiffrement intégré ; ).",
+      "t10": "Franchement j'ai bien aimé, c'est pas trop difficile à installer ! C'est mon mac qui m'a le plus ralenti. Je sais pas vraiment comment ça fonctionne mais j'imagine que c'est bien",
+      "t11": "J'adore NohamDrive ! Et j'adore la France, Macron est un nice guy. Make NohamDrive great again !!",
+      "t12": "Windows c'est de la merde, tout le monde le sait ! C'est pour ça que j'ai décidé d'utiliser la meilleure alternative à Onedrive (cette merde) : NohamDrive ! J'apprécie cette app presque autant que Linux"
+    },
+    "footerBuiltWith": "Conçu avec",
+    "footerTagline": "Le stockage de fichiers, niveau supérieur"
+  },
+  "home": {
+    "wipTitle": "Page en cours de réalisation…",
+    "wipDesc": "Donc tu quittes cette page illico presto"
+  },
+  "download": {
+    "headTitle": "Télécharger l’app - NohamDrive",
+    "ctaTitle": "Télécharge notre application !",
+    "ctaDesc": "On a fait une app, alors pourquoi ne pas la télécharger ?",
+    "windows": "Télécharger l’app pour Windows",
+    "mac": "Télécharger l’app pour Mac"
+  },
+  "nav": {
+    "home": "Accueil",
+    "myFiles": "Mes fichiers",
+    "contacts": "Contacts",
+    "teams": "Équipes",
+    "echo": "Echo",
+    "settings": "Paramètres",
+    "inbox": "Boîte de réception",
+    "myAccount": "Mon compte",
+    "downloadDesktopApp": "Télécharger l’application desktop",
+    "downloadApp": "Télécharger l’app",
+    "reportBug": "Signaler un bug"
+  },
+  "fileExplorer": {
+    "download": "Télécharger",
+    "duplicate": "Dupliquer",
+    "rename": "Renommer",
+    "delete": "Supprimer",
+    "properties": "Propriétés",
+    "createFolder": "Créer un dossier",
+    "importFile": "Importer un fichier",
+    "openWithEcho": "Ouvrir avec Echo",
+    "preview": "Visualiser",
+    "move": "Déplacer",
+    "share": "Partager",
+    "compress": "Compresser",
+    "display": {
+      "tiles": "Tuiles",
+      "list": "Liste",
+      "compact": "Compact"
+    },
+    "myFiles": "Mes fichiers",
+    "uploading": "Upload en cours…",
+    "uploadSuccess": "Upload terminé",
+    "uploadError": "Une erreur est survenue pendant l’upload.",
+    "add": "Ajouter",
+    "more": "Plus",
+    "downloading": "Téléchargement en cours…",
+    "downloadSuccess": "Téléchargement terminé !",
+    "downloadError": "Le téléchargement a échoué",
+    "deleting": "Suppression en cours…",
+    "deleteSuccess": "Éléments supprimés !",
+    "deleteError": "Erreur lors de la suppression",
+    "moveItemsTitle": "Déplacer des éléments",
+    "moveItemsDesc": "Choisissez un dossier de destination",
+    "moving": "Déplacement en cours…",
+    "moveSuccess": "Déplacement terminé !",
+    "moveError": "Le déplacement a échoué",
+    "andMore": "+ {count} autres…"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "headTitle": "Paramètres - NohamDrive",
+    "description": "Personnalisez votre expérience NohamDrive",
+    "profileSaved": "Profil enregistré",
+    "actions": {
+      "reset": "Réinitialiser",
+      "security": "Sécurité"
+    },
+    "sections": {
+      "userSettings": "Paramètres utilisateur",
+      "password": "Mot de passe",
+      "appearance": "Apparence",
+      "notifications": "Notifications",
+      "sync": "Synchronisation",
+      "privacy": "Confidentialité"
+    },
+    "profile": {
+      "changePhoto": "Changer la photo",
+      "detailsHint": "Les informations du compte sont enregistrées sur votre profil NohamDrive.",
+      "username": "Nom d'utilisateur",
+      "email": "Email",
+      "fullName": "Nom complet",
+      "placeholderUsername": "nom_utilisateur",
+      "placeholderEmail": "vous@domaine.com",
+      "placeholderFullName": "Nom complet",
+      "notSaved": "Profil non enregistré",
+      "savedTitle": "Enregistré",
+      "savedDesc": "Profil mis à jour localement.",
+      "save": "Enregistrer le profil"
+    },
+    "passwordSection": {
+      "hint": "Confirmez votre mot de passe actuel avant d’en choisir un nouveau.",
+      "current": "Mot de passe actuel",
+      "new": "Nouveau mot de passe",
+      "confirm": "Confirmer le mot de passe",
+      "notUpdated": "Mot de passe non mis à jour",
+      "savedDesc": "Mot de passe mis à jour.",
+      "update": "Mettre à jour",
+      "placeholderCurrent": "Mot de passe actuel",
+      "placeholderNew": "Nouveau mot de passe",
+      "placeholderConfirm": "Confirmer le mot de passe",
+      "updatedTitle": "Mot de passe mis à jour"
+    },
+    "appearance": {
+      "theme": "Thème",
+      "themeDesc": "Système, clair ou sombre",
+      "language": "Langue",
+      "languageDesc": "Langue de l’interface"
+    },
+    "theme": {
+      "system": "Système",
+      "light": "Clair",
+      "dark": "Sombre"
+    },
+    "notifications": {
+      "desktop": "Bureau",
+      "desktopDesc": "Toasts et bannières",
+      "sounds": "Sons",
+      "soundsDesc": "Alertes discrètes",
+      "syncAlerts": "Alertes sync",
+      "syncAlertsDesc": "Statut upload/téléchargement"
+    },
+    "sync": {
+      "ready": "Prêt",
+      "paused": "En pause",
+      "noFolderSelected": "Aucun dossier local sélectionné",
+      "lastSync": "Dernière sync : {label}",
+      "syncNow": "Synchroniser",
+      "storagePath": "Chemin de stockage",
+      "storagePathDesc": "Dossier local utilisé par le moteur de synchronisation",
+      "chooseFolder": "Choisir un dossier",
+      "autoSync": "Auto-sync",
+      "autoSyncDesc": "Garder les fichiers à jour automatiquement",
+      "startup": "Démarrer avec la session",
+      "startupDesc": "Ouvrir NohamDrive au démarrage",
+      "metered": "Connexion limitée",
+      "meteredDesc": "Autoriser la sync sur les réseaux limités",
+      "notSyncedYet": "Pas encore synchronisé",
+      "queued": "Synchronisation planifiée"
+    },
+    "privacy": {
+      "analytics": "Analytics",
+      "analyticsDesc": "Aide à améliorer le produit",
+      "crashReports": "Rapports de crash",
+      "crashReportsDesc": "Envoyer des diagnostics anonymes"
+    },
+    "errors": {
+      "noUser": "Aucun utilisateur chargé.",
+      "usernameRequired": "Le nom d'utilisateur est requis.",
+      "emailInvalid": "Un email valide est requis.",
+      "fullNameRequired": "Le nom complet est requis.",
+      "currentPasswordRequired": "Le mot de passe actuel est requis.",
+      "newPasswordsMismatch": "Les nouveaux mots de passe ne correspondent pas."
+    },
+    "reset": {
+      "title": "Réinitialiser les paramètres",
+      "desc": "Cela restaurera les préférences par défaut sur cet appareil.",
+      "areYouSure": "Êtes-vous sûr ?",
+      "detail": "Cela n’affecte que le profil du navigateur / de l’app desktop. Aucune donnée serveur n’est modifiée.",
+      "action": "Réinitialiser"
+    }
+  },
+  "tray": {
+    "title": "NohamDrive Tray",
+    "refresh": "Rafraîchir",
+    "parentFolder": "Dossier parent",
+    "searchPlaceholder": "Rechercher des fichiers locaux",
+    "chooseFolder": "Choisir un dossier",
+    "newFolder": "Nouveau dossier",
+    "createFolder": "Créer un dossier",
+    "synced": "Synchronisé",
+    "needsSync": "À synchroniser",
+    "noLocalItem": "Aucun élément local trouvé",
+    "availableInCloud": "Disponible dans le cloud",
+    "localChangesPending": "Modifications locales en attente",
+    "move": "Déplacer",
+    "rename": "Renommer",
+    "delete": "Supprimer",
+    "selectItem": "Sélectionnez un élément pour le gérer",
+    "syncAll": "Tout synchroniser",
+    "todayAt": "Aujourd’hui, {time}",
+    "yesterday": "Hier",
+    "justNow": "À l’instant",
+    "items": "{count} éléments",
+    "item": "{count} élément"
+  },
+  "uiPanel": {
+    "title": "Panneau de test couleurs & UI",
+    "subtitle": "Panneau de test pour la palette (textes, surfaces, boutons, inputs)",
+    "texts": "Textes",
+    "buttons": "Boutons",
+    "border": "Bordures",
+    "inputs": "Champs",
+    "states": "États",
+    "inputStandard": "Champ standard",
+    "disabled": "Désactivé",
+    "select": "Sélectionner",
+    "textarea": "Zone de texte",
+    "surfaceDefault": "Surface par défaut",
+    "surfaceDefaultDesc": "Surface principale",
+    "surfacePrimary": "Surface principale",
+    "surfacePrimaryDesc": "Accent / mise en avant",
+    "surfaceLight": "Surface claire",
+    "surfaceLightDesc": "Fond léger",
+    "infoTitle": "Info",
+    "infoMessage": "Message d'information",
+    "successTitle": "Succès",
+    "successMessage": "Action réussie",
+    "warningTitle": "Alerte",
+    "warningMessage": "Attention",
+    "errorTitle": "Erreur",
+    "errorMessage": "Une erreur est survenue"
+  },
+  "terminal": {
+    "inputAria": "Entrée du terminal"
+  }
+}

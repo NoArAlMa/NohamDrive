@@ -1,31 +1,32 @@
 <script lang="ts" setup>
 import type { ButtonProps, PageFeatureProps } from "@nuxt/ui";
 
-useHead({
-  title: "Welcome - NohamDrive",
+const { $t } = useI18n();
+
+useHead(() => ({
+  title: String($t("seo.welcomeTitle")),
   htmlAttrs: {
     class: "scroll-smooth",
   },
   meta: [
     {
       name: "NohamDrive | Welcome Page",
-      content: "Discover the open-source alternative of Onedrive",
+      content: String($t("seo.welcomeDescription")),
     },
   ],
-});
+}));
 
 useSeoMeta({
-  description: "Discover the open-source alternative of Onedrive",
-  ogTitle: "Welcome - NohamDrive",
-  ogDescription: "Discover the open-source alternative of Onedrive",
+  description: String($t("seo.welcomeDescription")),
+  ogTitle: String($t("seo.welcomeTitle")),
+  ogDescription: String($t("seo.welcomeDescription")),
   ogImage: "[og:image]",
   ogUrl: "[og:url]",
-  twitterTitle: "Welcome - NohamDrive",
-  twitterDescription: "Discover the open-source alternative of Onedrive",
+  twitterTitle: String($t("seo.welcomeTitle")),
+  twitterDescription: String($t("seo.welcomeDescription")),
   twitterImage: "[twitter:image]",
   twitterCard: "summary",
 });
-
 definePageMeta({
   layout: "welcome",
   middleware: "app-middleware",
@@ -33,56 +34,50 @@ definePageMeta({
 
 const { isMobile } = useResponsive();
 
-const features = [
+const features = computed(() => [
   {
-    title: "Explorateur de fichiers avancé",
-    description:
-      "Naviguez dans vos fichiers comme sur votre ordinateur, avec un terminal intégré pour une gestion rapide et précise.",
+    title: String($t("welcome.cards.advancedExplorer.title")),
+    description: String($t("welcome.cards.advancedExplorer.description")),
     icon: "material-symbols:folder",
   },
   {
-    title: "Partage sécurisé et collaboratif",
-    description:
-      "Partagez des fichiers ou dossiers en un clic, avec des permissions personnalisables et un historique des modifications.",
+    title: String($t("welcome.cards.secureSharing.title")),
+    description: String($t("welcome.cards.secureSharing.description")),
     icon: "material-symbols:share",
   },
   {
-    title: "100% Open-Source",
-    description:
-      "Un code transparent, modifiable et auditable par tous. Rejoignez notre communauté pour contribuer ou adapter NohamDrive à vos besoins.",
+    title: String($t("welcome.cards.openSource.title")),
+    description: String($t("welcome.cards.openSource.description")),
     icon: "material-symbols:code-rounded",
-  },
-];
-
-const pageSection = ref<PageFeatureProps[]>([
-  {
-    title: "Terminal Echo",
-    description:
-      "Gérez vos fichiers en ligne de commande directement dans le cloud, comme sur un système Linux.",
-    icon: "terminal:echo-icon",
-  },
-  {
-    title: "Collaboration en temps réel",
-    description:
-      "Partagez, commentez et éditez des fichiers à plusieurs, avec des notifications instantanées et un historique des changements.",
-    icon: "material-symbols:group-outline-rounded",
-  },
-  {
-    title: "Sécurité et confidentialité",
-    description:
-      "Vos données sont chiffrées et protégées. Contrôlez les accès et les permissions pour chaque membre de votre équipe.",
-    icon: "material-symbols:lock-outline",
   },
 ]);
 
-const links = ref<ButtonProps[]>([
+const pageSection: PageFeatureProps[] = [
   {
-    label: "Get started",
+    title: $t("welcome.sections.terminalEcho.title") as string,
+    description: $t("welcome.sections.terminalEcho.description") as string,
+    icon: "terminal:echo-icon",
+  },
+  {
+    title: $t("welcome.sections.realtimeCollab.title") as string,
+    description: $t("welcome.sections.realtimeCollab.description") as string,
+    icon: "material-symbols:group-outline-rounded",
+  },
+  {
+    title: $t("welcome.sections.security.title") as string,
+    description: $t("welcome.sections.security.description") as string,
+    icon: "material-symbols:lock-outline",
+  },
+];
+
+const links = computed<ButtonProps[]>(() => [
+  {
+    label: $t("common.getStarted") as string,
     to: "/auth",
     icon: "material-symbols:play-arrow-outline-rounded",
   },
   {
-    label: "Learn more",
+    label: $t("common.learnMore") as string,
     to: "#features",
     color: "neutral",
     variant: "subtle",
@@ -100,8 +95,7 @@ const testimonials = ref([
         alt: "Eric Z.",
       },
     },
-    quote:
-      "Eh ben voyons ! NohamDrive a révolutionné notre gestion des arabes à renvoyer dans leurs pays. Le terminal intégré est un game-changer : enfin une alternative open-source à OneDrive qui répond à nos besoins techniques !",
+    quote: $t("welcome.testimonials.t1"),
     star: 4,
   },
   {
@@ -113,8 +107,7 @@ const testimonials = ref([
         alt: "Adolf H.",
       },
     },
-    quote:
-      "J’ai été rejeté des Beaux-arts étant plus jeune. L’intégration avec Minio et le terminal Linux-like m’ont convaincu : c’est l’outil qu’il me manquait pour mes projets.",
+    quote: $t("welcome.testimonials.t2"),
     star: 3,
   },
   {
@@ -126,8 +119,7 @@ const testimonials = ref([
         alt: "Le minotaure",
       },
     },
-    quote:
-      "C'EST LE TRAIN DE LA HYYYYYPE !! Johan adore cette application ! Cela nous permet de nous organiser pour faire les vidéos dégustation",
+    quote: $t("welcome.testimonials.t3"),
     star: 4,
   },
   {
@@ -139,8 +131,7 @@ const testimonials = ref([
         alt: "Walter W.",
       },
     },
-    quote:
-      "Depuis que j'utilise NohamDrive, je suis le danger. Grâce à NohamDrive, Skyler gère mieux le blanchiment d'argent et surtout elle ouvre moins sa gueule",
+    quote: $t("welcome.testimonials.t4"),
     star: 5,
   },
   {
@@ -152,7 +143,7 @@ const testimonials = ref([
         alt: "Hugo H.",
       },
     },
-    quote: "Miaou",
+    quote: $t("welcome.testimonials.t5"),
     star: 5,
   },
 
@@ -165,8 +156,7 @@ const testimonials = ref([
         alt: "Elizabeth II",
       },
     },
-    quote:
-      "L’intégration avec notre infrastructure existante (PostgreSQL + Docker) a été un jeu d’enfant. Les performances sont au rendez-vous, même avec des fichiers volumineux.",
+    quote: $t("welcome.testimonials.t6"),
     star: 4,
   },
   {
@@ -178,8 +168,7 @@ const testimonials = ref([
         alt: "Cémoi lebaigé.",
       },
     },
-    quote:
-      "Ahah ne trouvez vous pas ça magnifique, mon cher ! Cette application est vraiment très belle et je l'aime bien. Un gain de temps énorme !",
+    quote: $t("welcome.testimonials.t7"),
     star: 4,
   },
   {
@@ -191,7 +180,7 @@ const testimonials = ref([
         alt: "Christian R.",
       },
     },
-    quote: "SIUUU… mes backups sont sécurisés.",
+    quote: $t("welcome.testimonials.t8"),
     star: 3,
   },
   {
@@ -203,8 +192,7 @@ const testimonials = ref([
         alt: "Jeffrey E.",
       },
     },
-    quote:
-      "Enfin un outil qui allie simplicité et puissance ! Mes équipes adorent explorer les enfants... euh les fichiers, et moi, je dors sur mes deux oreilles grâce au chiffrement intégré ; ).",
+    quote: $t("welcome.testimonials.t9"),
     star: 3,
   },
 
@@ -217,8 +205,7 @@ const testimonials = ref([
         alt: "Monsieur Bride'o'neaut",
       },
     },
-    quote:
-      "Franchement j'ai bien aimé, c'est pas trop difficile à installer ! C'est mon mac qui m'a le plus ralenti. Je sais pas vraiment comment ça fonctionne mais j'imagine que c'est bien",
+    quote: $t("welcome.testimonials.t10"),
     star: 3,
   },
   {
@@ -230,8 +217,7 @@ const testimonials = ref([
         alt: "Donald D.",
       },
     },
-    quote:
-      "J'adore NohamDrive ! Et j'adore la France, Macron est un nice guy. Make NohamDrive great again !!",
+    quote: $t("welcome.testimonials.t11"),
     star: 4,
   },
   {
@@ -243,16 +229,13 @@ const testimonials = ref([
         alt: "Jay Lance",
       },
     },
-    quote:
-      "Windows c'est de la merde, tout le monde le sait ! C'est pour ça que j'ai décidé d'utiliser la meilleure alternative à Onedrive (cette merde) : NohamDrive ! J'apprécie cette app presque autant que Linux",
+    quote: $t("welcome.testimonials.t12"),
     star: 5,
   },
 ]);
 
-const PageTitle = "Stock, share & collaborate freely";
-const PageDesc = ref(
-  "NohamDrive est une alternative open-source à OneDrive, conçue pour les équipes. Explorez, partagez et gérez vos fichiers directement depuis un terminal intégré et une interface intuitive, en toute sécurité.",
-);
+const PageTitle = computed(() => String($t("welcome.heroTitle")));
+const PageDesc = computed(() => String($t("welcome.heroDesc")));
 </script>
 
 <template>
@@ -272,8 +255,7 @@ const PageDesc = ref(
             v-if="isMobile"
             class="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-12 md:mb-16"
           >
-            Tout ce dont vous avez besoin<br class="hidden sm:block" />
-            pour gérer vos fichiers en équipe
+            {{ $t("welcome.featuresHeadingMobile") }}
           </h2>
           <UPageGrid
             class="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
@@ -299,15 +281,15 @@ const PageDesc = ref(
         <h1
           class="text-5xl sm:text-5xl font-bold flex items-center justify-center md:justify-start gap-3 mb-6"
         >
-          Découvrez Echo
+          {{ $t("welcome.echoHeading") }}
           <UIcon name="terminal:echo-icon" class="text-primary" dynamic />
         </h1>
         <p class="text-lg sm:text-x mb-8 max-w-lg">
-          Une façon révolutionnaire de naviguer entre vos dossiers et fichiers,
-          <span class="font-semibold">intuitive, rapide et puissante.</span>
+          {{ $t("welcome.echoLead") }}
+          <span class="font-semibold">{{ $t("welcome.echoLeadStrong") }}</span>
         </p>
         <UButton
-          label="En savoir plus"
+          :label="String($t('common.learnMore'))"
           color="primary"
           variant="solid"
           size="lg"
@@ -337,7 +319,7 @@ const PageDesc = ref(
         <h2
           class="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-12 md:mb-16"
         >
-          Ils nous font confiance
+          {{ $t("welcome.trustHeading") }}
         </h2>
 
         <UPageColumns>
@@ -345,7 +327,7 @@ const PageDesc = ref(
             v-for="(testimonial, index) in testimonials"
             :key="index"
             variant="subtle"
-            :description="testimonial.quote"
+            :description="String(testimonial.quote)"
             :ui="{
               description:
                 'before:content-[open-quote] after:content-[close-quote]',

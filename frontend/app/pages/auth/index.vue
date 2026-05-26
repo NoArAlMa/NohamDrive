@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 const route = useRoute();
 const router = useRouter();
+const { t } = useI18n();
 
 definePageMeta({
   layout: false,
@@ -9,11 +10,11 @@ definePageMeta({
 });
 
 useHead({
-  title: "Login & Register - NohamDrive",
+  title: String(t("seo.authTitle")),
   meta: [
     {
       name: "NohamDrive | Authentication",
-      content: "Connect yourself to your next favorite app",
+      content: String(t("seo.authDescription")),
     },
   ],
 });

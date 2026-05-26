@@ -2,20 +2,22 @@
 import type { AuthFormField, FormSubmitEvent, StepperItem } from "@nuxt/ui";
 import * as z from "zod";
 
+const { t } = useI18n();
+
 const authForm = useTemplateRef("authForm");
 const generalError = ref<string | null>(null);
 const step = ref(0);
 
-const items: StepperItem[] = [
+const items = computed<StepperItem[]>(() => [
   {
-    title: "Informations",
+    title: t("auth.fullName") as string,
     icon: "material-symbols:person-outline-rounded",
   },
   {
-    title: "Sécurité",
+    title: t("auth.password") as string,
     icon: "material-symbols:lock-outline",
   },
-];
+]);
 
 const steps = [
   {
@@ -32,46 +34,46 @@ const steps = [
 
 const isLastStep = computed(() => step.value === steps.length - 1);
 
-const registerFields: AuthFormField[] = [
+const registerFields = computed<AuthFormField[]>(() => [
   {
     name: "name",
     type: "text",
-    label: "Full Name",
-    placeholder: "Enter your name",
+    label: t("auth.fullName") as string,
+    placeholder: t("auth.placeholders.enterName") as string,
     required: true,
   },
   {
     name: "username",
     type: "text",
-    label: "Username",
-    placeholder: "Enter a username",
+    label: t("auth.username") as string,
+    placeholder: t("auth.placeholders.enterUsername") as string,
     required: true,
   },
   {
     name: "email",
     type: "email",
-    label: "Email",
-    placeholder: "Enter your email",
+    label: t("auth.email") as string,
+    placeholder: t("auth.placeholders.enterEmail") as string,
     required: true,
   },
   {
     name: "password",
     type: "password",
-    label: "Password",
-    placeholder: "Choose a password",
+    label: t("auth.password") as string,
+    placeholder: t("auth.placeholders.choosePassword") as string,
     required: true,
   },
   {
     name: "password_confirmation",
     type: "password",
-    label: "Confirm password",
-    placeholder: "Confirm your password",
+    label: t("auth.confirmPassword") as string,
+    placeholder: t("auth.placeholders.confirmPassword") as string,
     required: true,
   },
-];
+]);
 
 const currentFields = computed(() => {
-  return registerFields.filter((field) =>
+  return registerFields.value.filter((field) =>
     steps[step.value]!.fields.includes(field.name),
   );
 });
@@ -79,24 +81,24 @@ const currentFields = computed(() => {
 const stepSchemas = [
   z.object({
     name: z
-      .string("Full name required")
-      .min(3, "Must be at least 3 characters"),
+      .string(t("auth.validation.fullNameRequired") as string)
+      .min(3, t("auth.validation.min3") as string),
     username: z
-      .string("Username required")
-      .min(3, "Must be at least 3 characters"),
-    email: z.email("Invalid email"),
+      .string(t("auth.validation.usernameRequired") as string)
+      .min(3, t("auth.validation.min3") as string),
+    email: z.email(t("auth.validation.invalidEmail") as string),
   }),
   z
     .object({
       password: z
-        .string("Password is required")
-        .min(8, "Must be at least 8 characters"),
+        .string(t("auth.validation.passwordRequired") as string)
+        .min(8, t("auth.validation.min8") as string),
       password_confirmation: z
-        .string("Please confirm your password")
-        .min(8, "Must be at least 8 characters"),
+        .string(t("auth.validation.confirmPasswordRequired") as string)
+        .min(8, t("auth.validation.min8") as string),
     })
     .refine((data) => data.password === data.password_confirmation, {
-      message: "Passwords do not match",
+      message: t("auth.validation.passwordsDontMatch") as string,
       path: ["password_confirmation"],
     }),
 ];
@@ -177,22 +179,24 @@ async function handleNext(payload: FormSubmitEvent<any>): Promise<void> {
 
       <UAuthForm
         ref="authForm"
-        title="Create account"
+        :title="String(t('auth.createAccount'))"
         :schema="stepSchemas[step]"
         :fields="currentFields"
         @submit="handleNext"
         loading-auto
         :submit="{
-          label: isLastStep ? 'Create account' : 'Next',
+          label: isLastStep
+            ? (t('auth.createAccount') as string)
+            : (t('auth.next') as string),
           color: 'primary',
         }"
       >
         <template #description>
-          Already have an account ?
+          {{ t("auth.haveAccount") }}
           <ULink
             @click="$emit('switch-mode', 'login')"
             class="text-primary font-medium"
-            >Log in</ULink
+            >{{ t("auth.logIn") }}</ULink
           >.
         </template>
         <template #validation>
@@ -209,7 +213,7 @@ async function handleNext(payload: FormSubmitEvent<any>): Promise<void> {
           <div class="flex w-full">
             <UButton
               v-if="step > 0"
-              label="Back"
+              :label="String(t('auth.back'))"
               @click="step--"
               variant="ghost"
               icon="material-symbols:arrow-back-rounded"

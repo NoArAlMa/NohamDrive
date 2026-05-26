@@ -1,5 +1,45 @@
 <script lang="ts" setup>
 const { isMobile } = useResponsive();
+const { switchLocale, $getLocale } = useI18n();
+const locale = computed(() => $getLocale());
+
+const groups = computed(() => [
+  {
+    id: "navigation",
+    label: "Navigation",
+    items: [
+      {
+        label: "Home",
+        icon: "i-heroicons-home",
+        onSelect: () => navigateTo("/"),
+      },
+      {
+        label: "Settings",
+        icon: "i-heroicons-cog-6-tooth",
+        onSelect: () => navigateTo("/settings"),
+      },
+    ],
+  },
+
+  {
+    id: "language",
+    label: "Language",
+    items: [
+      {
+        label: "Français",
+        icon: "flag:fr-4x3",
+        active: locale.value === "fr",
+        onSelect: () => switchLocale("fr"),
+      },
+      {
+        label: "English",
+        icon: "flag:gb-4x3",
+        active: locale.value === "en",
+        onSelect: () => switchLocale("en"),
+      },
+    ],
+  },
+]);
 </script>
 
 <template>
@@ -30,7 +70,7 @@ const { isMobile } = useResponsive();
         </template>
 
         <template #body>
-          <LazyUDashboardSearch />
+          <LazyUDashboardSearch :groups="groups" />
           <NuxtPage />
         </template>
       </UDashboardPanel>

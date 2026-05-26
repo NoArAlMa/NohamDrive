@@ -1,30 +1,31 @@
 <script setup lang="ts">
 import type { SelectItem } from "@nuxt/ui";
 
+const { t } = useI18n();
 const { viewMode } = useFileExplorerSettings();
 
 type ViewMode = "tiles" | "list";
 
-const items = [
+const items = computed<SelectItem[]>(() => [
   {
-    label: "Tiles",
+    label: t("fileExplorer.display.tiles") as string,
     value: "tiles",
     icon: "material-symbols:tile-small-outline-rounded",
   },
   {
-    label: "List",
+    label: t("fileExplorer.display.list") as string,
     value: "list",
     icon: "material-symbols:format-list-bulleted-rounded",
   },
   {
-    label: "Compact",
+    label: t("fileExplorer.display.compact") as string,
     value: "compact",
     icon: "material-symbols:list-rounded",
   },
-] satisfies SelectItem[];
+]);
 
 const currentIcon = computed(
-  () => items.find((i) => i.value === viewMode.value)?.icon,
+  () => items.value.find((i) => i.value === viewMode.value)?.icon,
 );
 </script>
 

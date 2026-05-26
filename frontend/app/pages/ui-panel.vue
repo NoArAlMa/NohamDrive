@@ -9,18 +9,16 @@ definePageMeta({
     <!-- Title -->
     <section>
       <h1 class="text-3xl font-bold text-[--color-text]">
-        Color & UI Test Panel
+        {{ t("uiPanel.title") }}
       </h1>
-      <p class="text-muted">
-        Panneau de test pour la palette (textes, surfaces, boutons, inputs)
-      </p>
+      <p class="text-muted">{{ t("uiPanel.subtitle") }}</p>
       <UColorModeSwitch />
     </section>
 
     <!-- Text samples -->
     <UCard>
       <template #header>
-        <h2 class="text-xl font-semibold">Textes</h2>
+        <h2 class="text-xl font-semibold">{{ t("uiPanel.texts") }}</h2>
       </template>
 
       <div class="flex flex-row gap-6">
@@ -46,7 +44,7 @@ definePageMeta({
     <!-- Buttons -->
     <UCard class="bg-[#0D1520]">
       <template #header>
-        <h2 class="text-xl font-semibold">Boutons</h2>
+        <h2 class="text-xl font-semibold">{{ t("uiPanel.buttons") }}</h2>
       </template>
 
       <div class="flex flex-wrap gap-4">
@@ -61,7 +59,7 @@ definePageMeta({
 
     <UCard>
       <template #header>
-        <h2 class="text-xl font-semibold">Border</h2>
+        <h2 class="text-xl font-semibold">{{ t("uiPanel.border") }}</h2>
       </template>
 
       <div class="flex flex-wrap gap-4">
@@ -75,17 +73,17 @@ definePageMeta({
     <!-- Inputs -->
     <UCard>
       <template #header>
-        <h2 class="text-xl font-semibold">Inputs</h2>
+        <h2 class="text-xl font-semibold">{{ t("uiPanel.inputs") }}</h2>
       </template>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <UInput placeholder="Input standard" />
-        <UInput placeholder="Disabled" disabled />
+        <UInput :placeholder="t('uiPanel.inputStandard')" />
+        <UInput :placeholder="t('uiPanel.disabled')" disabled />
         <USelect
           :options="['Option A', 'Option B', 'Option C']"
-          placeholder="Select"
+          :placeholder="t('uiPanel.select')"
         />
-        <UTextarea placeholder="Textarea" />
+        <UTextarea :placeholder="t('uiPanel.textarea')" />
       </div>
     </UCard>
 
@@ -94,32 +92,40 @@ definePageMeta({
       <div
         class="rounded-xl border border-[--color-border] bg-[--color-surface] p-4 shadow-sm"
       >
-        <p class="font-medium text-primary">Surface Default</p>
-        <p class="text-sm text-muted">Surface principale</p>
+        <p class="font-medium text-primary">{{ t("uiPanel.surfaceDefault") }}</p>
+        <p class="text-sm text-muted">{{ t("uiPanel.surfaceDefaultDesc") }}</p>
       </div>
 
       <div class="rounded-xl bg-primary p-4 shadow-sm">
-        <p class="font-medium">Surface Primary</p>
-        <p class="text-sm opacity-90">Accent / highlight</p>
+        <p class="font-medium">{{ t("uiPanel.surfacePrimary") }}</p>
+        <p class="text-sm opacity-90">{{ t("uiPanel.surfacePrimaryDesc") }}</p>
       </div>
 
       <div class="rounded-xl bg-elevated p-4 shadow-sm">
-        <p class="font-medium">Surface Light</p>
-        <p class="text-sm">Background léger</p>
+        <p class="font-medium">{{ t("uiPanel.surfaceLight") }}</p>
+        <p class="text-sm">{{ t("uiPanel.surfaceLightDesc") }}</p>
       </div>
     </section>
 
     <!-- States -->
     <UCard>
       <template #header>
-        <h2 class="text-xl font-semibold">États</h2>
+        <h2 class="text-xl font-semibold">{{ t("uiPanel.states") }}</h2>
       </template>
 
       <div class="space-y-3">
-        <UAlert color="primary" title="Info">Message d'information</UAlert>
-        <UAlert color="success" title="Succès">Action réussie</UAlert>
-        <UAlert color="warning" title="Warning">Attention</UAlert>
-        <UAlert color="error" title="Erreur">Une erreur est survenue</UAlert>
+        <UAlert color="primary" :title="t('uiPanel.infoTitle')">
+          {{ t("uiPanel.infoMessage") }}
+        </UAlert>
+        <UAlert color="success" :title="t('uiPanel.successTitle')">
+          {{ t("uiPanel.successMessage") }}
+        </UAlert>
+        <UAlert color="warning" :title="t('uiPanel.warningTitle')">
+          {{ t("uiPanel.warningMessage") }}
+        </UAlert>
+        <UAlert color="error" :title="t('uiPanel.errorTitle')">
+          {{ t("uiPanel.errorMessage") }}
+        </UAlert>
       </div>
     </UCard>
   </div>
@@ -127,4 +133,5 @@ definePageMeta({
 
 <script setup lang="ts">
 // Panel de test visuel — aucune logique requise
+const { t } = useI18n();
 </script>

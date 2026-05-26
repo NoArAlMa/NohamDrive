@@ -3,6 +3,8 @@ import type { NavigationMenuItem } from "@nuxt/ui";
 import type { DropdownMenuItem } from "@nuxt/ui";
 import Limiter from "./Limiter.vue";
 
+const { t } = useI18n();
+
 const { isMobile } = useResponsive();
 const authStore = useAuthStore();
 const { user, profilePictureUrl } = storeToRefs(authStore);
@@ -12,9 +14,9 @@ const name_user = computed(() => user.value?.full_name || "");
 
 const { isElectron } = useElectron();
 
-const itemsDropDown = ref<DropdownMenuItem[]>([
+const itemsDropDown = computed<DropdownMenuItem[]>(() => [
   {
-    label: "Log out",
+    label: t("auth.logOut") as string,
     icon: "material-symbols:logout-rounded",
     color: "error",
     onSelect: () => logoutUser(),
@@ -23,40 +25,39 @@ const itemsDropDown = ref<DropdownMenuItem[]>([
     type: "separator",
   },
   {
-    label: "Settings",
+    label: t("nav.settings") as string,
     icon: "material-symbols:settings-outline-rounded",
     onSelect: () => navigateTo("/settings"),
   },
   {
-    label: "Inbox",
-
+    label: t("nav.inbox") as string,
     icon: "material-symbols:inbox-outline-rounded",
   },
   {
-    label: "My account",
+    label: t("nav.myAccount") as string,
     icon: "material-symbols:person-outline-rounded",
   },
 ]);
 
-const items: NavigationMenuItem[][] = [
+const items = computed<NavigationMenuItem[][]>(() => [
   [
     [
       {
-        label: "Home",
+        label: t("nav.home") as string,
         icon: "i-lucide-house",
         to: "/home",
       },
       {
-        label: "My files",
+        label: t("nav.myFiles") as string,
         icon: "material-symbols:folder-copy-outline-rounded",
         to: "/explorer",
       },
       {
-        label: "Contacts",
+        label: t("nav.contacts") as string,
         icon: "material-symbols:person-outline-rounded",
       },
       {
-        label: "Teams",
+        label: t("nav.teams") as string,
         icon: "material-symbols:groups-outline-rounded",
         children: [
           {
@@ -73,7 +74,7 @@ const items: NavigationMenuItem[][] = [
     ],
     [
       {
-        label: "Echo",
+        label: t("nav.echo") as string,
         icon: "terminal:echo-icon",
         to: "/terminal",
       },
@@ -83,7 +84,7 @@ const items: NavigationMenuItem[][] = [
     ...(isElectron.value === false
       ? [
           {
-            label: "Download desktop app",
+            label: t("nav.downloadDesktopApp") as string,
             icon: "material-symbols:download-2-outline-rounded",
             to: "/download-app",
             tooltip: true,
@@ -91,14 +92,14 @@ const items: NavigationMenuItem[][] = [
         ]
       : []),
     {
-      label: "Report a bug",
+      label: t("nav.reportBug") as string,
       icon: "i-lucide-info",
       to: "https://c.tenor.com/e3OI7DDT9i0AAAAd/tenor.gif",
       target: "_blank",
       tooltip: true,
     },
   ],
-];
+]);
 const collapsed = ref(false);
 </script>
 
@@ -179,7 +180,7 @@ const collapsed = ref(false);
         v-if="!isMobile"
       >
         <UTooltip
-          text="Download app"
+          :text="String(t('nav.downloadApp'))"
           :content="{
             side: 'top',
           }"
@@ -195,7 +196,7 @@ const collapsed = ref(false);
           />
         </UTooltip>
         <UTooltip
-          text="Report a bug"
+          :text="String(t('nav.reportBug'))"
           :content="{
             side: 'top',
           }"

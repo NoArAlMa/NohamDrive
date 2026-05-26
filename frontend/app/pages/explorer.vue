@@ -1,31 +1,29 @@
 <script setup lang="ts">
+const { t } = useI18n();
+
 definePageMeta({
   layout: "default",
   middleware: "auth-middleware",
 });
 
 useHead({
-  title: "File Explorer - NohamDrive",
+  title: String(t("seo.explorerTitle")),
   meta: [
     {
       name: "NohamDrive | File Explorer",
-      content:
-        "Browse your file stored in the cloud directly in this file explorer",
+      content: String(t("seo.explorerDescription")),
     },
   ],
 });
 
 useSeoMeta({
-  description:
-    "Browse your file stored in the cloud directly in this file explorer",
-  ogTitle: "File Explorer - NohamDrive",
-  ogDescription:
-    "Browse your file stored in the cloud directly in this file explorer",
+  description: String(t("seo.explorerDescription")),
+  ogTitle: String(t("seo.explorerTitle")),
+  ogDescription: String(t("seo.explorerDescription")),
   ogImage: "[og:image]",
   ogUrl: "[og:url]",
-  twitterTitle: "File Explorer - NohamDrive",
-  twitterDescription:
-    "Browse your file stored in the cloud directly in this file explorer",
+  twitterTitle: String(t("seo.explorerTitle")),
+  twitterDescription: String(t("seo.explorerDescription")),
   twitterImage: "[twitter:image]",
   twitterCard: "summary",
 });

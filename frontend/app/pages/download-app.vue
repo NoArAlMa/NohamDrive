@@ -1,32 +1,33 @@
 <script lang="ts" setup>
+const { t } = useI18n();
+
 useHead({
-  title: "Download App - NohamDrive",
+  title: String(t("download.headTitle")),
   meta: [
     {
       name: "Download Page",
-      content:
-        "Click here to download the latest desktop version of NohamDrive",
+      content: String(t("download.ctaDesc")),
     },
   ],
 });
 
 useSeoMeta({
-  description: "Download the latest desktop version of NohamDrive",
-  ogTitle: "Download App - NohamDrive",
-  ogDescription: "Download the latest desktop version of NohamDrive",
+  description:  String(t("download.ctaDesc")),
+  ogTitle:  String(t("download.headTitle")),
+  ogDescription:  String(t("download.ctaDesc")),
   ogImage: "[og:image]",
   ogUrl: "[og:url]",
-  twitterTitle: "Download App - NohamDrive",
-  twitterDescription: "Download the latest desktop version of NohamDrive",
+  twitterTitle:  String(t("download.headTitle")),
+  twitterDescription:  String(t("download.ctaDesc")),
   twitterImage: "[twitter:image]",
   twitterCard: "summary",
 });
 
 import type { ButtonProps } from "@nuxt/ui";
 
-const links = ref<ButtonProps[]>([
+const links = computed<ButtonProps[]>(() => [
   {
-    label: "Download App for windows",
+    label: t("download.windows") as string,
     color: "primary",
     variant: "outline",
     leadingIcon: "desktop:windows-icon",
@@ -34,7 +35,7 @@ const links = ref<ButtonProps[]>([
     target: "_blank",
   },
   {
-    label: "Download App for Mac",
+    label: t("download.mac") as string,
     color: "neutral",
     variant: "outline",
     leadingIcon: "desktop:apple-icon",
@@ -47,8 +48,8 @@ const links = ref<ButtonProps[]>([
 <template>
   <UPageCTA
     class="w-full h-full flex items-center justify-center"
-    title="Télécharge notre application !!"
-    description="On fait une app alors pourquoi pas la télécharger hein ?"
+    :title="String(t('download.ctaTitle'))"
+    :description="String(t('download.ctaDesc'))"
     variant="subtle"
     :links="links"
     orientation="horizontal"
